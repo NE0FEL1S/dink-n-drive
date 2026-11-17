@@ -49,6 +49,13 @@ Booking site for a single pickleball court in Cebu, Philippines, with a communit
 ## Out of scope for v1 — do not build
 Email sending of any kind, forgot/change password, booking emails, online payment gateways, multiple courts.
 
+## Git workflow
+- Branches: `main` (production, deployed) ← `staging` (integration/testing) ← work branches (`phase-1/supabase-setup`, `fix/...`, `docs/...`).
+- Start every piece of work on a new branch cut from `staging`. Never commit directly to `main` or `staging`.
+- When a phase or fix is done (build + lint pass), merge the work branch into `staging` and push `staging`.
+- `staging` is merged into `main` only after the developer has reviewed/tested it and says so.
+- Never force-push `main` or `staging`.
+
 ## How to work
 - Build **one phase at a time** (list below). At the end of each phase: run build + lint, summarize what changed and anything the developer must do by hand (e.g. Supabase dashboard settings), then **stop and wait for review** before the next phase.
 - If something in the spec is unclear or conflicts, ask instead of guessing.
