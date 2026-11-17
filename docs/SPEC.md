@@ -1,10 +1,11 @@
-# Dink n' Drive — Pickleball Court Website · Build Spec (v1.2)
+# Dink n' Drive — Pickleball Court Website · Build Spec (v1.3)
 
 Status: **Approved plan** · Last updated 2026-11-17
 
 Portfolio project by Arbien Armenion; may be handed over to the court owner for real use.
 
 Changelog
+- v1.3 — Pre-build review. Paddle carry-over removed: every booking with paddles pays the flat ₱50. Owner can block hours and cancel any booking with a full refund. New limits: how far ahead people can book and how many unpaid bookings a customer can hold. Cancellation fee is saved on the booking; unpaid bookings cancel free at any time. Comments and reactions use real foreign keys. Rate limits added for feedback and comments. Next.js 16 `proxy` replaces `middleware`.
 - v1.2 — Court named **Dink n' Drive**. No maximum booking length; bookings are whole hours only, always on the hour.
 - v1.1 — Customers can book multiple consecutive hours in one booking.
 
@@ -16,26 +17,29 @@ Changelog
 |---|---|
 | Court name | Dink n' Drive |
 | Courts | 1 |
-| Opening hours | 8:00 AM – 12:00 AM, every day (no closed days) |
+| Opening hours | 8:00 AM – 12:00 AM, every day (no closed days). Stored as `open_hour = 8`, `close_hour = 24` (24 = midnight). |
 | Slots | 1-hour slots → 16 per day (first 8–9 AM, last 11 PM–12 AM) |
-| Booking length | Any number of **consecutive whole hours** (minimum 1, **no maximum**). Always starts and ends on the hour (8:00–9:00, 8:00–11:00; never 9:15). Cannot run past 12 AM closing. |
+| Booking length | Any number of **consecutive whole hours** (minimum 1, **no maximum**). Always starts and ends on the hour (8:00–9:00, 8:00–11:00; never 9:15). Cannot run past 12 AM closing. Only hours that start in the future can be booked. |
+| Booking window | Up to **30 days** ahead (`max_advance_days`) |
+| Unpaid limit | A customer can have at most **2** bookings in `pending_payment` at once (`max_unpaid_bookings`) |
 | Court fee | ₱250 per hour (e.g. 3 hours = ₱750) |
-| Paddle rental | Flat ₱50 per booking, regardless of hours or how many of the 4 paddles they use. Not charged again when the customer extends by booking the hour right after an existing booking. |
-| Extending later | Customer books the next free hour(s) as a new booking |
+| Paddle rental | Flat ₱50 per booking that rents paddles, regardless of hours or how many of the 4 paddles they use. Every booking pays it, including an extension booked right after an earlier one. |
+| Extending later | Customer books the next free hour(s) as a new booking (paddles ₱50 again if rented) |
 | Payment | Customer scans the owner's GCash QR on the site, uploads a payment screenshot; owner approves or rejects |
 | Unpaid hold | A booking without an uploaded screenshot is released after 15 minutes |
-| Cancellation | Whole booking only, allowed up to **3 hours before** the booking starts. ₱100 cancellation fee per booking is kept; the rest is refunded to the customer's GCash |
+| Cancellation | Whole booking only. Unpaid bookings can be cancelled free at any time. Paid bookings (`pending_review` / `confirmed`) can be cancelled up to **3 hours before** the start; the ₱100 fee is kept and the rest is refunded to the customer's GCash. |
+| Owner tools | Owner can block hours (maintenance, events, weather) and cancel any booking at any time with a full refund |
 | Accounts | Login required to book, post, comment, react, or give feedback. Browsing is public. |
 | Timezone | Asia/Manila for all display and slot logic |
 | Money | Whole pesos, stored as integers |
 
-All prices, hours, hold time, cutoff and fees live in a `settings` row so the owner can change them without code. Each booking stores the prices it was made at, so past earnings never change.
+All prices, hours, hold time, cutoff, fees and limits live in a `settings` row so the owner can change them without code. Each booking stores the prices and cancellation fee it was made at, so past earnings and existing bookings never change.
 
 ---
 
 ## 2. Stack
 
-- **Next.js (App Router) + TypeScript**, Tailwind CSS
+- **Next.js 16 (App Router) + TypeScript**, Tailwind CSS
 - **Supabase**: Postgres, Auth (Google + email/password), Storage, Row-Level Security, pg_cron; `@supabase/ssr` for the Next.js client
 - **Vercel** hosting, **GitHub** repo
 - Exports: `exceljs` (.xlsx) and `jspdf` + `jspdf-autotable` (PDF), generated in the browser
@@ -48,8 +52,10 @@ All prices, hours, hold time, cutoff and fees live in a `settings` row so the ow
 ## 3. Auth & roles
 
 - Sign-in: **Google** (primary button) and **email + password** (email confirmation turned off in Supabase).
-- First sign-in → complete profile: full name and phone number (required) before booking or posting.
-- Roles: `customer` (default) and `owner`. Admin routes are protected by middleware **and** RLS.
+- A trigger on `auth.users` creates the `profiles` row on sign-up and prefills the name from Google when available.
+- First sign-in → complete profile: full name and phone number (required) before booking or posting. Phone must be a PH mobile number entered as `09XXXXXXXXX`; stored as `+639XXXXXXXXX`.
+- Roles: `customer` (default) and `owner`. Customers can never change `role`. The first owner is set by hand with SQL (see `docs/SETUP.md`).
+- Admin routes are protected by the Next.js **proxy** (`src/proxy.ts`, formerly "middleware") **and** RLS.
 - **Owner-assisted reset:** in Admin → Customers, the owner can set a temporary password for an email/password customer after verifying their phone number (server action using the secret/service-role key, server-side only).
 
 ---
@@ -57,8 +63,8 @@ All prices, hours, hold time, cutoff and fees live in a `settings` row so the ow
 ## 4. Pages
 
 ### Public
-- `/` — landing: court info, prices, hours, CTA to book, latest community posts
-- `/book` — date picker → hourly slot grid (pick start hour, extend over consecutive free hours) → paddle rental toggle → summary → pay
+- `/` — landing: one screen only. Hero with the court name, a one-line price note, and a single "Book now" button that opens the booking popup. No availability, location or community posts on this page (see `docs/DESIGN.md` §5).
+- `/book` — the booking flow: date picker → hourly slot grid (pick start hour, extend over consecutive free hours) → paddle rental toggle → summary → pay. Opens as a popup (bottom sheet on phones) from "Book now"; the same UI also works as a full page at `/book`.
 - `/community` — feed of posts
 - `/feedback` — public feedback feed with status badges and owner replies
 - `/login`
@@ -69,47 +75,66 @@ All prices, hours, hold time, cutoff and fees live in a `settings` row so the ow
 
 ### Owner (`/admin`)
 - **Overview** — summary cards + earnings chart
-- **Bookings** — the bookings table, filters, exports
+- **Bookings** — the bookings table, filters, exports; **block hours** (pick date + hours, optional note) and remove blocks; **cancel any booking** (full refund, no fee)
 - **Payments** — queue of bookings awaiting review with screenshot preview; Approve / Reject (with reason)
 - **Refunds** — cancellation requests; owner sends GCash refund manually, uploads refund screenshot, marks Refunded
 - **Customers** — customer list with bookings count, total hours, total spent, last visit; temporary-password reset
 - **Feedback** — inbox: set status, write the public reply, delete abusive items
 - **Moderation** — posts and comments, newest first; delete
-- **Settings** — prices, hours, hold minutes, cancellation cutoff/fee, GCash QR image, court name
+- **Settings** — prices, hours, hold minutes, cancellation cutoff/fee, booking window, unpaid-booking limit, GCash QR image, court name
 
 ---
 
 ## 5. Booking flow
 
-1. Customer picks a date; the page shows the 16 hourly slots as Available / Taken / Past.
+1. Customer picks a date (today up to `max_advance_days` ahead); the page shows the 16 hourly slots as Available / Taken / Past. Blocked hours show as Taken.
 2. Taps a start hour, then extends the selection over consecutive free hours. The selection stops at the next taken hour or at closing.
-3. Chooses whether to rent paddles. Total updates live: hours × ₱250 + ₱50 if paddles (₱0 paddles if they carry over from the customer's booking that ends right at this start time).
+3. Chooses whether to rent paddles. Total updates live: hours × ₱250 + ₱50 if paddles.
 4. Confirms → booking created as **Pending payment** with a 15-minute hold and a booking reference (e.g. `DND-7K3Q9`).
 5. Site shows the GCash QR and amount. Customer uploads the screenshot → **Pending review** (no longer expires).
 6. Owner approves → **Confirmed**, or rejects with a reason → **Rejected** (hours reopen).
 7. If no screenshot within 15 minutes → **Expired** (hours reopen), via a pg_cron job every minute.
 
-**Double-booking protection:** each booking stores a time range (`start_at`, `end_at`). A Postgres **exclusion constraint** (`btree_gist`, `tstzrange(start_at, end_at) WITH &&`) limited to active statuses (`pending_payment`, `pending_review`, `confirmed`) makes the database reject any booking that overlaps another active booking, even if two people submit at the same moment. Check constraints enforce whole hours on the hour, opening hours, and minimum 1 hour.
+**Booking creation** runs in a database function that, in order:
+1. Expires this court's overdue `pending_payment` holds (so the up-to-1-minute cron lag never blocks a slot).
+2. Checks: profile complete; start in the future; start no more than `max_advance_days` ahead; within opening hours from `settings`; customer has fewer than `max_unpaid_bookings` unpaid bookings.
+3. Copies `hourly_rate`, `paddle_fee` and `cancel_fee` from `settings` onto the booking, computes `court_fee` and `total`.
+4. Generates `ref_code`: `DND-` + 5 characters from an alphabet without look-alikes (no 0, O, 1, I); unique, retried on collision.
+5. Inserts; the exclusion constraint rejects overlaps.
 
-**Paddle carry-over:** booking creation runs in a database function that checks whether the same customer has an active booking ending exactly at this booking's start with paddle rental. If yes, paddle rental is included at ₱0.
+Opening hours are checked in the function, not by a CHECK constraint, because they come from `settings` and changing them must not invalidate existing bookings.
+
+**Payment-proof submission** is a database function that accepts the upload only if the booking belongs to the caller, is still `pending_payment`, and its hold has not run out.
+
+**Double-booking protection:** each booking stores a time range (`start_at`, `end_at`). A Postgres **exclusion constraint** (`btree_gist`, `tstzrange(start_at, end_at) WITH &&`) limited to active statuses (`pending_payment`, `pending_review`, `confirmed`, `blocked`) makes the database reject any booking that overlaps another active booking or an owner block, even if two people submit at the same moment. Check constraints enforce whole hours on the hour, minimum 1 hour, and `end_at = start_at + hours`.
+
+**Owner blocks** are rows in `bookings` with `kind = 'block'`, no customer, all amounts ₱0, status `blocked`, and an optional note. Keeping them in the same table lets one exclusion constraint cover everything. Removing a block deletes the row. Blocks can't be placed over an active customer booking — the owner cancels that booking first.
 
 ### Statuses
 `pending_payment` → `pending_review` → `confirmed` | `rejected`
 `pending_payment` → `expired`
-`pending_payment` → `cancelled` (free, nothing paid)
-`pending_review` / `confirmed` → `cancelled` (fee applies, refund flow)
+`pending_payment` → `cancelled` (free, nothing paid, any time)
+`pending_review` / `confirmed` → `cancelled` (customer: fee applies, refund flow; owner: full refund)
+`blocked` (owner blocks only)
 
 ---
 
 ## 6. Cancellation & refunds
 
-- Available from My Bookings until **3 hours before the booking starts** (enforced in the database, not only the UI).
-- Cancels the whole booking (no partial-hour cancellation).
-- Customer enters GCash account name and number.
-- Refund = total paid − ₱100 (e.g. 2 hours with paddles ₱550 → ₱450 back; 1 hour ₱250 → ₱150 back).
-- Refund status: `requested` → `refunded`. Owner uploads the refund screenshot when done.
+**Customer cancellation**
+- From My Bookings. Cancels the whole booking (no partial-hour cancellation).
+- `pending_payment`: free at any time, no refund flow.
+- `pending_review` / `confirmed`: allowed until **3 hours before the booking starts** (enforced in the database, not only the UI). Customer enters GCash account name and number.
+- Refund = `greatest(total − cancel_fee, 0)`, where `cancel_fee` is the fee saved on the booking when it was created (e.g. 2 hours with paddles ₱550 → ₱450 back; 1 hour ₱250 → ₱150 back).
+
+**Owner cancellation**
+- Any booking, any time, no cutoff, no fee. If the booking was `pending_review` or `confirmed`, a refund row is created for the full `total` (the owner enters or confirms the customer's GCash details).
+- Stored as `cancelled` with `cancelled_by = 'owner'`.
+
+**Both**
+- Refund status: `requested` → `refunded`. Owner uploads the refund screenshot when done; the customer can view it from My Bookings.
 - The GCash number is erased automatically once the refund is marked done.
-- Earnings: the ₱100 fee counts as revenue; refunds shown in their own column.
+- Earnings: a kept cancellation fee counts as revenue; refunds shown in their own column.
 
 ---
 
@@ -118,17 +143,19 @@ All prices, hours, hold time, cutoff and fees live in a `settings` row so the ow
 - Post = caption + **1–2 photos** (compressed in the browser).
 - Reactions: 👍 Like and 😂 Haha (one reaction per user per post; can switch or remove).
 - Comments (text).
-- Owner can delete any post or comment (soft delete).
-- Light rate limit on posting (e.g. 5 posts per hour per user), enforced in the database.
+- Owner can delete any post or comment (soft delete). Deleting a post also removes its photos from storage, because the public bucket would keep serving them.
+- Rate limits, enforced in the database: **5 posts per hour** and **30 comments per hour** per user.
+- Authors appear by `full_name` only (served through a public view). Phone and email are never shown.
 
 ## 8. Feedback page (public)
 
 - Same feed style as Community, with optional 0–2 photos.
 - Status badge: **Open / In progress / Resolved**.
 - Owner reply pinned under the feedback.
-- **Anonymous checkbox:** public sees "Anonymous"; the owner still sees the account.
+- **Anonymous checkbox:** public sees "Anonymous"; the owner still sees the account. The public view returns no author for anonymous feedback. Note: if the author comments on their own anonymous feedback, the comment shows their name.
 - Reactions and comments work the same as Community.
-- Owner can delete abusive feedback.
+- Owner can delete abusive feedback (soft delete; photos removed from storage).
+- Rate limit: **5 feedback items per day** per user.
 
 ---
 
@@ -138,9 +165,9 @@ All prices, hours, hold time, cutoff and fees live in a `settings` row so the ow
 
 **Summary cards (follow the filter):** total earnings, court revenue, paddle revenue, cancellation fees, refunds, number of bookings, hours booked, pending payments.
 
-**Earnings rule:** only **Confirmed** bookings count, plus ₱100 fees from cancelled bookings. Pending / Rejected / Expired are listed but excluded.
+**Earnings rule:** only **Confirmed** bookings count, plus kept cancellation fees from paid bookings the customer cancelled (bookings with a refund row). Unpaid cancellations, owner cancellations, Pending / Rejected / Expired bookings and owner blocks add ₱0; they are listed (blocks can be hidden by filter) but excluded. Everything is grouped by play date.
 
-**Table columns:** reference, play date, time (start–end), hours, customer, phone, email, paddles (Y/N), court fee, paddle fee, total, status, payment screenshot, approved by / at, refund amount.
+**Table columns:** reference, play date, time (start–end), hours, customer, phone, email, paddles (Y/N), court fee, paddle fee, total, status, payment screenshot, approved by / at, cancelled by, refund amount.
 
 **Exports (respect current filter):**
 - **Excel (.xlsx):** one row per booking + totals row
@@ -155,21 +182,28 @@ All prices, hours, hold time, cutoff and fees live in a `settings` row so the ow
 | Table | Key columns |
 |---|---|
 | `profiles` | id (= auth user), full_name, phone, email, role, created_at |
-| `settings` | single row: court_name, hourly_rate, paddle_fee, paddle_count, open_hour, close_hour, hold_minutes, cancel_cutoff_hours, cancel_fee, gcash_qr_path |
-| `bookings` | id, ref_code, user_id, start_at, end_at, hours, paddle_rented, hourly_rate, court_fee, paddle_fee, total, status, payment_proof_path, reviewed_by, reviewed_at, reject_reason, created_at |
+| `settings` | single row: court_name, hourly_rate, paddle_fee, paddle_count (display only), open_hour, close_hour (24 = midnight), hold_minutes, cancel_cutoff_hours, cancel_fee, max_advance_days, max_unpaid_bookings, gcash_qr_path |
+| `bookings` | id, ref_code, kind (`customer` / `block`), user_id (null for blocks), start_at, end_at, hours, paddle_rented, hourly_rate, court_fee, paddle_fee, cancel_fee, total, status, payment_proof_path, reviewed_by, reviewed_at, reject_reason, cancelled_by (`customer` / `owner`), cancelled_at, block_note, created_at |
 | `refunds` | booking_id, requested_at, cancel_fee, refund_amount, gcash_name, gcash_number (nulled after refund), status, refund_proof_path, refunded_by, refunded_at |
 | `posts` | id, user_id, caption, created_at, deleted_at |
 | `post_photos` | id, post_id, path, position (1–2) |
 | `feedback` | id, user_id, is_anonymous, message, status, owner_reply, replied_at, created_at, deleted_at |
 | `feedback_photos` | id, feedback_id, path, position (1–2) |
-| `comments` | id, user_id, target_type (post/feedback), target_id, body, created_at, deleted_at |
-| `reactions` | user_id, target_type, target_id, type (like/haha); unique per user + target |
+| `comments` | id, user_id, post_id (nullable FK), feedback_id (nullable FK), body, created_at, deleted_at — exactly one of post_id / feedback_id set |
+| `reactions` | user_id, post_id (nullable FK), feedback_id (nullable FK), type (like/haha) — exactly one target set; unique per user + target |
 
-**Constraints on `bookings`:** exclusion constraint against overlapping active bookings; `start_at` and `end_at` exactly on the hour; within opening hours; `hours >= 1`; `end_at = start_at + hours`.
+**Constraints on `bookings`:** exclusion constraint against overlapping active bookings and blocks; `start_at` and `end_at` exactly on the hour; `hours >= 1`; `end_at = start_at + hours`; `kind = 'block'` ⇔ `user_id is null` and `status = 'blocked'`. Opening hours and limits are enforced in the booking function (see §5).
 
-**Storage buckets:** `payment-proofs` (private), `refund-proofs` (private), `community-photos` (public), `feedback-photos` (public), `site-assets` (GCash QR).
+**Storage buckets:**
+| Bucket | Read | Write |
+|---|---|---|
+| `payment-proofs` (private) | owner + that booking's customer | that booking's customer |
+| `refund-proofs` (private) | owner + that booking's customer | owner |
+| `community-photos` (public) | anyone | post author; owner can delete |
+| `feedback-photos` (public) | anyone | feedback author; owner can delete |
+| `site-assets` (public, GCash QR) | anyone | owner |
 
-**Public availability** is served through a database function that returns taken time ranges only — never customer details.
+**Public availability** is served through a database function that returns taken time ranges only (customer bookings and blocks alike) — never customer details.
 
 ---
 
@@ -177,8 +211,8 @@ All prices, hours, hold time, cutoff and fees live in a `settings` row so the ow
 
 1. Project setup, database schema, RLS, storage buckets, auth (Google + email), profile completion, owner role
 2. Booking flow: hourly grid with multi-hour selection, paddle logic, payment-proof upload, holds and expiry, My Bookings
-3. Admin: payment queue, bookings table with filters, summary cards, exports, settings
-4. Cancellation and refund flow (customer + admin)
+3. Admin: payment queue, bookings table with filters, summary cards, exports, settings, block hours
+4. Cancellation and refund flow (customer + admin, including owner cancellation)
 5. Community feed: posts, photos, reactions, comments, moderation
 6. Public feedback: reuse community components + status, replies, anonymous option
 7. Customers tab with owner-assisted reset, earnings chart, mobile polish, testing, deploy to Vercel

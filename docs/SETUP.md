@@ -119,6 +119,19 @@ First message:
 
 ---
 
+## Part 5b — Make yourself the owner (after Phase 1 is applied)
+
+1. Run the app (`npm run dev`) and sign in once with the account that should be the owner.
+2. Supabase dashboard → **SQL Editor** → run (replace the email):
+   ```sql
+   update public.profiles set role = 'owner' where email = 'you@example.com';
+   ```
+3. Sign out and back in. `/admin` should now open.
+
+Customers can never change their own role; this SQL step is the only way to create an owner.
+
+---
+
 ## Part 6 — Later (Phase 7): Deploy to Vercel
 
 1. vercel.com → **Add New → Project** → import `dink-n-drive` from GitHub.

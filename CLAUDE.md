@@ -4,6 +4,10 @@ Booking site for a single pickleball court in Cebu, Philippines, with a communit
 
 **The full spec is in `docs/SPEC.md`. Read it before starting any phase.** Setup steps the developer does by hand are in `docs/SETUP.md`.
 
+**UI design guide is in `docs/DESIGN.md`** (colors, type, components, mobile checklist). Follow it for all UI work; it is built from the images in `docs/reference/UI reference/`.
+
+**Reference material is in `docs/reference/`** (designs, screenshots, brand assets, copy, owner notes). Check it before each phase, especially before any UI work, and follow it. If a reference conflicts with the spec, ask. `docs/reference/private/` is git-ignored: read it, but never copy its contents into committed files (e.g. the real GCash QR belongs in Supabase Storage, not `public/`).
+
 ## Stack
 - Next.js (App Router) + TypeScript (strict), Tailwind CSS, `src/` directory, `@/*` import alias
 - Supabase: Postgres, Auth (Google + email/password), Storage, RLS, pg_cron — use `@supabase/ssr`
@@ -20,14 +24,16 @@ Booking site for a single pickleball court in Cebu, Philippines, with a communit
 ## Core business rules (details in docs/SPEC.md)
 - One court. Open 8:00 AM – 12:00 AM daily, Asia/Manila time.
 - Bookings are **whole consecutive hours on the hour** (8–9, 8–11; never 9:15). Minimum 1 hour, **no maximum**, cannot pass closing.
-- ₱250 per hour. Paddle rental: flat ₱50 per booking; ₱0 if it carries over from the same customer's booking ending at this start time.
+- ₱250 per hour. Paddle rental: flat ₱50 per booking that rents paddles, every booking (extensions are new bookings and pay it again).
+- Bookable up to 30 days ahead; max 2 unpaid bookings per customer at once.
 - Payment: GCash QR shown on site → customer uploads screenshot → owner approves/rejects. Unpaid bookings expire after 15 minutes.
-- Cancel up to 3 hours before start; ₱100 fee kept, rest refunded manually via GCash by the owner.
+- Unpaid bookings cancel free any time. Paid bookings cancel up to 3 hours before start; ₱100 fee (saved on the booking at creation) kept, rest refunded manually via GCash by the owner.
+- Owner can block hours (stored as `bookings` rows with `kind = 'block'`) and cancel any booking any time with a full refund.
 - Login required to book, post, comment, react, give feedback. Browsing is public.
 - Prices, hours, hold time, cutoff, fees come from the `settings` table — never hardcode them in UI or logic.
 
 ## Conventions
-- **Database is the source of truth for rules.** Double-booking prevention uses a `btree_gist` exclusion constraint on `tstzrange(start_at, end_at)` for active statuses. Booking creation, paddle carry-over, cancellation cutoff, and refund amounts run in Postgres functions (`security definer` where needed), not only in the UI.
+- **Database is the source of truth for rules.** Double-booking prevention uses a `btree_gist` exclusion constraint on `tstzrange(start_at, end_at)` for active statuses. Booking creation, booking limits, cancellation cutoff, and refund amounts run in Postgres functions (`security definer` where needed), not only in the UI.
 - **RLS on every table**, no exceptions. Customers read/write only their own rows; public feeds expose only non-sensitive columns; owner role checked via `profiles.role`.
 - Never expose customer phone/email or payment screenshots publicly. Availability comes from a function returning time ranges only.
 - Money = integer pesos. Timestamps = `timestamptz`; convert to Asia/Manila for display only.
@@ -35,9 +41,10 @@ Booking site for a single pickleball court in Cebu, Philippines, with a communit
 - Soft delete (`deleted_at`) for posts, comments, feedback.
 - Schema changes only through new migration files. Never edit a migration that has already been pushed.
 - Server Components by default; Server Actions for mutations; validate inputs with `zod`.
+- Next.js 16: route protection lives in `src/proxy.ts` (the `middleware` file convention was renamed to `proxy`). Check `node_modules/next/dist/docs/` before using any Next.js API.
 - The Supabase secret/service-role key is used only in server code (`src/lib/supabase/admin.ts`), never in client components or `NEXT_PUBLIC_*` vars.
 - Never commit `.env.local` or any keys.
-- Mobile-first UI; most customers book from their phones.
+- Mobile-first UI; most customers book from their phones (iPhone and Android). Build at 360–430 px first and apply the iPhone & Android checklist in `docs/DESIGN.md` §7 on every screen.
 
 ## Out of scope for v1 — do not build
 Email sending of any kind, forgot/change password, booking emails, online payment gateways, multiple courts.
