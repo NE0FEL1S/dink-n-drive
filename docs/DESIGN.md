@@ -167,6 +167,10 @@ Follows the composition of reference image 2 (the bear breaking out of ice/glass
 
 **Booking popup** (opened by "Book now"; also reachable directly at `/book`)
 
+Steps in the sheet: date strip → hour grid → paddles toggle → **contact details** (guests: full name, email, PH mobile with `autoComplete` name/email/tel; signed-in users: prefilled, editable phone if missing) → Continue → **GCash QR + amount + 15-minute countdown, with the "Upload proof" button right below the QR** → "Pending review" confirmation with the booking reference. Guests see a note that the booking is saved in My Bookings on this browser.
+
+**My Bookings → Cancel booking:** unpaid bookings cancel instantly (confirm sheet). Paid bookings open a sheet asking for GCash account name and number, showing the refund amount (total − ₱100) and the 3-hour cutoff, then show "Cancellation requested" until the owner approves or declines.
+
 On phones it's a bottom sheet; on laptops, a centered dialog. `/book` renders the same booking UI as a page, for direct links. In Next.js, use an intercepting route so the popup and the page share code. The prototype shows the flow: date strip → hour grid → paddles toggle → total → "Continue to payment".
 - **Date strip:** horizontal, swipeable chips for today plus up to `max_advance_days` (`Tue 18`). The selected chip is filled `navy-900` with white text. A small calendar button opens a full date picker for far dates.
 - **Slot list:** 16 rows, each a 56 px tall tile showing "8:00 AM – 9:00 AM" and a state:

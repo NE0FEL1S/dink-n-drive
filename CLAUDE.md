@@ -25,17 +25,17 @@ Booking site for a single pickleball court in Cebu, Philippines, with a communit
 - One court. Open 8:00 AM – 12:00 AM daily, Asia/Manila time.
 - Bookings are **whole consecutive hours on the hour** (8–9, 8–11; never 9:15). Minimum 1 hour, **no maximum**, cannot pass closing.
 - ₱250 per hour. Paddle rental: flat ₱50 per booking that rents paddles, every booking (extensions are new bookings and pay it again).
-- Bookable up to 30 days ahead; max 2 unpaid bookings per customer at once.
+- Bookable up to 30 days ahead; max 2 unpaid bookings at once **per phone number**.
 - Payment: GCash QR shown on site → customer uploads screenshot → owner approves/rejects. Unpaid bookings expire after 15 minutes.
-- Unpaid bookings cancel free any time. Paid bookings cancel up to 3 hours before start; ₱100 fee (saved on the booking at creation) kept, rest refunded manually via GCash by the owner.
+- Unpaid bookings cancel free and instantly any time. Paid bookings: the customer sends a **cancellation request** (with GCash name + number) up to 3 hours before start; the owner approves or declines. Approved → ₱100 fee (saved on the booking at creation) kept, rest refunded manually via GCash; the fee counts as earnings once the refund is marked completed.
 - Owner can block hours (stored as `bookings` rows with `kind = 'block'`) and cancel any booking any time with a full refund.
-- Login required to book, post, comment, react, give feedback. Browsing is public.
+- **Guests can book without an account** (name, email, PH mobile in the booking popup; device-token cookie links the booking to that browser for My Bookings). Signed-in users get details prefilled. Login is required to post, comment, react, give feedback. Browsing is public.
 - Prices, hours, hold time, cutoff, fees come from the `settings` table — never hardcode them in UI or logic.
 
 ## Conventions
 - **Database is the source of truth for rules.** Double-booking prevention uses a `btree_gist` exclusion constraint on `tstzrange(start_at, end_at)` for active statuses. Booking creation, booking limits, cancellation cutoff, and refund amounts run in Postgres functions (`security definer` where needed), not only in the UI.
 - **RLS on every table**, no exceptions. Customers read/write only their own rows; public feeds expose only non-sensitive columns; owner role checked via `profiles.role`.
-- Never expose customer phone/email or payment screenshots publicly. Availability comes from a function returning time ranges only.
+- Never expose customer phone/email or payment screenshots publicly. Availability comes from a function returning time ranges only. Guests are anonymous to Supabase: guest actions (create booking, upload proof, request cancellation, list My Bookings) go through server actions + `security definer` functions that verify the device token hash; never open tables or storage to anonymous writes.
 - Money = integer pesos. Timestamps = `timestamptz`; convert to Asia/Manila for display only.
 - Each booking stores the rates it was created with (`hourly_rate`, `court_fee`, `paddle_fee`, `total`).
 - Soft delete (`deleted_at`) for posts, comments, feedback.
