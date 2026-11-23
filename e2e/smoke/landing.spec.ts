@@ -22,3 +22,16 @@ test.describe("landing page", () => {
     await expectNoHorizontalScroll(page);
   });
 });
+
+test.describe("court photo", () => {
+  test("laptops show the real court photo card; phones keep the clean hero", async ({ page, isMobile }) => {
+    await gotoLanding(page);
+    const photo = page.getByRole("img", { name: /players .* on the Dink n' Drive court/ });
+    if (isMobile) {
+      await expect(photo).toBeHidden();
+    } else {
+      await expect(photo).toBeVisible();
+      await expect(page.getByText("The real court").filter({ visible: true })).toBeVisible();
+    }
+  });
+});

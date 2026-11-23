@@ -25,8 +25,6 @@ export type LandingCopy = {
   closeWords: string;
   /** settings.paddle_count (display only) */
   paddleCount: number;
-  /** Booking pass illustration: 2 hours + paddles at current prices, e.g. "₱550". */
-  sampleTotalText: string;
 };
 
 const SHARDS = 9;
@@ -243,54 +241,33 @@ export function LandingScene({ copy, account }: { copy: LandingCopy; account: Re
             </span>
           </span>
 
-          {/* Illustration of what customers get after booking, not live data (DESIGN.md §5). */}
-          <div data-l="pass" className="l-pass" aria-hidden="true">
-            <div className="l-pass-in">
-              <div className="l-pass-top">
-                <LogoMark className="" gradientId="l-tile-pass" />
-                <div>
-                  <small>Booking pass</small>
-                  <b>Dink n&apos; Drive</b>
-                </div>
-                <span className="l-ok">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M5 12.5l4.5 4.5L19 7.5" />
-                  </svg>
-                  Confirmed
+          {/* The real court (laptops): a tilted frosted photo card in the open column left of the slab.
+              Bystanders were edited out of the photo; originals stay in docs/reference/private/court-photos/. */}
+          <figure data-l="photo" className="l-photo">
+            <span className="l-photo-in">
+              <span className="l-photo-img">
+                <Image
+                  src="/landing/court.webp"
+                  alt="Four players raising their paddles at the net on the Dink n' Drive court in Luyang"
+                  fill
+                  sizes="280px"
+                  draggable={false}
+                />
+              </span>
+              <figcaption className="l-photo-cap">
+                <span>
+                  <b>The real court</b>
+                  <small>Luyang, Cebu</small>
                 </span>
-              </div>
-              <div className="l-pass-when">
-                <span>Saturday, Nov 21</span>
-                <b>7:00 – 9:00 PM</b>
-              </div>
-              <dl className="l-pass-rows">
-                <div>
-                  <dt>Hours</dt>
-                  <dd>2</dd>
-                </div>
-                <div>
-                  <dt>Paddles</dt>
-                  <dd>Rented</dd>
-                </div>
-                <div>
-                  <dt>Paid via</dt>
-                  <dd>GCash</dd>
-                </div>
-              </dl>
-              <div className="l-perf" />
-              <div className="l-pass-foot">
-                <div>
-                  <small>Reference</small>
-                  <b>DND-7K3Q9</b>
-                </div>
-                <div className="l-total">
-                  <small>Total</small>
-                  <b>{copy.sampleTotalText}</b>
-                </div>
-              </div>
-              <div className="l-bars" />
-            </div>
-          </div>
+                <i aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21Z" />
+                    <circle cx="12" cy="9.5" r="2.4" />
+                  </svg>
+                </i>
+              </figcaption>
+            </span>
+          </figure>
 
           <div data-l="ball" className="l-ball">
             <div className="l-par">
