@@ -50,7 +50,8 @@ export function mountLandingScene(root: HTMLElement, opts: SceneOptions): () => 
   const chipPaddles = q("chip-paddles");
   const info = q("info"); // status row inside the slab (location + open/closed)
   const openPill = q("open-pill");
-  const pass = q("pass");
+  const photo = q("photo"); // the real court photo card (laptops)
+  const see = q("see"); // "See the court" chip under Book now (phones, or when the card has no room)
   const shards = [...root.querySelectorAll<HTMLElement>('[data-l="shard"]')];
 
   /* ---------- open / closed chip (Manila time, from settings) ---------- */
@@ -655,7 +656,7 @@ export function mountLandingScene(root: HTMLElement, opts: SceneOptions): () => 
     if (!reduce && !document.hidden) snowRAF = requestAnimationFrame(drawSnow);
   }
 
-  /* ---------- layout: slab, paddle, ice break, ball, chips, pass, shards ---------- */
+  /* ---------- layout: slab, paddle, ice break, ball, chips, photo card, shards ---------- */
   const AR = 586 / 1156; // paddle image aspect ratio
   // Right edge of the opaque paddle in 24 horizontal bands, as a fraction of the image width
   // (measured from /landing/paddle.webp). The head is full width near the top, its edge pulls
@@ -716,7 +717,7 @@ export function mountLandingScene(root: HTMLElement, opts: SceneOptions): () => 
   }
 
   // text that the paddle's ice break must stay clear of (laptop layout)
-  const TEXT_SEL = '[data-l="head"] h1 span, [data-l="head"] .l-para, [data-l="head"] .l-steps li, [data-l="head"] .l-book, [data-l="cta"] .l-features li';
+  const TEXT_SEL = '[data-l="head"] h1 span, [data-l="head"] .l-para, [data-l="head"] .l-steps li, [data-l="head"] .l-book, [data-l="head"] .l-see, [data-l="cta"] .l-features li';
 
   function layout() {
     const W = stage.clientWidth,
@@ -735,14 +736,17 @@ export function mountLandingScene(root: HTMLElement, opts: SceneOptions): () => 
         bottom = H - ctaH - 36;
       P = { x: 0, y: top, w: W, h: Math.max(320, bottom - top) };
       place(info, P.x + 20, P.y + 18, P.w - 40);
+      see.hidden = false;
       head.style.height = "";
       place(head, P.x + 20, P.y + 18 + info.offsetHeight, P.w - 40);
     } else {
       const top0 = navB + 18, // slab starts below the nav bar
         avail = H - top0;
       const w = W < 1000 ? W * 0.82 : Math.min(W * 0.68, 1000);
-      // shifted right of centre to leave a column for the booking pass on the left
+      // shifted right of centre to leave a column for the court photo card on the left
       const x = (W - w) / 2 + (W < 1000 ? W * 0.05 : W * 0.078);
+      // the card needs a 250px column; without it, the "See the court" chip shows under Book now instead
+      see.hidden = x >= 250;
       // measure the status row, text and feature cards first
       place(info, x + 44, 0, w - 88);
       const ib = 26 + info.offsetHeight, // status row block at the top of the slab
@@ -777,7 +781,7 @@ export function mountLandingScene(root: HTMLElement, opts: SceneOptions): () => 
       cr = rectOf(cta, S),
       nr = rectOf(nav, S),
       ir = rectOf(info, S);
-    const textEls = phone ? head.querySelectorAll("h1 span, .l-para, .l-book") : root.querySelectorAll(TEXT_SEL);
+    const textEls = phone ? head.querySelectorAll("h1 span, .l-para, .l-book, .l-see") : root.querySelectorAll(TEXT_SEL);
     const textR = Math.max(...[...textEls].map((e) => rectOf(e, S).r));
 
     // Right-hand chips (laptops) form a LADDER: three rungs with equal gaps, each rung a step
@@ -1039,17 +1043,17 @@ export function mountLandingScene(root: HTMLElement, opts: SceneOptions): () => 
     trail.setAttribute("viewBox", `0 0 ${W} ${H}`);
     trail.innerHTML = `${tr}</defs>${tl}<g class="rays">${rays}</g><circle class="ring" cx="${f1(contact[0])}" cy="${f1(contact[1])}" r="${f1(bs * 0.42)}" fill="none" stroke="#fff" stroke-width="2.5"/>`;
 
-    // booking pass in the open column left of the slab (laptop only)
-    pass.hidden = phone || P.x < 250;
-    let passR: Box = { l: 0, t: 0, r: 0, b: 0 };
-    if (!pass.hidden) {
+    // court photo card in the open column left of the slab (laptop only)
+    photo.hidden = phone || P.x < 250;
+    let photoR: Box = { l: 0, t: 0, r: 0, b: 0 };
+    if (!photo.hidden) {
       const k = Math.min(1.02, (P.x - 36) / 250);
-      pass.style.setProperty("--k", k.toFixed(3));
-      const hh = pass.offsetHeight,
+      photo.style.setProperty("--k", k.toFixed(3));
+      const hh = photo.offsetHeight,
         ccx = P.x / 2 - 4,
         ccy = P.y + P.h * 0.58;
-      place(pass, ccx - 125, ccy - hh / 2);
-      passR = { l: ccx - 125 * k, t: ccy - (hh * k) / 2, r: ccx + 125 * k, b: ccy + (hh * k) / 2 };
+      place(photo, ccx - 125, ccy - hh / 2);
+      photoR = { l: ccx - 125 * k, t: ccy - (hh * k) / 2, r: ccx + 125 * k, b: ccy + (hh * k) / 2 };
     }
 
     // floating chips (laptop only)
@@ -1057,10 +1061,10 @@ export function mountLandingScene(root: HTMLElement, opts: SceneOptions): () => 
     col.forEach((c) => (c.hidden = true)); // shown only if placed below
     const rightR: Box[] = [];
     if (!phone) {
-      place(chipPrice, Math.max(8, P.x / 2 - chipPrice.offsetWidth / 2 - 10), Math.max(nr.b + 14, Math.min(P.y + P.h * 0.08, passR.t - chipPrice.offsetHeight - 40)));
+      place(chipPrice, Math.max(8, P.x / 2 - chipPrice.offsetWidth / 2 - 10), Math.max(nr.b + 14, Math.min(P.y + P.h * 0.08, photoR.t - chipPrice.offsetHeight - 40)));
       {
         const b = rectOf(chipPrice, S);
-        chipPrice.hidden = b.l < 2 || b.r > W - 2 || hit(b, nr, 8) || hit(b, ballR, 8) || hit(b, hr, 8) || hit(b, cr, 8) || (!pass.hidden && hit(b, passR, 6));
+        chipPrice.hidden = b.l < 2 || b.r > W - 2 || hit(b, nr, 8) || hit(b, ballR, 8) || hit(b, hr, 8) || hit(b, cr, 8) || (!photo.hidden && hit(b, photoR, 6));
       }
 
       // Right-side ladder (found together with the paddle size, above)

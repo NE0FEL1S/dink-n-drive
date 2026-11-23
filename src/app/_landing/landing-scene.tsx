@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useEffect, useRef, type ReactNode } from "react";
 import { LogoMark } from "@/components/logo";
 import { MobileNav } from "@/components/nav-links";
+import { COURT_PHOTOS, CourtGallery } from "./court-gallery";
 import { mountLandingScene } from "./scene";
 
 export type LandingCopy = {
@@ -25,8 +26,6 @@ export type LandingCopy = {
   closeWords: string;
   /** settings.paddle_count (display only) */
   paddleCount: number;
-  /** Booking pass illustration: 2 hours + paddles at current prices, e.g. "₱550". */
-  sampleTotalText: string;
 };
 
 const SHARDS = 9;
@@ -38,6 +37,8 @@ const SHARDS = 9;
  */
 export function LandingScene({ copy, account }: { copy: LandingCopy; account: ReactNode }) {
   const rootRef = useRef<HTMLDivElement>(null);
+  const galleryRef = useRef<HTMLDialogElement>(null);
+  const openGallery = () => galleryRef.current?.showModal();
 
   useEffect(() => {
     if (!rootRef.current) return;
@@ -164,6 +165,19 @@ export function LandingScene({ copy, account }: { copy: LandingCopy; account: Re
                   <path d="M5 12h14M13 6l6 6-6 6" />
                 </svg>
               </Link>
+              {/* Into the court photos: a square photo tile beside Book now on phones (no extra height, so the
+                  paddle keeps its size); a labelled chip on laptops too narrow for the photo card. */}
+              <button type="button" data-l="see" className="l-see" onClick={openGallery} aria-haspopup="dialog">
+                <span className="l-see-thumb">
+                  <Image src={COURT_PHOTOS[0].src} alt="" fill sizes="(max-width: 699px) 112px, 64px" draggable={false} />
+                  <i aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M14 4h6v6M10 20H4v-6M20 4l-7 7M4 20l7-7" />
+                    </svg>
+                  </i>
+                </span>
+                <span className="l-see-label">See the court</span>
+              </button>
             </div>
           </div>
 
@@ -243,54 +257,25 @@ export function LandingScene({ copy, account }: { copy: LandingCopy; account: Re
             </span>
           </span>
 
-          {/* Illustration of what customers get after booking, not live data (DESIGN.md §5). */}
-          <div data-l="pass" className="l-pass" aria-hidden="true">
-            <div className="l-pass-in">
-              <div className="l-pass-top">
-                <LogoMark className="" gradientId="l-tile-pass" />
-                <div>
-                  <small>Booking pass</small>
-                  <b>Dink n&apos; Drive</b>
-                </div>
-                <span className="l-ok">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M5 12.5l4.5 4.5L19 7.5" />
-                  </svg>
-                  Confirmed
+          {/* The real court (laptops): a tilted frosted photo card in the open column left of the slab. */}
+          <button type="button" data-l="photo" className="l-photo" onClick={openGallery} aria-haspopup="dialog" aria-label="See photos of the court">
+            <span className="l-photo-in">
+              <span className="l-photo-img">
+                <Image src={COURT_PHOTOS[0].src} alt="" fill sizes="280px" draggable={false} />
+              </span>
+              <span className="l-photo-cap">
+                <span>
+                  <b>The real court</b>
+                  <small>Luyang · {COURT_PHOTOS.length} photos</small>
                 </span>
-              </div>
-              <div className="l-pass-when">
-                <span>Saturday, Nov 21</span>
-                <b>7:00 – 9:00 PM</b>
-              </div>
-              <dl className="l-pass-rows">
-                <div>
-                  <dt>Hours</dt>
-                  <dd>2</dd>
-                </div>
-                <div>
-                  <dt>Paddles</dt>
-                  <dd>Rented</dd>
-                </div>
-                <div>
-                  <dt>Paid via</dt>
-                  <dd>GCash</dd>
-                </div>
-              </dl>
-              <div className="l-perf" />
-              <div className="l-pass-foot">
-                <div>
-                  <small>Reference</small>
-                  <b>DND-7K3Q9</b>
-                </div>
-                <div className="l-total">
-                  <small>Total</small>
-                  <b>{copy.sampleTotalText}</b>
-                </div>
-              </div>
-              <div className="l-bars" />
-            </div>
-          </div>
+                <i aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M14 4h6v6M10 20H4v-6M20 4l-7 7M4 20l7-7" />
+                  </svg>
+                </i>
+              </span>
+            </span>
+          </button>
 
           <div data-l="ball" className="l-ball">
             <div className="l-par">
@@ -302,6 +287,7 @@ export function LandingScene({ copy, account }: { copy: LandingCopy; account: Re
       </main>
 
       <canvas data-l="snow" className="l-snow" aria-hidden="true" />
+      <CourtGallery dialogRef={galleryRef} />
     </div>
   );
 }

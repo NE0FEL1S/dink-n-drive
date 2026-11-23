@@ -156,7 +156,10 @@ Follows the composition of reference image 2 (the bear breaking out of ice/glass
   - **Placement:** the break stays inside the slab and clear of the text. The slab's shadow shares the hole, so no gray box shows through.
 - **Paddle:** fully **in front** of the glass and sharp, as if it just smashed through, with a deep drop shadow. On laptops the handle runs out past the slab's bottom edge.
 - **Ball hitting the paddle:** the ball sits on the paddle face (upper-left), half in front of the glass. It has speed lines trailing toward the lower-left where it came from, an impact burst of short white rays, and a ring that pulses every 2.2 s. On laptops it never overlaps the text column.
-- **Booking pass (laptop showcase, fills the open column left of the slab):** a frosted ticket tilted in 3D (`rotateY(16deg) rotateZ(-4deg)`), floating and following the parallax. It shows the logo tile, "Booking pass · Dink n' Drive", a green "Confirmed" stamp, "Saturday, Nov 21 / 7:00 – 9:00 PM", tiles for Hours 2 · Paddles Rented · Paid via GCash, a perforated tear line, reference "DND-7K3Q9", total ₱550 (in orange) and a barcode. It's an illustration of what customers get after booking, not live data. It scales to the column and is hidden when the column is narrower than 250 px and on phones.
+- **The real court (added 2026-11-23; replaced the old "Booking pass" illustration):** two photos of the actual court with the developer and friends (consent given). Bystanders in the background (children) were edited out; the full-size originals and the clean masters stay in `docs/reference/private/court-photos/`. Web copies: `public/landing/court-1.webp` (main) and `court-2.webp`, 2048 × 1536, no EXIF.
+  - **Laptops: photo card** in the open column left of the slab, where the booking pass was. Same frosted frame and 1.5 px rim as the slab, the same 3D tilt (`rotateY(16deg) rotateZ(-4deg)`), gentle float and parallax, and a small **snow mound** resting on its top edge. The photo is 5:6 (cover, centred on the players), with a caption "**The real court** / Luyang · 2 photos" and an orange-gradient expand button. Clicking anywhere on the card opens the lightbox. It scales to the column and is hidden when the column is narrower than 250 px.
+  - **Phones: a 56 × 56 photo tile beside Book now** (same height, white frame, small orange expand badge), so the row stays one line and the paddle keeps its full size. Its accessible name is "See the court". Laptops too narrow for the card show a labelled frosted chip ("See the court" with a round thumbnail) beside Book now instead.
+  - **Lightbox:** a native `<dialog>` over a dark, blurred backdrop: title "The real court · Luyang · 1 / 2", a 48 px close button, the photo as large as fits (16 px radius), swipe between photos on phones, ‹ › buttons, dots and arrow keys on laptops. Esc or a tap on the dark area closes it. The images load only when it opens.
 - **Outside the glass:** on laptops, a floating frosted "₱250 / hour" chip on the left. The live "Open now" status moved into the slab's status row (see **Status row**).
   - **Right side:** three one-line chips styled like "₱250 / hour":
     - "**Night games** till midnight", from `close_hour`;
@@ -187,7 +190,7 @@ Follows the composition of reference image 2 (the bear breaking out of ice/glass
   - **The D** is slanted forward like a drive shot and like the italic "n'" in the wordmark.
   - **Its round hollow centre holds a lime pickleball** with a ring of six holes, framed by an even ring of the tile's orange.
   - **A small white frost sparkle** sits in the top-right corner, echoing the ice glints on the slab.
-  - **One source:** `src/components/logo-mark.ts` feeds the header, landing nav, booking pass, and Apple icon. `src/app/icon.svg` is a static copy generated from it.
+  - **One source:** `src/components/logo-mark.ts` feeds the header, landing nav, and Apple icon. `src/app/icon.svg` is a static copy generated from it.
   - **Wordmark:** **Dink *n'* Drive** (Fraunces 750, "n'" in italic orange) over "PICKLEBALL · LUYANG" in small spaced caps.
 - **Wording** (structured like the CK Grounds reference the developer liked, written in our own words):
   - Location pill: "📍 Luyang · open daily" (in the status row)
@@ -202,7 +205,7 @@ Follows the composition of reference image 2 (the bear breaking out of ice/glass
 - **Orange-gradient buttons** (Book now, Log in, the active nav link, the menu button, Continue): a gradient from `#FB8C47` at the top to `#EC6620` at the bottom, with a white inner top highlight and an orange glow shadow. White text, weight 800, with a faint text shadow. White on this orange is only about 3:1, enough for accessibility only on large bold text (Book now at 19–20 px). The smaller labels fall below AA, which the developer accepted.
 - **Motion (2.5D, no three.js):** gentle float, and parallax that follows the pointer or finger, with paddle, ball, shards and chips at different depths.
 - **Nothing else on the landing page:** no availability, no location map, no footer. Available hours appear only in the booking popup.
-- **Assets:** must be the court's own photos before launch. The prototype uses manufacturer product shots, which carry a brand logo and are copyrighted. They're also low-resolution (upscaled 2× for the prototype). Export as WebP/AVIF with transparency at 2–3× display size, via `next/image`.
+- **Assets:** the paddle and ball must be replaced with the court's own before launch. The prototype uses manufacturer product shots, which carry a brand logo and are copyrighted. They're also low-resolution (upscaled 2× for the prototype). Export as WebP/AVIF with transparency at 2–3× display size, via `next/image`. The court photos above are already the court's own.
 
 **Inner pages (every page except `/`)** (added with the developer, 2026-11-23)
 

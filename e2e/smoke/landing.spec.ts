@@ -22,3 +22,22 @@ test.describe("landing page", () => {
     await expectNoHorizontalScroll(page);
   });
 });
+
+test.describe("court photos", () => {
+  test("open in a lightbox, swipe to the next photo, close", async ({ page }) => {
+    await gotoLanding(page);
+    // laptops show the photo card; phones (and narrow laptops) the "See the court" tile
+    await page.getByRole("button", { name: /See (photos of )?the court/ }).filter({ visible: true }).first().click();
+
+    const gallery = page.getByRole("dialog", { name: "Photos of the court" });
+    await expect(gallery).toBeVisible();
+    await expect(gallery.getByRole("img")).toHaveCount(2);
+    await expect(gallery.getByText("Luyang · 1 / 2")).toBeVisible();
+
+    await gallery.getByRole("button", { name: "Next photo" }).click();
+    await expect(gallery.getByText("Luyang · 2 / 2")).toBeVisible();
+
+    await gallery.getByRole("button", { name: "Close photos" }).click();
+    await expect(gallery).toBeHidden();
+  });
+});
