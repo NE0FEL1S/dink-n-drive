@@ -1,12 +1,10 @@
 import { randomBytes } from "node:crypto";
 import { expect, test, type Page } from "@playwright/test";
-import { addDays, dayLabel, manilaDay, slotStartIso } from "../../src/lib/booking-time";
+import { dayLabel, slotStartIso } from "../../src/lib/booking-time";
 import { peso } from "../../src/lib/format";
 import { admin, testEmail, testPhone } from "../support/admin";
+import { freeTestDay } from "../support/booking";
 import { button, gotoLanding, heading } from "../support/ui";
-
-// Each device project uses its own far-ahead day, so parallel projects never collide.
-const DAY_OFFSET: Record<string, number> = { iphone: 22, android: 23, desktop: 24 };
 
 async function settings() {
   const { data, error } = await admin().from("settings").select("hourly_rate, paddle_fee").single();
@@ -34,7 +32,7 @@ const bar = (page: Page) => page.getByRole("region", { name: "Your booking" }).f
 test.describe("booking grid", () => {
   test("pick a range, extend it, rent paddles; booked hours can't be picked", async ({ page }, info) => {
     const s = await settings();
-    const day = addDays(manilaDay(Date.now()), DAY_OFFSET[info.project.name] ?? 25);
+    const day = await freeTestDay(info.project.name, "grid");
     await bookAsGuest(day, 14, 2); // 2:00–4:00 PM taken
 
     await page.goto("/book");

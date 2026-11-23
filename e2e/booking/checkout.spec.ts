@@ -1,13 +1,11 @@
 import { randomBytes } from "node:crypto";
 import { expect, test, type Page } from "@playwright/test";
-import { addDays, dayLabel, manilaDay, slotStartIso } from "../../src/lib/booking-time";
+import { dayLabel, slotStartIso } from "../../src/lib/booking-time";
 import { peso } from "../../src/lib/format";
 import { admin, createTestUser, testEmail, testPhone } from "../support/admin";
+import { freeTestDay } from "../support/booking";
 import { button, field, signIn } from "../support/ui";
 
-// Own far-ahead day per device project (grid.spec uses 22–24), so parallel runs never collide.
-const DAY_OFFSET: Record<string, number> = { iphone: 26, android: 27, desktop: 28 };
-const dayFor = (project: string) => addDays(manilaDay(Date.now()), DAY_OFFSET[project] ?? 29);
 
 // a tiny valid PNG, standing in for a GCash receipt screenshot
 const RECEIPT_PNG = Buffer.from(
@@ -33,7 +31,7 @@ async function pickHours(page: Page, day: string, from: RegExp, to?: RegExp) {
 test.describe("checkout", () => {
   test("guest: details → GCash QR + countdown → upload receipt → pending review", async ({ page, context }, info) => {
     const rate = await hourlyRate();
-    const day = dayFor(info.project.name);
+    const day = await freeTestDay(info.project.name, "checkout-guest");
     const email = testEmail(`checkout-${info.project.name}`);
 
     await pickHours(page, day, /^10:00\sAM to 11:00\sAM/, /^11:00\sAM to 12:00\sPM/);
@@ -71,7 +69,7 @@ test.describe("checkout", () => {
   });
 
   test("a phone number with 2 unpaid bookings can't book a third", async ({ page }, info) => {
-    const day = dayFor(info.project.name);
+    const day = await freeTestDay(info.project.name, "checkout-unpaid");
     const phone = testPhone();
     for (const hour of [18, 20]) {
       const { error } = await admin().rpc("create_booking", {
@@ -97,7 +95,7 @@ test.describe("checkout", () => {
   test("signed in without a phone: details prefilled, phone asked once and saved", async ({ page }, info) => {
     const user = await createTestUser(`checkout-acct-${info.project.name}`, { complete: false });
     await signIn(page, user);
-    const day = dayFor(info.project.name);
+    const day = await freeTestDay(info.project.name, "checkout-account");
     const phone = testPhone();
 
     await pickHours(page, day, /^4:00\sPM to 5:00\sPM/);
