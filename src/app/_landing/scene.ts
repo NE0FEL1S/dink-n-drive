@@ -726,7 +726,7 @@ export function mountLandingScene(root: HTMLElement, opts: SceneOptions): () => 
     } else {
       const w = W < 1000 ? W * 0.82 : Math.min(W * 0.68, 1000);
       // shifted right of centre to leave a column for the booking pass on the left
-      const x = (W - w) / 2 + (W < 1000 ? W * 0.05 : W * 0.087);
+      const x = (W - w) / 2 + (W < 1000 ? W * 0.05 : W * 0.078);
       // measure the nav and text first, so the slab is always tall enough to hold them
       place(nav, x, 0, w);
       const navH = nav.offsetHeight,
@@ -753,6 +753,17 @@ export function mountLandingScene(root: HTMLElement, opts: SceneOptions): () => 
       : root.querySelectorAll('[data-l="head"] .l-loc, [data-l="head"] h1 span, [data-l="head"] .l-para, [data-l="head"] .l-book, [data-l="cta"] .l-features li');
     const textR = Math.max(...[...textEls].map((e) => rectOf(e, S).r));
 
+    // Right-hand chip column (laptops): measured first, so the paddle can be kept left of it.
+    // The column is reserved only if the paddle stays at least 75% of its natural size;
+    // otherwise the chips hide and the paddle keeps its full size.
+    const col = [chipLights, chipPaddles, chipAhead];
+    col.forEach((c) => (c.hidden = false)); // measurable
+    const colSizes = col.map((c) => [c.offsetWidth, c.offsetHeight] as const);
+    col.forEach((c) => (c.hidden = true));
+    const colW = Math.max(...colSizes.map(([w0]) => w0)),
+      colL = W - 12 - colW;
+    let useCol = false;
+
     // paddle: in front of the glass; the break sits behind its head and stays fully inside the slab
     let ph: number, cx: number, cy: number;
     if (phone) {
@@ -764,10 +775,26 @@ export function mountLandingScene(root: HTMLElement, opts: SceneOptions): () => 
       const top = nr.b + 6,
         bottom = P.y + P.h - 10,
         left = textR + 40,
-        right = P.x + P.w - 10;
-      ph = Math.min(P.h * 0.9, (bottom - top) / (2 * K1 * RY), (right - left) / (2 * K1 * RX * AR));
+        right = P.x + P.w - 10,
+        maxV = Math.min(P.h * 0.9, (bottom - top) / (2 * K1 * RY));
+      // natural size: the whole ice break fits between the text and the slab's right edge
+      const natural = Math.min(maxV, (right - left) / (2 * K1 * RX * AR));
+      // with the chip column: the paddle IMAGE stays left of the column (the jagged break may
+      // tuck under the chips) and the break may come a little closer to the text
+      const imgRight = colL - 8,
+        leftC = textR + 28,
+        hole = K1 * RX; // break half-width as a fraction of the paddle width
+      const withCol = Math.min(maxV, (imgRight - leftC) / (0.5 + hole) / AR);
+      if (colL > P.x + P.w * 0.6 && withCol >= natural * 0.75) {
+        useCol = true;
+        ph = withCol;
+        const pwC = ph * AR;
+        cx = Math.min(imgRight - 0.5 * pwC, right - hole * pwC);
+      } else {
+        ph = natural;
+        cx = Math.min(right - K1 * RX * ph * AR, Math.max(left + K1 * RX * ph * AR, P.x + P.w * 0.72));
+      }
       cy = Math.min(Math.max(top + K1 * RY * ph, P.y + P.h * 0.52), bottom - K1 * RY * ph);
-      cx = Math.min(right - K1 * RX * ph * AR, Math.max(left + K1 * RX * ph * AR, P.x + P.w * 0.72));
     }
     ph = Math.max(ph, 60);
     const pw = ph * AR,
@@ -932,7 +959,7 @@ export function mountLandingScene(root: HTMLElement, opts: SceneOptions): () => 
     pass.hidden = phone || P.x < 250;
     let passR: Box = { l: 0, t: 0, r: 0, b: 0 };
     if (!pass.hidden) {
-      const k = Math.min(1.14, (P.x - 36) / 250);
+      const k = Math.min(1.02, (P.x - 36) / 250);
       pass.style.setProperty("--k", k.toFixed(3));
       const hh = pass.offsetHeight,
         ccx = P.x / 2 - 4,
@@ -942,9 +969,10 @@ export function mountLandingScene(root: HTMLElement, opts: SceneOptions): () => 
     }
 
     // floating chips (laptop only)
-    [chipPrice, chipOpen, chipAhead, chipLights, chipPaddles].forEach((c) => {
+    [chipPrice, chipOpen].forEach((c) => {
       c.hidden = phone;
     });
+    col.forEach((c) => (c.hidden = true)); // shown only if placed below
     const rightR: Box[] = [];
     if (!phone) {
       place(chipPrice, Math.max(8, P.x / 2 - chipPrice.offsetWidth / 2 - 10), Math.max(8, Math.min(P.y + P.h * 0.08, passR.t - chipPrice.offsetHeight - 40)));
@@ -954,40 +982,29 @@ export function mountLandingScene(root: HTMLElement, opts: SceneOptions): () => 
         c.hidden = b.l < 2 || b.r > W - 2 || b.t < 2 || hit(b, ballR, 8) || hit(b, hr, 8) || hit(b, cr, 8) || (!pass.hidden && hit(b, passR, 6));
       });
 
-      // Right-side chips (lights, paddles, book-ahead): one column, left-aligned, straddling the
-      // slab's right edge below the paddle head, with EQUAL gaps between them. The paddle is
-      // modelled as a head box + a handle box (the handle runs lower-left). If the column
-      // doesn't fit, chips are dropped from the end rather than overlapping anything.
-      const headBox = { l: pl, t: pt, r: pl + pw, b: pt + ph * 0.58 },
-        handleBox = { l: pl, t: pt + ph * 0.55, r: pl + pw * 0.45, b: pt + ph };
-      const blockers: Box[] = [headBox, handleBox, ballR, hr, cr];
-      const col = [chipLights, chipPaddles, chipAhead];
-      col.forEach((c) => (c.hidden = false)); // measurable
-      const sizes = col.map((c) => [c.offsetWidth, c.offsetHeight] as const);
-      col.forEach((c) => (c.hidden = true));
-      const GAP = 14;
-      for (let n = col.length; n > 0; n--) {
-        const use = sizes.slice(0, n),
-          maxW = Math.max(...use.map(([w0]) => w0)),
-          stackH = use.reduce((sum, [, h0]) => sum + h0, 0) + GAP * (n - 1);
-        const x0 = Math.min(P.x + P.w - 64, W - 12 - maxW);
-        // vertical room: below the paddle head, down to a little past the slab's bottom edge
-        const top = Math.max(headBox.b + 14, P.y + P.h * 0.42),
-          bottom = Math.min(H - 12, P.y + P.h + 40);
-        if (stackH > bottom - top || x0 < P.x + P.w * 0.55) continue;
-        let y = top + (bottom - top - stackH) / 2;
-        const boxes = use.map(([w0, h0]) => {
-          const bx = { l: x0, t: y, r: x0 + w0, b: y + h0 };
-          y += h0 + GAP;
-          return bx;
-        });
-        if (boxes.some((bx) => blockers.some((o) => hit(bx, o, 8)))) continue;
-        boxes.forEach((bx, i) => {
-          place(col[i], bx.l, bx.t);
-          col[i].hidden = false;
-          rightR.push(bx);
-        });
-        break;
+      // Right-side chips (lights, paddles, book-ahead): one left-aligned column at colL,
+      // spread evenly from just below the nav row down to the slab's bottom edge, with equal
+      // gaps. The paddle was already kept left of this column (see useCol above).
+      if (useCol) {
+        const n = col.length,
+          sumH = colSizes.reduce((sum, [, h0]) => sum + h0, 0),
+          y0 = nr.b + 18,
+          y1 = Math.min(H - 12, P.y + P.h + 8),
+          gap = (y1 - y0 - sumH) / (n - 1);
+        if (gap >= 12) {
+          const blockers: Box[] = [ballR, hr, cr];
+          if (!chipOpen.hidden) blockers.push(rectOf(chipOpen, S));
+          let y = y0;
+          col.forEach((c, i) => {
+            const [w0, h0] = colSizes[i];
+            const bx = { l: colL, t: y, r: colL + w0, b: y + h0 };
+            y += h0 + gap;
+            if (blockers.some((o) => hit(bx, o, 8))) return;
+            place(c, bx.l, bx.t);
+            c.hidden = false;
+            rightR.push(bx);
+          });
+        }
       }
     }
 

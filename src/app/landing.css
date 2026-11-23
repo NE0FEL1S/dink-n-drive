@@ -186,6 +186,10 @@
 .landing .l-chip i { width: 32px; height: 32px; border-radius: 50%; background: var(--l-grad); display: grid; place-items: center; box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.4); }
 .landing .l-chip i svg { width: 17px; height: 17px; color: var(--l-white); }
 .landing .l-chip .l-dot { width: 10px; height: 10px; border-radius: 50%; background: #22C55E; box-shadow: 0 0 0 4px rgb(34 197 94 / 0.22); margin-left: 8px; }
+/* right-hand column chips: same look, a touch more compact so the column fits beside the paddle */
+.landing .l-chip.l-chip-col { height: 42px; gap: 8px; padding: 0 15px 0 6px; font-size: 13.5px; }
+.landing .l-chip.l-chip-col i { width: 30px; height: 30px; }
+.landing .l-chip.l-chip-col i svg { width: 16px; height: 16px; }
 .landing .l-chip.l-closed .l-dot { background: var(--l-slate-300); box-shadow: 0 0 0 4px rgb(138 151 168 / 0.25); }
 
 /* ---------- booking pass (laptop showcase; illustration, not live data) ---------- */

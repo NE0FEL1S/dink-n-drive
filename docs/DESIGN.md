@@ -163,7 +163,12 @@ Follows the composition of reference image 2 (the bear breaking out of ice/glass
     - "**4 paddles** to rent · ₱50", from `paddle_count` and `paddle_fee`;
     - "Book up to **30 days** ahead", from `max_advance_days`.
 
-    They're stacked in one left-aligned column with **equal 14 px gaps**, straddling the slab's right edge below the paddle head. If the column doesn't fit, chips drop from the end rather than overlap the paddle, ball or text. All three show on 1280–1920 px laptops; on 1024 px and tablets none do.
+    They form one left-aligned column near the window's right edge, **spread evenly from just below the nav row down to the slab's bottom edge, with equal gaps**.
+    - The chips share one parallax depth, so their edges stay aligned when the scene moves.
+    - The column is reserved before the paddle is sized: the paddle image stays left of it, and the jagged ice break may tuck under the chips.
+    - The column is used only if the paddle stays at least 75% of its natural size; otherwise the chips hide and the paddle keeps its full size.
+    - It shows at 1366–1920 px laptops; on 1280 px and narrower the chips hide.
+    - Column chips are slightly compact (42 px tall, 13.5 px text) so they fit.
   - The paddle icon is drawn as solid shapes (face, handle and ball), because outlines at 16–18 px read as a search icon.
 - **Entrance moment:** on load the paddle smashes out with an overshoot, the cracks draw outward, the shards burst from the hole and the ball flies in. It runs once, takes about 1 s, and is skipped with `prefers-reduced-motion`.
 - **Nav:** on laptops it sits inside the slab: logo on the left, the links in a frosted pill group **centered in the slab** (the active link is an orange-gradient chip), and an orange-gradient "Log in" on the right. The links show only when the slab itself is wide enough (a container query on the nav, about 770 px); otherwise they fold into the orange-gradient menu button, so nothing wraps or overflows on tablets and small laptops. On phones it's a frosted top bar with the logo, "Log in" and the menu button.

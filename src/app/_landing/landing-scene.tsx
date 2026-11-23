@@ -160,7 +160,7 @@ export function LandingScene({ copy, account }: { copy: LandingCopy; account: Re
               <b>{copy.rateText}</b> / hour
             </span>
           </span>
-          <span data-l="chip-lights" className="l-chip" aria-hidden="true" style={{ "--depth": "12px" } as React.CSSProperties}>
+          <span data-l="chip-lights" className="l-chip l-chip-col" aria-hidden="true" style={{ "--depth": "-14px" } as React.CSSProperties}>
             <i>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="5" y="3" width="14" height="7" rx="1.6" />
@@ -172,7 +172,7 @@ export function LandingScene({ copy, account }: { copy: LandingCopy; account: Re
               <b>Night games</b> till {copy.closeWords}
             </span>
           </span>
-          <span data-l="chip-paddles" className="l-chip" aria-hidden="true" style={{ "--depth": "-10px" } as React.CSSProperties}>
+          <span data-l="chip-paddles" className="l-chip l-chip-col" aria-hidden="true" style={{ "--depth": "-14px" } as React.CSSProperties}>
             <i>
               <PaddleIcon />
             </i>
@@ -180,7 +180,7 @@ export function LandingScene({ copy, account }: { copy: LandingCopy; account: Re
               <b>{copy.paddleCount} paddles</b> to rent · {copy.paddleFeeText}
             </span>
           </span>
-          <span data-l="chip-ahead" className="l-chip" aria-hidden="true" style={{ "--depth": "-18px" } as React.CSSProperties}>
+          <span data-l="chip-ahead" className="l-chip l-chip-col" aria-hidden="true" style={{ "--depth": "-14px" } as React.CSSProperties}>
             <i>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="3.5" y="5" width="17" height="15.5" rx="3" />
