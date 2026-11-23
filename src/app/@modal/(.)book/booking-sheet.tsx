@@ -2,16 +2,22 @@
 
 import { X } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, type ReactNode } from "react";
+import { CloseGuardContext } from "@/components/close-guard";
 
 /**
  * The "Book now" popup (DESIGN.md §4–5): a bottom sheet on phones, a centred dialog on
  * laptops. It's a native <dialog> (focus trap, Esc, top layer). Closing goes back in
- * history, so the URL returns to the page underneath.
+ * history, so the URL returns to the page underneath. While the content has a close guard
+ * (a booking waiting for payment), a backdrop tap is ignored and ✕ / Esc ask first.
  */
 export function BookingSheet({ children }: { children: ReactNode }) {
   const router = useRouter();
   const ref = useRef<HTMLDialogElement>(null);
+  const guard = useRef<string | null>(null);
+  const setGuard = useCallback((message: string | null) => {
+    guard.current = message;
+  }, []);
 
   useEffect(() => {
     const dialog = ref.current;
@@ -23,6 +29,11 @@ export function BookingSheet({ children }: { children: ReactNode }) {
     return () => dialog.close();
   }, []);
 
+  const close = () => {
+    if (guard.current && !window.confirm(guard.current)) return;
+    router.back();
+  };
+
   return (
     <dialog
       ref={ref}
@@ -31,22 +42,23 @@ export function BookingSheet({ children }: { children: ReactNode }) {
       className="booking-sheet outline-none"
       onCancel={(e) => {
         e.preventDefault();
-        router.back();
+        close();
       }}
       onClick={(e) => {
-        if (e.target === e.currentTarget) router.back(); // tap on the dimmed backdrop
+        // a tap on the dimmed backdrop closes, unless a booking is in progress
+        if (e.target === e.currentTarget && !guard.current) router.back();
       }}
     >
       <div className="mx-auto mt-2 h-1.5 w-10 shrink-0 rounded-full bg-line sm:hidden" aria-hidden="true" />
       <button
         type="button"
-        onClick={() => router.back()}
+        onClick={close}
         aria-label="Close"
         className="absolute top-3 right-3 z-10 grid size-12 touch-manipulation place-items-center rounded-full text-navy-700 hover:bg-ice-50 active:bg-ice-100"
       >
         <X className="size-6" aria-hidden="true" />
       </button>
-      {children}
+      <CloseGuardContext value={setGuard}>{children}</CloseGuardContext>
     </dialog>
   );
 }

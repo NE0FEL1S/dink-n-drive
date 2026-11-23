@@ -1,8 +1,11 @@
 import { connection } from "next/server";
+import { getProfile } from "@/lib/auth";
 import { loadTakenHours } from "@/lib/availability";
 import { manilaDay, nowMs as readClock } from "@/lib/booking-time";
 import { hourLabel, peso } from "@/lib/format";
 import { getPublicSettings } from "@/lib/settings";
+import { SUPABASE_URL } from "@/lib/supabase/env";
+import { toLocalPhMobile } from "@/lib/phone";
 import { BookingFlow } from "./booking-flow";
 
 /**
@@ -12,7 +15,7 @@ import { BookingFlow } from "./booking-flow";
  */
 export async function BookingData({ variant }: { variant: "sheet" | "page" }) {
   await connection();
-  const s = await getPublicSettings();
+  const [s, profile] = await Promise.all([getPublicSettings(), getProfile()]);
   const nowMs = readClock(); // request time (after connection())
   const today = manilaDay(nowMs);
   let taken: number[] | null = null;
@@ -35,9 +38,22 @@ export async function BookingData({ variant }: { variant: "sheet" | "page" }) {
         openHour: s.open_hour,
         closeHour: s.close_hour,
         maxAdvanceDays: s.max_advance_days,
+        holdMinutes: s.hold_minutes,
       }}
+      account={
+        profile
+          ? { name: profile.full_name, email: profile.email, phone: profile.phone ? toLocalPhMobile(profile.phone) : null }
+          : null
+      }
+      qr={s.gcash_qr_path ? gcashQr(s.gcash_qr_path) : null}
     />
   );
+}
+
+/** Public URLs of the GCash QR in the site-assets bucket (plain + "download" variant for Save QR). */
+function gcashQr(path: string) {
+  const url = `${SUPABASE_URL}/storage/v1/object/public/site-assets/${path.split("/").map(encodeURIComponent).join("/")}`;
+  return { url, downloadUrl: `${url}?download=dink-n-drive-gcash-qr.jpg` };
 }
 
 /** "₱250 per hour · open 8 AM – 12 AM" (from settings). */
