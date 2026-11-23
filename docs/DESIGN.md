@@ -238,6 +238,13 @@ On phones it's a bottom sheet; on laptops, a centered dialog. `/book` renders th
   - Availability refreshes every minute and when the tab comes back. If someone books part of the selection meanwhile, it's dropped with a notice ("Someone just booked part of those hours").
   - After the last hour of the day has started, the popup opens on tomorrow. Today's passed hours collapse into one line ("Earlier hours (8:00 AM – 2:00 PM) have passed").
   - Paddles: a switch in the bar, "Rent paddles · ₱50 / Flat fee per booking · 4 paddles". The calendar button opens the native date picker limited to the booking window.
+- **Built (Phase 2D), checkout in the same popup / page:**
+  - **Your details:** a summary card (day, time, court × hours, paddles, total) with "Change hours", then the form. Guests: full name, email, mobile (`09XXXXXXXXX`), "No account needed. This booking will be saved on this browser." and a "Log in" link. Signed in: a grey card with their name, email and phone ("Edit in your profile"); only a missing phone (or name) is asked for, and it's saved to the profile. Button: "Book and pay ₱X" (orange gradient), with "We hold your hours for 15 minutes while you pay with GCash." under it.
+  - **Pay:** the `#FDF3E1` "Pay within mm:ss" banner with the reference on the right; "Send exactly ₱X via GCash" in large serif numbers; the GCash QR (from `settings.gcash_qr_path` in the public `site-assets` bucket, max 240 px wide) with "Save QR to Photos" (downloads the image) and the numbered steps; then "Upload your GCash receipt": a dashed drop area → preview + "Change" → "Send payment proof". The photo is compressed in the browser (JPEG, ≤ 1800 px, ~0.8 MB) and uploaded through a one-time signed URL.
+  - **While paying,** a tap on the dimmed backdrop doesn't close the popup, and ✕ / Esc ask first ("You can still upload … from My bookings until the timer runs out").
+  - **Time's up:** if the countdown ends first, "Time's up" explains the hours were released, with "Pick hours again".
+  - **Done:** green check, "Payment sent for review", a blue "Pending review / DND-XXXXX" badge, a guest note that the booking is saved in My bookings on this browser, and "Go to My bookings".
+  - Errors from the database read as plain sentences (e.g. "This mobile number already has 2 unpaid bookings…"); if the hours were just taken, it returns to the hour list with a notice.
 
 **Pay** (after confirming)
 - Hold countdown ("Pay within 14:32") in a `#FDF3E1` banner.

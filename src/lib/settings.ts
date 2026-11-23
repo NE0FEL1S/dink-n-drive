@@ -7,7 +7,7 @@ import { SUPABASE_PUBLISHABLE_KEY, SUPABASE_URL } from "./supabase/env";
 
 export type PublicSettings = Pick<
   Database["public"]["Tables"]["settings"]["Row"],
-  "court_name" | "hourly_rate" | "paddle_fee" | "paddle_count" | "open_hour" | "close_hour" | "hold_minutes" | "cancel_cutoff_hours" | "cancel_fee" | "max_advance_days"
+  "court_name" | "hourly_rate" | "paddle_fee" | "paddle_count" | "open_hour" | "close_hour" | "hold_minutes" | "cancel_cutoff_hours" | "cancel_fee" | "max_advance_days" | "gcash_qr_path"
 >;
 
 /** Tag to pass to updateTag() whenever the owner changes settings (Phase 3). */
@@ -27,7 +27,7 @@ export async function getPublicSettings(): Promise<PublicSettings> {
   });
   const { data, error } = await supabase
     .from("settings")
-    .select("court_name, hourly_rate, paddle_fee, paddle_count, open_hour, close_hour, hold_minutes, cancel_cutoff_hours, cancel_fee, max_advance_days")
+    .select("court_name, hourly_rate, paddle_fee, paddle_count, open_hour, close_hour, hold_minutes, cancel_cutoff_hours, cancel_fee, max_advance_days, gcash_qr_path")
     .single();
 
   if (error || !data) {

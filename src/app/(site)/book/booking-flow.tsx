@@ -1,11 +1,12 @@
 "use client";
 
-import { CalendarDays, Check, ChevronLeft, Minus, Plus } from "lucide-react";
+import { CalendarDays, Check, Minus, Plus } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
-import { addDays, dayLabel, dayParts, rangeLabel, slotStartMs, timeLabel } from "@/lib/booking-time";
+import { addDays, dayLabel, dayParts, rangeLabel, slotStartIso, slotStartMs, timeLabel } from "@/lib/booking-time";
 import { peso } from "@/lib/format";
-import { fetchAvailability } from "./actions";
+import { fetchAvailability, type CreatedBooking } from "./actions";
+import { DetailsStep, DoneStep, PayStep, type Account, type GcashQr } from "./checkout";
 
 export type FlowSettings = {
   hourlyRate: number;
@@ -14,6 +15,7 @@ export type FlowSettings = {
   openHour: number;
   closeHour: number;
   maxAdvanceDays: number;
+  holdMinutes: number;
 };
 
 type Selection = { start: number; end: number };
@@ -28,15 +30,18 @@ type Props = {
   initialTaken: number[] | null;
   /** "sheet": inside the popup (own scroll area, bar pinned at the bottom). "page": /book, bar sticks to the window. */
   variant: "sheet" | "page";
+  /** The signed-in customer (prefilled details), or null for guests. */
+  account: Account;
+  qr: GcashQr;
 };
 
 const REFRESH_MS = 60_000;
 
 /**
- * Booking step 1 (DESIGN.md §5, booking popup): date strip → hour list → paddles → total.
+ * The booking popup / page (DESIGN.md §5): 1 pick hours → 2 your details → 3 GCash + proof → 4 done.
  * Availability is read-only here; the database re-checks everything when the booking is created.
  */
-export function BookingFlow({ settings, today, nowMs, initialTaken, variant }: Props) {
+export function BookingFlow({ settings, today, nowMs, initialTaken, variant, account, qr }: Props) {
   const { openHour, closeHour, hourlyRate, paddleFee } = settings;
   // late in the day (last hour already started) open on tomorrow instead of an empty today
   const [day, setDay] = useState(() =>
@@ -47,7 +52,11 @@ export function BookingFlow({ settings, today, nowMs, initialTaken, variant }: P
   const [now, setNow] = useState(nowMs);
   const [sel, setSel] = useState<Selection | null>(null);
   const [paddles, setPaddles] = useState(false);
-  const [step, setStep] = useState<"pick" | "review">("pick");
+  const [step, setStep] = useState<"pick" | "details" | "pay" | "done">("pick");
+  // the booking once created (its hours then show as taken, so it no longer lives in `sel`)
+  const [booked, setBooked] = useState<{ booking: CreatedBooking; skewMs: number } | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
   const [loading, startLoading] = useTransition();
 
   const load = useCallback((d: string) => {
@@ -95,6 +104,14 @@ export function BookingFlow({ settings, today, nowMs, initialTaken, variant }: P
   const hours = active ? active.end - active.start : 0;
   const total = hours * hourlyRate + (active && paddles ? paddleFee : 0);
 
+  function go(next: typeof step) {
+    setStep(next);
+    requestAnimationFrame(() => {
+      if (variant === "sheet") scrollRef.current?.scrollTo({ top: 0 });
+      else scrollRef.current?.scrollIntoView({ block: "start", behavior: "smooth" });
+    });
+  }
+
   function pickDay(d: string) {
     if (d === day) return;
     setDay(d);
@@ -122,15 +139,47 @@ export function BookingFlow({ settings, today, nowMs, initialTaken, variant }: P
   const shownHours = hourList.filter((h) => !pastHours.includes(h));
 
   const body =
-    step === "review" && active ? (
-      <ReviewStub
+    step === "details" && active ? (
+      <DetailsStep
         day={day}
         sel={active}
+        startAt={slotStartIso(day, active.start)}
         paddles={paddles}
         total={total}
-        settings={settings}
-        onBack={() => setStep("pick")}
+        hourlyRate={hourlyRate}
+        paddleFee={paddleFee}
+        holdMinutes={settings.holdMinutes}
+        account={account}
+        onBack={() => go("pick")}
+        onRepick={(message) => {
+          setNotice(message);
+          setSel(null);
+          load(day);
+          go("pick");
+        }}
+        onCreated={(booking, serverNow) => {
+          setBooked({ booking, skewMs: serverNow - Date.now() });
+          setSel(null);
+          setPaddles(false);
+          load(day);
+          go("pay");
+        }}
       />
+    ) : step === "pay" && booked ? (
+      <PayStep
+        booking={booked.booking}
+        skewMs={booked.skewMs}
+        qr={qr}
+        holdMinutes={settings.holdMinutes}
+        onDone={() => go("done")}
+        onExpired={() => {
+          setBooked(null);
+          load(day);
+          go("pick");
+        }}
+      />
+    ) : step === "done" && booked ? (
+      <DoneStep booking={booked.booking} isGuest={!account} />
     ) : (
       <>
         <DateStrip today={today} day={day} maxAdvanceDays={settings.maxAdvanceDays} onPick={pickDay} />
@@ -148,6 +197,11 @@ export function BookingFlow({ settings, today, nowMs, initialTaken, variant }: P
               : "Tap the hour you want to start. Then tap a later hour to play longer."}
           </p>
 
+          {notice && !active && (
+            <p role="alert" className="mt-3 rounded-[var(--radius-control)] bg-warning-bg px-4 py-3 text-sm font-medium text-warning">
+              {notice}
+            </p>
+          )}
           {conflict && (
             <p role="alert" className="mt-3 rounded-[var(--radius-control)] bg-warning-bg px-4 py-3 text-sm font-medium text-warning">
               Someone just booked part of those hours. Please pick again.
@@ -225,7 +279,9 @@ export function BookingFlow({ settings, today, nowMs, initialTaken, variant }: P
 
   return (
     <div className={variant === "sheet" ? "flex min-h-0 flex-1 flex-col" : "flex flex-col"}>
-      <div className={variant === "sheet" ? "min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-6 sm:px-6" : "pb-6"}>{body}</div>
+      <div ref={scrollRef} className={variant === "sheet" ? "min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-6 sm:px-6" : "scroll-mt-24 pb-6"}>
+        {body}
+      </div>
 
       {active && step === "pick" && (
         <SummaryBar
@@ -239,7 +295,10 @@ export function BookingFlow({ settings, today, nowMs, initialTaken, variant }: P
           canAdd={active.end < closeHour && isFree(active.end)}
           onLess={() => setSel(hours > 1 ? { start: active.start, end: active.end - 1 } : active)}
           onMore={() => setSel({ start: active.start, end: active.end + 1 })}
-          onContinue={() => setStep("review")}
+          onContinue={() => {
+            setNotice(null);
+            go("details");
+          }}
         />
       )}
     </div>
@@ -413,45 +472,6 @@ function SummaryBar(props: {
           Continue
         </Button>
       </div>
-    </div>
-  );
-}
-
-/** Placeholder for step 2 until the checkout lands (Phase 2, part D). */
-function ReviewStub(props: { day: string; sel: Selection; paddles: boolean; total: number; settings: FlowSettings; onBack: () => void }) {
-  const { day, sel, paddles, total, settings } = props;
-  const hours = sel.end - sel.start;
-  return (
-    <div className="grid gap-4 pt-1">
-      <button type="button" onClick={props.onBack} className="-ml-2 inline-flex min-h-12 w-fit items-center gap-1 rounded-full px-2 text-sm font-semibold text-glacier-700 hover:bg-glacier-50">
-        <ChevronLeft className="size-5" aria-hidden="true" />
-        Change hours
-      </button>
-      <div className="rounded-[var(--radius-card)] border border-line p-4">
-        <p className="text-sm text-slate-500">{dayLabel(day)}</p>
-        <p className="tabular mt-0.5 text-xl font-bold text-navy-900">{rangeLabel(sel.start, sel.end)}</p>
-        <dl className="mt-3 grid gap-1.5 text-[15px]">
-          <div className="flex justify-between">
-            <dt className="text-slate-500">
-              Court · {hours} {hours === 1 ? "hour" : "hours"} × {peso(settings.hourlyRate)}
-            </dt>
-            <dd className="tabular font-semibold text-navy-900">{peso(hours * settings.hourlyRate)}</dd>
-          </div>
-          {paddles && (
-            <div className="flex justify-between">
-              <dt className="text-slate-500">Paddle rental</dt>
-              <dd className="tabular font-semibold text-navy-900">{peso(settings.paddleFee)}</dd>
-            </div>
-          )}
-          <div className="mt-1 flex justify-between border-t border-line pt-2">
-            <dt className="font-semibold text-navy-900">Total</dt>
-            <dd className="tabular text-lg font-bold text-navy-900">{peso(total)}</dd>
-          </div>
-        </dl>
-      </div>
-      <p className="rounded-[var(--radius-control)] bg-info-bg px-4 py-3 text-sm font-medium text-info">
-        Next comes your details and GCash payment. That step is being built and will appear here soon.
-      </p>
     </div>
   );
 }

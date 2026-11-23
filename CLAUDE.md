@@ -17,7 +17,7 @@ Booking site for a single pickleball court in Cebu, Philippines, with a communit
 ## Commands
 - `npm run dev` — local dev at http://localhost:3000
 - `npm run build` / `npm run lint` — run both before saying a phase is done
-- `npm run test:e2e` — Playwright e2e (iPhone/Android/desktop) against local dev, or `E2E_BASE_URL=<url>`; see `docs/SETUP.md` Part 7. Test data must be tagged `e2e+…@dinkndrive.test`; scope locators to visible elements (`cacheComponents` keeps hidden routes mounted)
+- `npm run test:e2e` — Playwright e2e (iPhone/Android/desktop) against local dev, or `E2E_BASE_URL=<url>`; see `docs/SETUP.md` Part 7. Test data must be tagged `e2e+…@dinkndrive.test`; scope locators to visible elements (`cacheComponents` keeps hidden routes mounted). Tests that book hours get their day from `freeTestDay()` (`e2e/support/booking.ts`) — never a fixed day, because other runs share the database
 - `npx supabase migration new <name>` — create a migration in `supabase/migrations/`
 - `npx supabase db push --remote` — apply migrations to the linked remote project (CLI v3 targets a **local** stack unless you pass `--remote`; `--linked` is deprecated)
 - `npx supabase gen types --lang=typescript --remote --schema public > src/types/database.ts` — regenerate DB types after schema changes
