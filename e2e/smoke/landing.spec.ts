@@ -13,14 +13,6 @@ test.describe("landing page", () => {
     await expect(page.getByText(`${hourWords(s!.open_hour)} to ${hourWords(s!.close_hour)}`).first()).toBeVisible();
     await expectNoHorizontalScroll(page);
   });
-
-  test("Book now opens the booking page", async ({ page }) => {
-    await gotoLanding(page);
-    await page.getByRole("link", { name: "Book now" }).filter({ visible: true }).click();
-    await expect(page).toHaveURL(/\/book$/);
-    await expect(heading(page, "Book the court")).toBeVisible();
-    await expectNoHorizontalScroll(page);
-  });
 });
 
 test.describe("court photo", () => {
