@@ -157,13 +157,13 @@ Follows the composition of reference image 2 (the bear breaking out of ice/glass
 - **Paddle:** fully **in front** of the glass and sharp, as if it just smashed through, with a deep drop shadow. On laptops the handle runs out past the slab's bottom edge.
 - **Ball hitting the paddle:** the ball sits on the paddle face (upper-left), half in front of the glass. It has speed lines trailing toward the lower-left where it came from, an impact burst of short white rays, and a ring that pulses every 2.2 s. On laptops it never overlaps the text column.
 - **Booking pass (laptop showcase, fills the open column left of the slab):** a frosted ticket tilted in 3D (`rotateY(16deg) rotateZ(-4deg)`), floating and following the parallax. It shows the logo tile, "Booking pass · Dink n' Drive", a green "Confirmed" stamp, "Saturday, Nov 21 / 7:00 – 9:00 PM", tiles for Hours 2 · Paddles Rented · Paid via GCash, a perforated tear line, reference "DND-7K3Q9", total ₱550 (in orange) and a barcode. It's an illustration of what customers get after booking, not live data. It scales to the column and is hidden when the column is narrower than 250 px and on phones.
-- **Outside the glass:** on laptops, floating frosted chips: "₱250 / hour" on the left, and a live **"Open now · till 12 AM"** status (green dot, from Manila time and `settings`) above the top-right corner.
+- **Outside the glass:** on laptops, a floating frosted "₱250 / hour" chip on the left. The live "Open now" status moved into the slab's status row (see **Status row**).
   - **Right side:** three one-line chips styled like "₱250 / hour":
     - "**Night games** till midnight", from `close_hour`;
     - "**4 paddles** to rent · ₱50", from `paddle_count` and `paddle_fee`;
     - "Book up to **30 days** ahead", from `max_advance_days`.
 
-    They form one left-aligned column near the window's right edge, **with equal 72 px gaps, centered vertically beside the paddle** (between the nav row and the slab's bottom edge), so they read as one group. Spreading them across the full height left gaps that were too big.
+    They form one left-aligned column near the window's right edge, **with equal 90 px gaps, centered vertically beside the paddle** (between the nav row and the slab's bottom edge), so they read as one group. Spreading them across the full height left gaps that were too big.
     - The chips share one parallax depth, so their edges stay aligned when the scene moves.
     - The column is reserved before the paddle is sized: the paddle image stays left of it, and the jagged ice break may tuck under the chips.
     - The column is used only if the paddle stays at least 75% of its natural size; otherwise the chips hide and the paddle keeps its full size.
@@ -171,7 +171,12 @@ Follows the composition of reference image 2 (the bear breaking out of ice/glass
     - Column chips are slightly compact (42 px tall, 13.5 px text) so they fit.
   - The paddle icon is drawn as solid shapes (face, handle and ball), because outlines at 16–18 px read as a search icon.
 - **Entrance moment:** on load the paddle smashes out with an overshoot, the cracks draw outward, the shards burst from the hole and the ball flies in. It runs once, takes about 1 s, and is skipped with `prefers-reduced-motion`.
-- **Nav:** on laptops it sits inside the slab: logo on the left, the links in a frosted pill group **centered in the slab** (the active link is an orange-gradient chip), and an orange-gradient "Log in" on the right. The links show only when the slab itself is wide enough (a container query on the nav, about 770 px); otherwise they fold into the orange-gradient menu button, so nothing wraps or overflows on tablets and small laptops. On phones it's a frosted top bar with the logo, "Log in" and the menu button.
+- **Nav (moved out of the slab 2026-11-23):** a floating frosted bar across the top of the page at every size: logo on the left, links **centered** (the active link is an orange-gradient chip), and an orange-gradient "Log in" on the right. It's the same frosted style the phone nav already used. The links show only when the bar is wide enough (container query, about 770 px); otherwise they fold into the orange-gradient menu button. The slab sits below the bar.
+- **Status row (replaces the nav inside the slab):** a slim row at the top of the slab.
+  - Left: the location pill "📍 Luyang · open daily".
+  - Right: the live **"● Open now · till 12 AM"** / **"Closed · opens 8 AM"** pill (Manila time, hours from `settings`). It uses the same pill style, with a green or grey dot.
+  - On phones only the location pill shows, centered.
+  - The headline starts below the row.
 - **Logo (reworked 2026-11-23):** an orange-gradient app tile holding a bold white **"D"** (for Dink and Drive).
   - **The D** is slanted forward like a drive shot and like the italic "n'" in the wordmark.
   - **Its round hollow centre holds a lime pickleball** with a ring of six holes, framed by an even ring of the tile's orange.
@@ -179,7 +184,7 @@ Follows the composition of reference image 2 (the bear breaking out of ice/glass
   - **One source:** `src/components/logo-mark.ts` feeds the header, landing nav, booking pass, and Apple icon. `src/app/icon.svg` is a static copy generated from it.
   - **Wordmark:** **Dink *n'* Drive** (Fraunces 750, "n'" in italic orange) over "PICKLEBALL · LUYANG" in small spaced caps.
 - **Wording** (structured like the CK Grounds reference the developer liked, written in our own words):
-  - Location pill: "📍 Luyang · open daily"
+  - Location pill: "📍 Luyang · open daily" (in the status row)
   - Headline: **"Book your hour." / "*Own the kitchen.*"** (the second line is italic with an orange gradient; "the kitchen" is the players' name for the non-volley zone)
   - Paragraph: "Luyang's own pickleball court, open **8 AM to midnight**. Pick your hours, pay with GCash, then just show up and play." Phones show only the first sentence.
   - Features row (at the bottom of the screen on phones, under the button on laptops).
@@ -237,7 +242,7 @@ On phones it's a bottom sheet; on laptops, a centered dialog. `/book` renders th
 ## 6. Navigation
 
 - **Top navigation everywhere** (decided with the developer; no bottom tab bar). Logo on the left. From 1024 px up the links (Home · Community · Feedback · My bookings) are **centered in the header**, with the active one as an `orange-50` pill, and an orange "Log in" button (or the avatar when signed in) on the right. Below 1024 px (phones and tablets): "Log in"/avatar plus a menu button that opens the links in a dropdown with 48 px rows.
-- On the landing page the nav sits inside the glass panel. On other pages it's a sticky frosted header with the same content (`top: env(safe-area-inset-top)`), over the sky band described under "Inner pages" in §5.
+- On the landing page the nav is a floating frosted bar at the top of the page (the slab below it opens with a status row). On other pages it's a sticky frosted header with the same content (`top: env(safe-area-inset-top)`), over the sky band described under "Inner pages" in §5.
 - Account menu (avatar): My bookings, Profile, Admin (owner only), Sign out.
 
 ---

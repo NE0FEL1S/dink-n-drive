@@ -96,7 +96,8 @@ export function LandingScene({ copy, account }: { copy: LandingCopy; account: Re
             </div>
           </nav>
 
-          <div data-l="head" className="l-head l-abs">
+          {/* Status row at the top of the slab (replaces the old in-slab nav): where + whether it's open now. */}
+          <div data-l="info" className="l-info l-abs">
             <span className="l-loc">
               <i>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -106,6 +107,13 @@ export function LandingScene({ copy, account }: { copy: LandingCopy; account: Re
               </i>
               Luyang <span>· open daily</span>
             </span>
+            <span data-l="open-pill" className="l-open">
+              <span className="l-dot" />
+              <span data-l="open-text" />
+            </span>
+          </div>
+
+          <div data-l="head" className="l-head l-abs">
             <h1>
               <span>Book your hour.</span>
               <span>
@@ -191,10 +199,6 @@ export function LandingScene({ copy, account }: { copy: LandingCopy; account: Re
             <span>
               Book up to <b>{copy.maxAdvanceDays} days</b> ahead
             </span>
-          </span>
-          <span data-l="chip-open" className="l-chip" aria-hidden="true" style={{ "--depth": "-14px" } as React.CSSProperties}>
-            <span className="l-dot" />
-            <span data-l="open-text" />
           </span>
 
           {/* Illustration of what customers get after booking, not live data (DESIGN.md §5). */}

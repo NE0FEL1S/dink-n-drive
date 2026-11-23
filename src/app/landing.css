@@ -75,7 +75,14 @@
 /* z 9: above the text (7) and the snow (8), so the account and phone menus open on top.
    The nav is a size container: the links show (centered in the panel) only when the
    panel itself is wide enough; otherwise they fold into the menu button. */
-.landing .l-nav { z-index: 9; container: lnav / inline-size; }
+/* Frosted nav bar across the top of the page (all sizes; moved out of the slab 2026-11-23). */
+.landing .l-nav {
+  z-index: 9; container: lnav / inline-size;
+  padding: 6px 6px 6px 10px; border-radius: 20px;
+  background: var(--l-frost), rgb(255 255 255 / 0.66); background-size: 180px 180px, auto;
+  -webkit-backdrop-filter: blur(14px) saturate(150%); backdrop-filter: blur(14px) saturate(150%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.8), inset 0 0 16px rgb(255 255 255 / 0.5), 0 8px 24px rgb(4 24 48 / 0.18);
+}
 .landing .l-nav-row { display: flex; align-items: center; gap: 10px; }
 .landing .l-links { display: none; align-items: center; gap: 2px; padding: 4px; border-radius: 14px; background: rgb(255 255 255 / 0.36); box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.6); }
 .landing .l-links a { display: flex; align-items: center; height: 38px; padding: 0 15px; border-radius: 10px; font-size: 14.5px; font-weight: 700; color: var(--l-navy-900); text-decoration: none; }
@@ -92,12 +99,6 @@
 .landing .l-login { height: 42px !important; padding: 0 20px !important; border-radius: 12px !important; font-size: 15.5px !important; font-weight: 800; }
 .landing .l-grad:active { filter: brightness(0.94); transform: scale(0.98); }
 @media (max-width: 699px) {
-  .landing .l-nav {
-    padding: 6px 6px 6px 10px; border-radius: 20px;
-    background: var(--l-frost), rgb(255 255 255 / 0.66); background-size: 180px 180px, auto;
-    -webkit-backdrop-filter: blur(14px) saturate(150%); backdrop-filter: blur(14px) saturate(150%);
-    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.8), inset 0 0 16px rgb(255 255 255 / 0.5), 0 8px 24px rgb(4 24 48 / 0.18);
-  }
   .landing .l-logo svg { width: 34px; height: 34px; }
   .landing .l-logo .l-wm b { font-size: 19px; }
   .landing .l-logo .l-wm small { white-space: nowrap; }
@@ -111,7 +112,22 @@
   .landing .l-login { padding: 0 14px !important; font-size: 15px !important; }
 }
 @media (min-width: 700px) {
-  .landing .l-nav { padding: 18px 18px 0 24px; }
+  .landing .l-nav { padding: 10px 12px 10px 20px; border-radius: 22px; }
+}
+
+/* ---------- status row at the top of the slab (where the nav used to be) ---------- */
+.landing .l-info { z-index: 7; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.landing .l-open {
+  display: inline-flex; align-items: center; gap: 8px; height: 32px; padding: 0 14px 0 12px; border-radius: 999px;
+  background: rgb(255 255 255 / 0.82); color: var(--l-navy-900);
+  font-size: 13.5px; font-weight: 700; white-space: nowrap;
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.95), 0 4px 12px rgb(4 24 48 / 0.08);
+}
+.landing .l-open .l-dot { width: 9px; height: 9px; border-radius: 50%; background: #22C55E; box-shadow: 0 0 0 4px rgb(34 197 94 / 0.22); }
+.landing .l-open.l-closed .l-dot { background: var(--l-slate-300); box-shadow: 0 0 0 4px rgb(138 151 168 / 0.25); }
+@media (max-width: 699px) {
+  .landing .l-info { justify-content: center; }
+  .landing .l-open { display: none; }
 }
 
 /* ---------- words ---------- */
@@ -165,7 +181,7 @@
   .landing .l-features svg { color: #FFB27F; filter: drop-shadow(0 1px 2px rgb(4 24 48 / 0.5)); }
 }
 @media (min-width: 700px) {
-  .landing h1 { font-size: clamp(50px, 4.5vw, 70px); margin-top: 18px; line-height: 0.96; }
+  .landing h1 { font-size: clamp(50px, 4.5vw, 70px); margin-top: 0; line-height: 0.96; }
   .landing .l-para { font-size: clamp(16px, 1.25vw, 18px); line-height: 1.6; margin-top: 18px; }
   .landing .l-book-wrap { margin-top: 28px; }
   .landing .l-book { height: 60px; padding: 0 28px 0 30px; font-size: 19.5px; }
@@ -185,12 +201,10 @@
 .landing .l-chip b { font-weight: 800; font-variant-numeric: tabular-nums; }
 .landing .l-chip i { width: 32px; height: 32px; border-radius: 50%; background: var(--l-grad); display: grid; place-items: center; box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.4); }
 .landing .l-chip i svg { width: 17px; height: 17px; color: var(--l-white); }
-.landing .l-chip .l-dot { width: 10px; height: 10px; border-radius: 50%; background: #22C55E; box-shadow: 0 0 0 4px rgb(34 197 94 / 0.22); margin-left: 8px; }
 /* right-hand column chips: same look, a touch more compact so the column fits beside the paddle */
 .landing .l-chip.l-chip-col { height: 42px; gap: 8px; padding: 0 15px 0 6px; font-size: 13.5px; }
 .landing .l-chip.l-chip-col i { width: 30px; height: 30px; }
 .landing .l-chip.l-chip-col i svg { width: 16px; height: 16px; }
-.landing .l-chip.l-closed .l-dot { background: var(--l-slate-300); box-shadow: 0 0 0 4px rgb(138 151 168 / 0.25); }
 
 /* ---------- booking pass (laptop showcase; illustration, not live data) ---------- */
 .landing .l-pass { position: absolute; z-index: 6; width: 250px; pointer-events: none; transform: translate3d(calc(var(--mx, 0) * 20px), calc(var(--my, 0) * 14px), 0) perspective(900px) rotateY(16deg) rotateZ(-4deg) scale(var(--k, 1)); }

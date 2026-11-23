@@ -48,7 +48,8 @@ export function mountLandingScene(root: HTMLElement, opts: SceneOptions): () => 
   const chipAhead = q("chip-ahead");
   const chipLights = q("chip-lights");
   const chipPaddles = q("chip-paddles");
-  const chipOpen = q("chip-open");
+  const info = q("info"); // status row inside the slab (location + open/closed)
+  const openPill = q("open-pill");
   const pass = q("pass");
   const shards = [...root.querySelectorAll<HTMLElement>('[data-l="shard"]')];
 
@@ -57,7 +58,7 @@ export function mountLandingScene(root: HTMLElement, opts: SceneOptions): () => 
     const h = new Date(Date.now() + 8 * 3_600_000).getUTCHours();
     const isOpen = h >= opts.openHour && h < opts.closeHour;
     q("open-text").textContent = isOpen ? `Open now · till ${hourText(opts.closeHour)}` : `Closed · opens ${hourText(opts.openHour)}`;
-    chipOpen.classList.toggle("l-closed", !isOpen);
+    openPill.classList.toggle("l-closed", !isOpen);
   };
   updateOpen();
   const openTimer = window.setInterval(updateOpen, 60_000);
@@ -713,32 +714,36 @@ export function mountLandingScene(root: HTMLElement, opts: SceneOptions): () => 
     const phone = W < 700;
     const S = stage.getBoundingClientRect();
     let P: { x: number; y: number; w: number; h: number };
+    // the nav is a frosted bar across the top of the page (all sizes)
+    place(nav, 0, 0, W);
+    const navH = nav.offsetHeight;
     if (phone) {
-      place(nav, 0, 0, W);
-      const navH = nav.offsetHeight;
       place(cta, 0, 0, W);
       const ctaH = cta.offsetHeight;
       place(cta, 0, H - ctaH - 8);
       const top = navH + 12,
         bottom = H - ctaH - 36;
       P = { x: 0, y: top, w: W, h: Math.max(320, bottom - top) };
-      place(head, P.x + 20, P.y + 20, P.w - 40);
+      place(info, P.x + 20, P.y + 18, P.w - 40);
+      place(head, P.x + 20, P.y + 18 + info.offsetHeight, P.w - 40);
     } else {
+      const top0 = navH + 18, // slab starts below the nav bar
+        avail = H - top0;
       const w = W < 1000 ? W * 0.82 : Math.min(W * 0.68, 1000);
       // shifted right of centre to leave a column for the booking pass on the left
       const x = (W - w) / 2 + (W < 1000 ? W * 0.05 : W * 0.078);
-      // measure the nav and text first, so the slab is always tall enough to hold them
-      place(nav, x, 0, w);
-      const navH = nav.offsetHeight,
+      // measure the status row and text first, so the slab is always tall enough to hold them
+      place(info, x + 44, 0, w - 88);
+      const ib = 26 + info.offsetHeight, // status row block at the top of the slab
         colW = w * 0.54;
       place(head, x + 44, 0, colW);
       place(cta, x + 44, 0, colW);
       const total = head.offsetHeight + 30 + cta.offsetHeight;
-      const h = Math.min(H - 24, Math.max(Math.min(H * 0.8, 660, w * 0.72), navH + total + 64));
-      const y = Math.max(12, (H - h) / 2 - H * 0.01);
+      const h = Math.min(avail - 12, Math.max(Math.min(avail * 0.86, 660, w * 0.72), ib + total + 64));
+      const y = top0 + Math.max(0, (avail - h) / 2 - avail * 0.01);
       P = { x, y, w, h };
-      place(nav, P.x, P.y, P.w);
-      const y0 = P.y + navH + Math.max(14, (P.h - navH - total) / 2);
+      place(info, P.x + 44, P.y + 26, P.w - 88);
+      const y0 = P.y + ib + Math.max(14, (P.h - ib - total) / 2);
       place(head, P.x + 44, y0);
       place(cta, P.x + 44, y0 + head.offsetHeight + 30);
     }
@@ -747,10 +752,11 @@ export function mountLandingScene(root: HTMLElement, opts: SceneOptions): () => 
 
     const hr = rectOf(head, S),
       cr = rectOf(cta, S),
-      nr = rectOf(nav, S);
+      nr = rectOf(nav, S),
+      ir = rectOf(info, S);
     const textEls = phone
-      ? head.querySelectorAll(".l-loc, h1 span, .l-para, .l-book")
-      : root.querySelectorAll('[data-l="head"] .l-loc, [data-l="head"] h1 span, [data-l="head"] .l-para, [data-l="head"] .l-book, [data-l="cta"] .l-features li');
+      ? head.querySelectorAll("h1 span, .l-para, .l-book")
+      : root.querySelectorAll('[data-l="head"] h1 span, [data-l="head"] .l-para, [data-l="head"] .l-book, [data-l="cta"] .l-features li');
     const textR = Math.max(...[...textEls].map((e) => rectOf(e, S).r));
 
     // Right-hand chip column (laptops): measured first, so the paddle can be kept left of it.
@@ -772,7 +778,7 @@ export function mountLandingScene(root: HTMLElement, opts: SceneOptions): () => 
       cy = hr.b + 8 + K1 * RY * ph;
       cx = P.x + P.w * 0.6;
     } else {
-      const top = nr.b + 6,
+      const top = ir.b + 6,
         bottom = P.y + P.h - 10,
         left = textR + 40,
         right = P.x + P.w - 10,
@@ -803,7 +809,7 @@ export function mountLandingScene(root: HTMLElement, opts: SceneOptions): () => 
     place(pFront, cx - HC.u * pw, cy - HC.v * ph, pw, ph);
 
     // the break
-    const yMin = phone ? 10 : nr.b - P.y + 4;
+    const yMin = phone ? 10 : ir.b - P.y + 4;
     const hx = cx - P.x,
       hy = cy - P.y;
     const B = shatter(hx, hy, rx, ry, P, yMin, phone);
@@ -816,7 +822,7 @@ export function mountLandingScene(root: HTMLElement, opts: SceneOptions): () => 
     shadowPath.setAttribute("d", canHole ? `${outer} ${holeD}` : outer);
     shadowPath.setAttribute("transform", `translate(${P.x} ${P.y})`);
 
-    const txt = [hr, cr].map((b) => ({ l: b.l - P.x - 12, t: b.t - P.y - 12, r: b.r - P.x + 12, b: b.b - P.y + 12 }));
+    const txt = [hr, cr, ir].map((b) => ({ l: b.l - P.x - 12, t: b.t - P.y - 12, r: b.r - P.x + 12, b: b.b - P.y + 12 }));
     const underText = (x: number, y: number) => txt.some((b) => x > b.l && x < b.r && y > b.t && y < b.b);
     let s = `<defs>
       <filter id="l-soft" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="${phone ? 7 : 11}"/></filter>
@@ -969,18 +975,15 @@ export function mountLandingScene(root: HTMLElement, opts: SceneOptions): () => 
     }
 
     // floating chips (laptop only)
-    [chipPrice, chipOpen].forEach((c) => {
-      c.hidden = phone;
-    });
+    chipPrice.hidden = phone;
     col.forEach((c) => (c.hidden = true)); // shown only if placed below
     const rightR: Box[] = [];
     if (!phone) {
-      place(chipPrice, Math.max(8, P.x / 2 - chipPrice.offsetWidth / 2 - 10), Math.max(8, Math.min(P.y + P.h * 0.08, passR.t - chipPrice.offsetHeight - 40)));
-      place(chipOpen, P.x + P.w - chipOpen.offsetWidth - 14, P.y - chipOpen.offsetHeight - 14);
-      [chipPrice, chipOpen].forEach((c) => {
-        const b = rectOf(c, S);
-        c.hidden = b.l < 2 || b.r > W - 2 || b.t < 2 || hit(b, ballR, 8) || hit(b, hr, 8) || hit(b, cr, 8) || (!pass.hidden && hit(b, passR, 6));
-      });
+      place(chipPrice, Math.max(8, P.x / 2 - chipPrice.offsetWidth / 2 - 10), Math.max(nr.b + 14, Math.min(P.y + P.h * 0.08, passR.t - chipPrice.offsetHeight - 40)));
+      {
+        const b = rectOf(chipPrice, S);
+        chipPrice.hidden = b.l < 2 || b.r > W - 2 || hit(b, nr, 8) || hit(b, ballR, 8) || hit(b, hr, 8) || hit(b, cr, 8) || (!pass.hidden && hit(b, passR, 6));
+      }
 
       // Right-side chips (lights, paddles, book-ahead): one left-aligned column at colL with
       // equal gaps (capped at COL_GAP so they read as a group), centred vertically between the
@@ -988,13 +991,12 @@ export function mountLandingScene(root: HTMLElement, opts: SceneOptions): () => 
       if (useCol) {
         const n = col.length,
           sumH = colSizes.reduce((sum, [, h0]) => sum + h0, 0),
-          y0 = nr.b + 18,
+          y0 = ir.b + 18,
           y1 = Math.min(H - 12, P.y + P.h + 8),
-          COL_GAP = 72,
+          COL_GAP = 90,
           gap = Math.min(COL_GAP, (y1 - y0 - sumH) / (n - 1));
         if (gap >= 12) {
           const blockers: Box[] = [ballR, hr, cr];
-          if (!chipOpen.hidden) blockers.push(rectOf(chipOpen, S));
           let y = y0 + (y1 - y0 - (sumH + gap * (n - 1))) / 2;
           col.forEach((c, i) => {
             const [w0, h0] = colSizes[i];
@@ -1011,7 +1013,7 @@ export function mountLandingScene(root: HTMLElement, opts: SceneOptions): () => 
 
     // shards flying outward from the break
     const k = phone ? 0.6 : 1,
-      avoid = [hr, cr, nr, ballR, ...rightR],
+      avoid = [hr, cr, nr, ir, ballR, ...rightR],
       rs = rng(53);
     shards.forEach((el, i) => {
       const a = -2.9 + i * 0.68 + (rs() - 0.5) * 0.3,
@@ -1090,6 +1092,7 @@ export function mountLandingScene(root: HTMLElement, opts: SceneOptions): () => 
   const ro = new ResizeObserver(redraw);
   ro.observe(stage);
   ro.observe(nav); // the account area streams in and can change the nav height
+  ro.observe(info);
   let alive = true;
   document.fonts?.ready.then(() => {
     if (alive) redraw();
