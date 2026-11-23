@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, type ReactNode } from "react";
+import { LogoMark } from "@/components/logo";
 import { MobileNav } from "@/components/nav-links";
 import { mountLandingScene } from "./scene";
 
@@ -72,7 +73,7 @@ export function LandingScene({ copy, account }: { copy: LandingCopy; account: Re
           <nav data-l="nav" className="l-nav l-abs" aria-label="Main">
             <div className="l-nav-row">
               <Link className="l-logo" href="/" aria-label="Dink n' Drive home">
-                <LogoTile />
+                <LogoMark className="" gradientId="l-tile-nav" />
                 <span className="l-wm">
                   <b>
                     Dink <em>n&apos;</em> Drive
@@ -159,7 +160,7 @@ export function LandingScene({ copy, account }: { copy: LandingCopy; account: Re
               <b>{copy.rateText}</b> / hour
             </span>
           </span>
-          <span data-l="chip-lights" className="l-chip l-chip-2" aria-hidden="true" style={{ "--depth": "12px" } as React.CSSProperties}>
+          <span data-l="chip-lights" className="l-chip" aria-hidden="true" style={{ "--depth": "12px" } as React.CSSProperties}>
             <i>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="5" y="3" width="14" height="7" rx="1.6" />
@@ -168,17 +169,15 @@ export function LandingScene({ copy, account }: { copy: LandingCopy; account: Re
               </svg>
             </i>
             <span>
-              <b>Night games</b>
-              <small>Lit till {copy.closeWords}</small>
+              <b>Night games</b> till {copy.closeWords}
             </span>
           </span>
-          <span data-l="chip-paddles" className="l-chip l-chip-2" aria-hidden="true" style={{ "--depth": "-10px" } as React.CSSProperties}>
+          <span data-l="chip-paddles" className="l-chip" aria-hidden="true" style={{ "--depth": "-10px" } as React.CSSProperties}>
             <i>
               <PaddleIcon />
             </i>
             <span>
-              <b>{copy.paddleCount} paddles</b>
-              <small>{copy.paddleFeeText} to rent</small>
+              <b>{copy.paddleCount} paddles</b> to rent · {copy.paddleFeeText}
             </span>
           </span>
           <span data-l="chip-ahead" className="l-chip" aria-hidden="true" style={{ "--depth": "-18px" } as React.CSSProperties}>
@@ -202,7 +201,7 @@ export function LandingScene({ copy, account }: { copy: LandingCopy; account: Re
           <div data-l="pass" className="l-pass" aria-hidden="true">
             <div className="l-pass-in">
               <div className="l-pass-top">
-                <LogoTile simple />
+                <LogoMark className="" gradientId="l-tile-pass" />
                 <div>
                   <small>Booking pass</small>
                   <b>Dink n&apos; Drive</b>
@@ -258,34 +257,6 @@ export function LandingScene({ copy, account }: { copy: LandingCopy; account: Re
 
       <canvas data-l="snow" className="l-snow" aria-hidden="true" />
     </div>
-  );
-}
-
-function LogoTile({ simple = false }: { simple?: boolean }) {
-  const id = simple ? "l-tile-pass" : "l-tile-nav";
-  return (
-    <svg viewBox="0 0 40 40" aria-hidden="true">
-      <defs>
-        <linearGradient id={id} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#FB8C47" />
-          <stop offset="1" stopColor="#E8601C" />
-        </linearGradient>
-      </defs>
-      <rect width="40" height="40" rx="12" fill={`url(#${id})`} />
-      {!simple && <rect x="0.75" y="0.75" width="38.5" height="38.5" rx="11.25" fill="none" stroke="#fff" strokeOpacity="0.35" strokeWidth="1.5" />}
-      <g transform="rotate(-38 19 21)">
-        <rect x="12.5" y="7" width="13" height="16" rx="6" fill="#fff" />
-        {!simple && <rect x="15.5" y="12" width="7" height="1.6" rx="0.8" fill="#EC6620" opacity="0.55" />}
-        <rect x="17" y="22" width="4" height="11" rx="2" fill="#fff" />
-      </g>
-      <circle cx="29.5" cy="10.5" r="4.6" fill="#D4F02E" stroke="#0F1B33" strokeWidth="1.2" />
-      {!simple && (
-        <>
-          <circle cx="28.2" cy="9.4" r="0.8" fill="#0F1B33" opacity="0.6" />
-          <circle cx="30.9" cy="11.6" r="0.8" fill="#0F1B33" opacity="0.6" />
-        </>
-      )}
-    </svg>
   );
 }
 

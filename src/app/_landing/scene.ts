@@ -75,33 +75,35 @@ export function mountLandingScene(root: HTMLElement, opts: SceneOptions): () => 
    * a white highlight shifted up, which leaves shading in the creases and underneath.
    * Bottoms stay round and bumpy (never flat).
    */
-  function cumulus(r: () => number, cx: number, baseY: number, w: number, alpha: number) {
+  function cumulus(r: () => number, cx: number, baseY: number, w: number, alpha: number, stretch = 1) {
+    // `stretch` widens the cloud (more puffs across a wider span) without making it taller
     const dpr = Math.min(window.devicePixelRatio || 1, 2),
       h = w * 0.58,
       pad = w * 0.16,
-      bw = w + pad * 2,
+      sw = w * stretch,
+      bw = sw + pad * 2,
       bh = h + pad * 2,
       Y0 = pad + h; // cloud base inside the offscreen canvas
     const puffs: Array<[number, number, number]> = [];
     // base row: many medium puffs; their varied sizes make the underside bumpy
-    const nb = 7 + Math.floor(r() * 3);
+    const nb = Math.round((7 + Math.floor(r() * 3)) * stretch);
     for (let i = 0; i < nb; i++) {
       const t = (i + 0.5) / nb - 0.5,
         rad = w * (0.085 + 0.045 * r()) * (0.75 + 0.35 * Math.cos(t * Math.PI));
-      puffs.push([pad + w / 2 + t * w * 0.86 + (r() - 0.5) * w * 0.03, Y0 - rad * (0.72 + r() * 0.18), rad]);
+      puffs.push([pad + sw / 2 + t * sw * 0.86 + (r() - 0.5) * w * 0.03, Y0 - rad * (0.72 + r() * 0.18), rad]);
     }
     // middle tier: bigger puffs, narrower
-    const nm = 4 + Math.floor(r() * 2);
+    const nm = Math.round((4 + Math.floor(r() * 2)) * stretch);
     for (let i = 0; i < nm; i++) {
       const t = (i + 0.5) / nm - 0.5,
         rad = w * (0.13 + 0.05 * r()) * (0.8 + 0.25 * Math.cos(t * Math.PI));
-      puffs.push([pad + w / 2 + t * w * 0.6 + (r() - 0.5) * w * 0.05, Y0 - h * (0.42 + r() * 0.08), rad]);
+      puffs.push([pad + sw / 2 + t * sw * 0.6 + (r() - 0.5) * w * 0.05, Y0 - h * (0.42 + r() * 0.08), rad]);
     }
     // domed top: one to three large puffs near the middle
-    const nt = 1 + Math.floor(r() * 3);
+    const nt = Math.round((1 + Math.floor(r() * 3)) * stretch);
     for (let i = 0; i < nt; i++) {
       const rad = w * (0.15 + 0.05 * r());
-      puffs.push([pad + w / 2 + (r() - 0.5) * w * 0.3, Y0 - h * (0.66 + r() * 0.08), rad]);
+      puffs.push([pad + sw / 2 + (r() - 0.5) * sw * 0.32, Y0 - h * (0.66 + r() * 0.08), rad]);
     }
 
     const off = document.createElement("canvas");
@@ -229,7 +231,8 @@ export function mountLandingScene(root: HTMLElement, opts: SceneOptions): () => 
       const tops: Array<[number, number, number]> = phone
         ? [[0.12, 0.22, 0.42], [0.86, 0.3, 0.46], [0.5, 0.16, 0.34]]
         : [[0.1, 0.2, 0.15], [0.36, 0.13, 0.11], [0.66, 0.18, 0.13], [0.9, 0.26, 0.15], [0.2, 0.42, 0.1], [0.8, 0.48, 0.11]];
-      tops.forEach(([fxp, fyp, fw]) => cumulus(rt, W * fxp, hz * fyp, (phone ? W : M) * fw, 0.96));
+      // stretched wider than the horizon clouds, so the upper sky reads as long, drifting banks
+      tops.forEach(([fxp, fyp, fw]) => cumulus(rt, W * fxp, hz * fyp, (phone ? W : M) * fw, 0.96, 1.5));
     }
 
     // horizon bank: two overlapping rows of the same cumulus (far row smaller and fainter)
@@ -722,7 +725,8 @@ export function mountLandingScene(root: HTMLElement, opts: SceneOptions): () => 
       place(head, P.x + 20, P.y + 20, P.w - 40);
     } else {
       const w = W < 1000 ? W * 0.82 : Math.min(W * 0.68, 1000);
-      const x = (W - w) / 2 + (W < 1000 ? W * 0.05 : W * 0.07);
+      // shifted right of centre to leave a column for the booking pass on the left
+      const x = (W - w) / 2 + (W < 1000 ? W * 0.05 : W * 0.087);
       // measure the nav and text first, so the slab is always tall enough to hold them
       place(nav, x, 0, w);
       const navH = nav.offsetHeight,
@@ -931,7 +935,7 @@ export function mountLandingScene(root: HTMLElement, opts: SceneOptions): () => 
       const k = Math.min(1.14, (P.x - 36) / 250);
       pass.style.setProperty("--k", k.toFixed(3));
       const hh = pass.offsetHeight,
-        ccx = P.x / 2 + 6,
+        ccx = P.x / 2 - 4,
         ccy = P.y + P.h * 0.58;
       place(pass, ccx - 125, ccy - hh / 2);
       passR = { l: ccx - 125 * k, t: ccy - (hh * k) / 2, r: ccx + 125 * k, b: ccy + (hh * k) / 2 };
@@ -950,38 +954,40 @@ export function mountLandingScene(root: HTMLElement, opts: SceneOptions): () => 
         c.hidden = b.l < 2 || b.r > W - 2 || b.t < 2 || hit(b, ballR, 8) || hit(b, hr, 8) || hit(b, cr, 8) || (!pass.hidden && hit(b, passR, 6));
       });
 
-      // Right-side chips (lights, paddles, book-ahead): each straddles the slab's right edge
-      // (or sits flush against the window edge) and takes the first height that is clear of
-      // the paddle (head box + handle box, the handle runs lower-left), ball, text and the
-      // chips already placed. A chip with no clear spot hides itself.
+      // Right-side chips (lights, paddles, book-ahead): one column, left-aligned, straddling the
+      // slab's right edge below the paddle head, with EQUAL gaps between them. The paddle is
+      // modelled as a head box + a handle box (the handle runs lower-left). If the column
+      // doesn't fit, chips are dropped from the end rather than overlapping anything.
       const headBox = { l: pl, t: pt, r: pl + pw, b: pt + ph * 0.58 },
         handleBox = { l: pl, t: pt + ph * 0.55, r: pl + pw * 0.45, b: pt + ph };
-      const taken: Box[] = [headBox, handleBox, ballR, hr, cr];
-      if (!chipOpen.hidden) taken.push(rectOf(chipOpen, S));
-      const rightChips: Array<[HTMLElement, number[]]> = [
-        [chipLights, [0.3, 0.4, 0.22]],
-        [chipPaddles, [0.52, 0.6, 0.45]],
-        [chipAhead, [0.76, 0.86, 0.68]],
-      ];
-      for (const [chip, ys] of rightChips) {
-        chip.hidden = false; // measurable
-        const aw = chip.offsetWidth,
-          ah = chip.offsetHeight;
-        chip.hidden = true;
-        const xs = [Math.min(P.x + P.w - aw * 0.42, W - 10 - aw), W - 10 - aw];
-        found: for (const f of ys) {
-          for (const ax of xs) {
-            const ay = P.y + P.h * f - ah / 2;
-            const b = { l: ax, t: ay, r: ax + aw, b: ay + ah };
-            if (b.l < P.x + P.w * 0.55 || b.r > W - 2 || b.t < 2 || b.b > H - 2) continue;
-            if (taken.some((o) => hit(b, o, 8))) continue;
-            place(chip, ax, ay);
-            chip.hidden = false;
-            taken.push(b);
-            rightR.push(b);
-            break found;
-          }
-        }
+      const blockers: Box[] = [headBox, handleBox, ballR, hr, cr];
+      const col = [chipLights, chipPaddles, chipAhead];
+      col.forEach((c) => (c.hidden = false)); // measurable
+      const sizes = col.map((c) => [c.offsetWidth, c.offsetHeight] as const);
+      col.forEach((c) => (c.hidden = true));
+      const GAP = 14;
+      for (let n = col.length; n > 0; n--) {
+        const use = sizes.slice(0, n),
+          maxW = Math.max(...use.map(([w0]) => w0)),
+          stackH = use.reduce((sum, [, h0]) => sum + h0, 0) + GAP * (n - 1);
+        const x0 = Math.min(P.x + P.w - 64, W - 12 - maxW);
+        // vertical room: below the paddle head, down to a little past the slab's bottom edge
+        const top = Math.max(headBox.b + 14, P.y + P.h * 0.42),
+          bottom = Math.min(H - 12, P.y + P.h + 40);
+        if (stackH > bottom - top || x0 < P.x + P.w * 0.55) continue;
+        let y = top + (bottom - top - stackH) / 2;
+        const boxes = use.map(([w0, h0]) => {
+          const bx = { l: x0, t: y, r: x0 + w0, b: y + h0 };
+          y += h0 + GAP;
+          return bx;
+        });
+        if (boxes.some((bx) => blockers.some((o) => hit(bx, o, 8)))) continue;
+        boxes.forEach((bx, i) => {
+          place(col[i], bx.l, bx.t);
+          col[i].hidden = false;
+          rightR.push(bx);
+        });
+        break;
       }
     }
 

@@ -133,7 +133,7 @@ Follows the composition of reference image 2 (the bear breaking out of ice/glass
       - **Pure white**, with soft blue-grey shading in the creases and underneath for volume, so the orange accents stand out.
       - Bottoms are round and bumpy, **never flat**.
       - Each cloud is one merged shape, never visible overlapping circles.
-    - Upper-sky cumulus are scattered across the top, and the horizon bank (in place of the bear image's snowy peaks) is two overlapping rows of the same clouds.
+    - Upper-sky cumulus are scattered across the top, stretched about 1.5× wider than tall so they read as long, drifting banks. The horizon bank (in place of the bear image's snowy peaks) is two overlapping rows of the same clouds.
     - No moon (tried; it looked out of place).
   - **Court:** a **blue court with a red kitchen** (the non-volley zones next to the net), white lines including the kitchen lines, and a net.
   - **Benches:** wooden **benches** along both sidelines.
@@ -158,16 +158,21 @@ Follows the composition of reference image 2 (the bear breaking out of ice/glass
 - **Ball hitting the paddle:** the ball sits on the paddle face (upper-left), half in front of the glass. It has speed lines trailing toward the lower-left where it came from, an impact burst of short white rays, and a ring that pulses every 2.2 s. On laptops it never overlaps the text column.
 - **Booking pass (laptop showcase, fills the open column left of the slab):** a frosted ticket tilted in 3D (`rotateY(16deg) rotateZ(-4deg)`), floating and following the parallax. It shows the logo tile, "Booking pass · Dink n' Drive", a green "Confirmed" stamp, "Saturday, Nov 21 / 7:00 – 9:00 PM", tiles for Hours 2 · Paddles Rented · Paid via GCash, a perforated tear line, reference "DND-7K3Q9", total ₱550 (in orange) and a barcode. It's an illustration of what customers get after booking, not live data. It scales to the column and is hidden when the column is narrower than 250 px and on phones.
 - **Outside the glass:** on laptops, floating frosted chips: "₱250 / hour" on the left, and a live **"Open now · till 12 AM"** status (green dot, from Manila time and `settings`) above the top-right corner.
-  - **Right side:** three chips straddle the slab's right edge, or sit flush against the window edge. They fill the open strip there and float with the parallax:
-    - "Night games · Lit till midnight", from `close_hour`;
-    - "4 paddles · ₱50 to rent", from `paddle_count` and `paddle_fee`;
+  - **Right side:** three one-line chips styled like "₱250 / hour":
+    - "**Night games** till midnight", from `close_hour`;
+    - "**4 paddles** to rent · ₱50", from `paddle_count` and `paddle_fee`;
     - "Book up to **30 days** ahead", from `max_advance_days`.
 
-    The two-line chips are compact (52 px tall) so they fit beside the paddle head. Each chip takes the first clear height and hides itself if it would touch the paddle, the ball, the text or another chip. All three show on 1280–1920 px laptops; on 1024 px and tablets there's no room.
+    They're stacked in one left-aligned column with **equal 14 px gaps**, straddling the slab's right edge below the paddle head. If the column doesn't fit, chips drop from the end rather than overlap the paddle, ball or text. All three show on 1280–1920 px laptops; on 1024 px and tablets none do.
   - The paddle icon is drawn as solid shapes (face, handle and ball), because outlines at 16–18 px read as a search icon.
 - **Entrance moment:** on load the paddle smashes out with an overshoot, the cracks draw outward, the shards burst from the hole and the ball flies in. It runs once, takes about 1 s, and is skipped with `prefers-reduced-motion`.
 - **Nav:** on laptops it sits inside the slab: logo on the left, the links in a frosted pill group **centered in the slab** (the active link is an orange-gradient chip), and an orange-gradient "Log in" on the right. The links show only when the slab itself is wide enough (a container query on the nav, about 770 px); otherwise they fold into the orange-gradient menu button, so nothing wraps or overflows on tablets and small laptops. On phones it's a frosted top bar with the logo, "Log in" and the menu button.
-- **Logo:** an orange-gradient app tile with a white paddle and a lime ball, plus the wordmark **Dink *n'* Drive** (Fraunces 750, "n'" in italic orange) over "PICKLEBALL · LUYANG" in small spaced caps.
+- **Logo (reworked 2026-11-23):** an orange-gradient app tile holding a bold white **"D"** (for Dink and Drive).
+  - **The D** is slanted forward like a drive shot and like the italic "n'" in the wordmark.
+  - **Its round hollow centre holds a lime pickleball** with a ring of six holes, framed by an even ring of the tile's orange.
+  - **A small white frost sparkle** sits in the top-right corner, echoing the ice glints on the slab.
+  - **One source:** `src/components/logo-mark.ts` feeds the header, landing nav, booking pass, and Apple icon. `src/app/icon.svg` is a static copy generated from it.
+  - **Wordmark:** **Dink *n'* Drive** (Fraunces 750, "n'" in italic orange) over "PICKLEBALL · LUYANG" in small spaced caps.
 - **Wording** (structured like the CK Grounds reference the developer liked, written in our own words):
   - Location pill: "📍 Luyang · open daily"
   - Headline: **"Book your hour." / "*Own the kitchen.*"** (the second line is italic with an orange gradient; "the kitchen" is the players' name for the non-volley zone)
