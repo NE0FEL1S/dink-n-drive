@@ -52,10 +52,10 @@ Booking site for a single pickleball court in Cebu, Philippines, with a communit
 Email sending of any kind, forgot/change password, booking emails, online payment gateways, multiple courts.
 
 ## Git workflow
-- Branches: `main` (production, deployed) ← `staging` (integration/testing) ← work branches (`phase-1/supabase-setup`, `fix/...`, `docs/...`).
-- Start every piece of work on a new branch cut from `staging`. Never commit directly to `main` or `staging`.
-- When a phase or fix is done (build + lint pass), merge the work branch into `staging` and push `staging`.
-- `staging` is merged into `main` only after the developer has reviewed/tested it and says so.
+- Branches: `main` (production, deployed) ← `staging` (integration/testing) ← work branches (`phase-2/booking-grid`, `fix/...`, `docs/...`).
+- **One branch per feature or part** (a phase is usually several branches), cut from the latest `staging`. Never commit directly to `main` or `staging`.
+- When a branch is done (build + lint pass), push it and **open a PR into `staging`** (`gh pr create --base staging`). The developer reviews and merges it. **Never merge PRs yourself**, and never merge locally into `staging` or `main`.
+- `staging` → `main` happens only through a PR the developer merges, and only when they say so.
 - Never force-push `main` or `staging`.
 
 ## How to work
