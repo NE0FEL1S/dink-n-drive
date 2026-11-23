@@ -990,7 +990,7 @@ export function mountLandingScene(root: HTMLElement, opts: SceneOptions): () => 
           sumH = colSizes.reduce((sum, [, h0]) => sum + h0, 0),
           y0 = nr.b + 18,
           y1 = Math.min(H - 12, P.y + P.h + 8),
-          COL_GAP = 36,
+          COL_GAP = 72,
           gap = Math.min(COL_GAP, (y1 - y0 - sumH) / (n - 1));
         if (gap >= 12) {
           const blockers: Box[] = [ballR, hr, cr];

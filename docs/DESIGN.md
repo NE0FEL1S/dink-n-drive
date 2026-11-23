@@ -163,7 +163,7 @@ Follows the composition of reference image 2 (the bear breaking out of ice/glass
     - "**4 paddles** to rent · ₱50", from `paddle_count` and `paddle_fee`;
     - "Book up to **30 days** ahead", from `max_advance_days`.
 
-    They form one left-aligned column near the window's right edge, **with equal 36 px gaps, centered vertically beside the paddle** (between the nav row and the slab's bottom edge), so they read as one group. Spreading them across the full height left gaps that were too big.
+    They form one left-aligned column near the window's right edge, **with equal 72 px gaps, centered vertically beside the paddle** (between the nav row and the slab's bottom edge), so they read as one group. Spreading them across the full height left gaps that were too big.
     - The chips share one parallax depth, so their edges stay aligned when the scene moves.
     - The column is reserved before the paddle is sized: the paddle image stays left of it, and the jagged ice break may tuck under the chips.
     - The column is used only if the paddle stays at least 75% of its natural size; otherwise the chips hide and the paddle keeps its full size.
