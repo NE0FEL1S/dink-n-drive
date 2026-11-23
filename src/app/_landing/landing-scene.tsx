@@ -18,6 +18,10 @@ export type LandingCopy = {
   holdMinutes: number;
   /** How far ahead people can book (settings.max_advance_days). */
   maxAdvanceDays: number;
+  /** "midnight" (closing time in words) */
+  closeWords: string;
+  /** settings.paddle_count (display only) */
+  paddleCount: number;
   /** Booking pass illustration: 2 hours + paddles at current prices, e.g. "₱550". */
   sampleTotalText: string;
 };
@@ -138,12 +142,7 @@ export function LandingScene({ copy, account }: { copy: LandingCopy; account: Re
                 Pay with GCash
               </li>
               <li>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <g transform="rotate(-35 12 12)">
-                    <rect x="7.5" y="2.5" width="9" height="11" rx="4.2" />
-                    <path d="M12 13.5v8" />
-                  </g>
-                </svg>
+                <PaddleIcon />
                 Paddles for {copy.paddleFeeText}
               </li>
             </ul>
@@ -158,6 +157,28 @@ export function LandingScene({ copy, account }: { copy: LandingCopy; account: Re
             </i>
             <span>
               <b>{copy.rateText}</b> / hour
+            </span>
+          </span>
+          <span data-l="chip-lights" className="l-chip l-chip-2" aria-hidden="true" style={{ "--depth": "12px" } as React.CSSProperties}>
+            <i>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="5" y="3" width="14" height="7" rx="1.6" />
+                <path d="M8.5 6.5h0M12 6.5h0M15.5 6.5h0" strokeWidth="2.8" />
+                <path d="M12 10v11M8.5 21h7M7 13.5l-2.5 2M17 13.5l2.5 2" />
+              </svg>
+            </i>
+            <span>
+              <b>Night games</b>
+              <small>Lit till {copy.closeWords}</small>
+            </span>
+          </span>
+          <span data-l="chip-paddles" className="l-chip l-chip-2" aria-hidden="true" style={{ "--depth": "-10px" } as React.CSSProperties}>
+            <i>
+              <PaddleIcon />
+            </i>
+            <span>
+              <b>{copy.paddleCount} paddles</b>
+              <small>{copy.paddleFeeText} to rent</small>
             </span>
           </span>
           <span data-l="chip-ahead" className="l-chip" aria-hidden="true" style={{ "--depth": "-18px" } as React.CSSProperties}>
@@ -264,6 +285,19 @@ function LogoTile({ simple = false }: { simple?: boolean }) {
           <circle cx="30.9" cy="11.6" r="0.8" fill="#0F1B33" opacity="0.6" />
         </>
       )}
+    </svg>
+  );
+}
+
+/** Pickleball paddle + ball as solid shapes (reads clearly at 16px; outlines looked like a search icon). */
+function PaddleIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" stroke="none" aria-hidden="true">
+      <g transform="rotate(-22 11 12)">
+        <rect x="5.5" y="1" width="12" height="12.5" rx="4" />
+        <rect x="9.9" y="12.5" width="3.2" height="10.5" rx="1.5" />
+      </g>
+      <circle cx="20" cy="19.2" r="2.7" />
     </svg>
   );
 }
