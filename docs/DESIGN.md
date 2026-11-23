@@ -163,10 +163,10 @@ Follows the composition of reference image 2 (the bear breaking out of ice/glass
     - "**4 paddles** to rent · ₱50", from `paddle_count` and `paddle_fee`;
     - "Book up to **30 days** ahead", from `max_advance_days`.
 
-    They form a **ladder**: each rung steps 32 px left of the one above (26 or 20 px if needed), **following the paddle's tilted right edge**, with **equal 90 px gaps**. The top rung sits 6 px from the window edge, and the ladder is placed **as high as it can go** while clearing the paddle.
+    They form a **ladder**: each rung steps 28 px left of the one above (22 or 18 px if needed), **following the paddle's tilted right edge**, with **equal 90 px gaps**. The top rung sits 16 px from the window edge (parallax drifts up to 14 px), and the ladder is placed **as high as it can go** while clearing the paddle.
     - The paddle's real outline is measured from the image (`PADDLE_RIGHT` in `scene.ts`), so the rungs hug the edge as it pulls in toward the handle.
-    - The 90 px gap comes first, with the biggest paddle that allows it, down to 85% of full size. Then 80 or 70 px gaps, then paddles down to 78%. Otherwise the chips hide.
-    - Results: 90 px gaps at 1366, 1440 (paddle about 87%), 1536 and 1920 px (full size). The chips are hidden at 1280 px and below.
+    - The 90 px gap comes first, with the biggest paddle that allows it, down to 78%. Then 80 or 70 px gaps, but only with a paddle of at least 85%. Otherwise the chips hide, because a tiny paddle is worse than no ladder.
+    - Results: 90 px gaps at 1366 (paddle about 78%), 1440 (about 94%), 1536 and 1920 px (full size). The chips are hidden at 1280 px and below.
     - Column chips are slightly compact (42 px tall, 13.5 px text) so they fit.
   - The paddle icon is drawn as solid shapes (face, handle and ball), because outlines at 16–18 px read as a search icon.
 - **Entrance moment:** on load the paddle smashes out with an overshoot, the cracks draw outward, the shards burst from the hole and the ball flies in. It runs once, takes about 1 s, and is skipped with `prefers-reduced-motion`.
@@ -195,7 +195,7 @@ Follows the composition of reference image 2 (the bear breaking out of ice/glass
   - Paragraph: "Luyang's own pickleball court, open **8 AM to midnight**." (hours from `settings`).
   - **How it works row** (laptops only), under the paragraph: numbered steps **01 Pick your hours — 02 Pay with GCash — 03 Show up & play**, with small orange-gradient number circles (palette 1's numbered steps). It replaces the paragraph's old second sentence, so nothing is said twice. It's no wider than the paragraph.
   - **Vertical rhythm (laptops):** the headline block fills the room between the status row and the feature cards. Beyond 48 px outer gaps, up to 32 px more goes between each group (headline / paragraph / steps / button), so there's no big empty band above the headline or after **Book now**.
-  - Features row: at the bottom of the screen on phones (white text). On laptops it's **three small frosted cards on the slab's bottom edge**, each with an orange icon circle, a bold label and a short second line: "15-min slot hold / while you pay", "Pay with GCash / scan, then upload", "Paddles for ₱50 / per booking". The cards are no wider than the headline text. The headline block is centered between the status row and the cards, so the slab has no empty band at the bottom.
+  - Features row: at the bottom of the screen on phones (white text). On laptops it's **three small frosted cards on the slab's bottom edge** (16 px apart), each with an orange icon circle, a bold label and a short second line: "15-min slot hold / while you pay", "Pay with GCash / scan, then upload", "Paddles for ₱50 / per booking". The cards are no wider than the headline text. The headline block is centered between the status row and the cards, so the slab has no empty band at the bottom.
   - One button, **"Book now →"**, directly under the paragraph. On phones the whole text block and the button are **centered**; on laptops they're left-aligned. "My bookings" lives only in the nav and menu, never as a second hero button.
   - Features: "15-min slot hold" · "Pay with GCash" · "Paddles for ₱50"
   - Hours, prices and hold minutes in the copy must come from `settings`.

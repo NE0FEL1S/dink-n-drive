@@ -788,7 +788,7 @@ export function mountLandingScene(root: HTMLElement, opts: SceneOptions): () => 
     const colSizes = col.map((c) => [c.offsetWidth, c.offsetHeight] as const);
     col.forEach((c) => (c.hidden = true));
     const colW = Math.max(...colSizes.map(([w0]) => w0)),
-      colL = W - 6 - colW, // the top rung hugs the window's right edge
+      colL = W + 8 - colW, // the top rung hugs the window's right edge (16px clear; parallax drifts ≤14px)
       sumColH = colSizes.reduce((sum, [, h0]) => sum + h0, 0);
     let ladder: Box[] | null = null;
 
@@ -835,7 +835,7 @@ export function mountLandingScene(root: HTMLElement, opts: SceneOptions): () => 
           const stackH = sumColH + gap * (col.length - 1),
             yHi = yMax - stackH;
           if (yHi < yLo) return null;
-          for (const step of [32, 26, 20]) {
+          for (const step of [28, 22, 18]) {
             for (let yS = yLo; yS <= yHi; yS += 4) {
               {
                 let y = yS;
@@ -856,15 +856,15 @@ export function mountLandingScene(root: HTMLElement, opts: SceneOptions): () => 
         return null;
       };
       // The 90px gap comes first (the spacing asked for): the biggest paddle that allows it,
-      // down to 85%. Then smaller gaps, then smaller paddles (down to 78%); else no chips.
+      // down to 78%. Then 80/70px gaps, but only with a paddle of at least 85%; else no chips
+      // (a tiny paddle is worse than no ladder).
       ph = natural;
       cx = cxOf(natural, false);
       cy = cyOf(natural);
       const tries: Array<[number, number]> = [
-        [90, 1], [90, 0.92], [90, 0.85],
+        [90, 1], [90, 0.92], [90, 0.85], [90, 0.78],
         [80, 1], [80, 0.92], [80, 0.85],
         [70, 1], [70, 0.92], [70, 0.85],
-        [90, 0.78], [80, 0.78], [70, 0.78],
       ];
       for (const [gap, f] of tries) {
         const p0 = natural * f,
