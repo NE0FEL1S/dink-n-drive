@@ -1,11 +1,6 @@
-import { SiteHeader } from "@/components/site-header";
+import { SiteShell } from "@/components/site-shell";
 
-/** Inner pages: sticky frosted header + page content on the ice-50 background. */
+/** Inner pages: sky band + sticky frosted header + page content on the ice-50 background. */
 export default function SiteLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <>
-      <SiteHeader />
-      <div className="flex flex-1 flex-col">{children}</div>
-    </>
-  );
+  return <SiteShell>{children}</SiteShell>;
 }
