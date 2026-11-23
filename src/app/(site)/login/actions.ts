@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { postSignInPath } from "@/lib/auth";
+import { claimGuestBookings } from "@/lib/claim-guest-bookings";
 import { safeNextPath } from "@/lib/safe-next";
 import { createClient } from "@/lib/supabase/server";
 import { fieldErrors, signInSchema, signUpSchema, type FieldErrors } from "@/lib/validation";
@@ -30,6 +31,7 @@ export async function signInWithEmail(_prev: AuthFormState, formData: FormData):
     return { error: message, values: { email: raw.email } };
   }
 
+  await claimGuestBookings(supabase);
   redirect(await postSignInPath(data.user.id, next));
 }
 
@@ -68,5 +70,6 @@ export async function signUpWithEmail(_prev: AuthFormState, formData: FormData):
     return { error: "Account created, but sign-in is waiting for email confirmation. Ask the site owner to turn it off.", values };
   }
 
+  await claimGuestBookings(supabase);
   redirect(await postSignInPath(data.user.id, next));
 }

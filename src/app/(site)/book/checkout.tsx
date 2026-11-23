@@ -14,7 +14,7 @@ import { createClient } from "@/lib/supabase/client";
 import { createBooking, startProofUpload, submitProof, type CreatedBooking } from "./actions";
 
 export type Account = { name: string | null; email: string | null; phone: string | null } | null;
-export type GcashQr = { url: string; downloadUrl: string } | null;
+export type GcashQr = import("@/lib/gcash").GcashQr | null;
 type Sel = { start: number; end: number };
 
 /* ---------------------------------------------------------------------------------------------- */
@@ -393,7 +393,7 @@ export function PayStep(props: {
 /* step 4: done                                                                                    */
 /* ---------------------------------------------------------------------------------------------- */
 
-export function DoneStep({ booking, isGuest }: { booking: CreatedBooking; isGuest: boolean }) {
+export function DoneStep({ booking, isGuest, showMyBookingsLink = true }: { booking: CreatedBooking; isGuest: boolean; showMyBookingsLink?: boolean }) {
   return (
     <div className="grid gap-4 pt-2 text-center">
       <CheckCircle2 className="mx-auto size-12 text-success" aria-hidden="true" />
@@ -408,9 +408,11 @@ export function DoneStep({ booking, isGuest }: { booking: CreatedBooking; isGues
         <p className="tabular text-lg font-bold">{booking.ref}</p>
       </div>
       {isGuest && <p className="text-sm text-slate-500">This booking is saved in My bookings on this browser.</p>}
-      <Link href="/my-bookings" className={buttonClass("secondary", "w-full")}>
-        Go to My bookings
-      </Link>
+      {showMyBookingsLink && (
+        <Link href="/my-bookings" className={buttonClass("secondary", "w-full")}>
+          Go to My bookings
+        </Link>
+      )}
     </div>
   );
 }
