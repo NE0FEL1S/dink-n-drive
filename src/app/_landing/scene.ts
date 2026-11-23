@@ -716,7 +716,7 @@ export function mountLandingScene(root: HTMLElement, opts: SceneOptions): () => 
   }
 
   // text that the paddle's ice break must stay clear of (laptop layout)
-  const TEXT_SEL = '[data-l="head"] h1 span, [data-l="head"] .l-para, [data-l="head"] .l-book, [data-l="cta"] .l-features li';
+  const TEXT_SEL = '[data-l="head"] h1 span, [data-l="head"] .l-para, [data-l="head"] .l-steps li, [data-l="head"] .l-book, [data-l="cta"] .l-features li';
 
   function layout() {
     const W = stage.clientWidth,
@@ -735,6 +735,7 @@ export function mountLandingScene(root: HTMLElement, opts: SceneOptions): () => 
         bottom = H - ctaH - 36;
       P = { x: 0, y: top, w: W, h: Math.max(320, bottom - top) };
       place(info, P.x + 20, P.y + 18, P.w - 40);
+      head.style.height = "";
       place(head, P.x + 20, P.y + 18 + info.offsetHeight, P.w - 40);
     } else {
       const top0 = navB + 18, // slab starts below the nav bar
@@ -746,6 +747,7 @@ export function mountLandingScene(root: HTMLElement, opts: SceneOptions): () => 
       place(info, x + 44, 0, w - 88);
       const ib = 26 + info.offsetHeight, // status row block at the top of the slab
         colW = w * 0.54;
+      head.style.height = ""; // natural height first (it may be stretched below)
       place(head, x + 44, 0, colW);
       place(cta, x + 44, 0, colW);
       const headH = head.offsetHeight,
@@ -756,10 +758,17 @@ export function mountLandingScene(root: HTMLElement, opts: SceneOptions): () => 
       const y = top0 + Math.max(0, (avail - h) / 2 - avail * 0.01);
       P = { x, y, w, h };
       place(info, P.x + 44, P.y + 26, P.w - 88);
-      // feature cards sit on the slab's bottom edge; the headline block is centred above them
+      // feature cards sit on the slab's bottom edge; the headline block fills the room above
+      // them: beyond comfortable 48px outer gaps, up to 32px more goes between each text group
+      // (headline / paragraph / steps / button, via flex space-between), so there are no big
+      // empty bands above the headline or after the Book now button.
       const ctaY = P.y + P.h - 30 - ctaH;
       place(cta, P.x + 44, ctaY);
-      place(head, P.x + 44, P.y + ib + Math.max(20, (ctaY - (P.y + ib) - headH) / 2));
+      const span = ctaY - (P.y + ib),
+        grow = Math.min(Math.max(0, span - headH - 2 * 48), 3 * 32),
+        hh = headH + grow;
+      head.style.height = `${hh}px`;
+      place(head, P.x + 44, P.y + ib + Math.max(20, (span - hh) / 2));
     }
     place(panel, P.x, P.y, P.w, P.h);
     shadowSvg.setAttribute("viewBox", `0 0 ${W} ${H}`);
@@ -779,7 +788,7 @@ export function mountLandingScene(root: HTMLElement, opts: SceneOptions): () => 
     const colSizes = col.map((c) => [c.offsetWidth, c.offsetHeight] as const);
     col.forEach((c) => (c.hidden = true));
     const colW = Math.max(...colSizes.map(([w0]) => w0)),
-      colL = W - 12 - colW, // the top rung hugs the window's right edge
+      colL = W - 6 - colW, // the top rung hugs the window's right edge
       sumColH = colSizes.reduce((sum, [, h0]) => sum + h0, 0);
     let ladder: Box[] | null = null;
 
@@ -817,7 +826,7 @@ export function mountLandingScene(root: HTMLElement, opts: SceneOptions): () => 
         }
         return m;
       };
-      // find a ladder with the given gap, as close to vertically centred as possible
+      // find a ladder with the given gap, placed as HIGH as it can go while clearing the paddle
       const findLadder = (p0: number, cx0: number, cy0: number, gap: number): Box[] | null => {
         if (colL < P.x + P.w * 0.6) return null;
         const yLo = ir.b + 18,
@@ -826,11 +835,9 @@ export function mountLandingScene(root: HTMLElement, opts: SceneOptions): () => 
           const stackH = sumColH + gap * (col.length - 1),
             yHi = yMax - stackH;
           if (yHi < yLo) return null;
-          const ideal = (yLo + yHi) / 2;
-          for (const step of [40, 32, 24]) {
-            for (let k = 0; k <= yHi - yLo + 6; k += 6) {
-              for (const yS of k ? [ideal - k, ideal + k] : [ideal]) {
-                if (yS < yLo || yS > yHi) continue;
+          for (const step of [32, 26, 20]) {
+            for (let yS = yLo; yS <= yHi; yS += 4) {
+              {
                 let y = yS;
                 const boxes = colSizes.map(([w0, h0], i) => {
                   const l = colL - step * i;

@@ -144,8 +144,19 @@ export function LandingScene({ copy, account }: { copy: LandingCopy; account: Re
             </h1>
             <p className="l-para">
               Luyang&apos;s own pickleball court, open <b>{copy.hoursText}</b>.
-              <span className="l-more"> Pick your hours, pay with GCash, then just show up and play.</span>
             </p>
+            {/* How it works (laptops): numbered steps, as in DESIGN.md's palette-1 style */}
+            <ol className="l-steps" aria-label="How it works">
+              <li>
+                <b>01</b> Pick your hours
+              </li>
+              <li>
+                <b>02</b> Pay with GCash
+              </li>
+              <li>
+                <b>03</b> Show up &amp; play
+              </li>
+            </ol>
             <div className="l-book-wrap">
               <Link className="l-book l-grad" href="/book">
                 Book now
