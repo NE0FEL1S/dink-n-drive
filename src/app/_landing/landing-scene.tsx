@@ -92,6 +92,16 @@ export function LandingScene({ copy, account }: { copy: LandingCopy; account: Re
                 <Link href="/my-bookings">My bookings</Link>
               </div>
               <div className="l-nav-right">
+                <span className="l-clock" aria-label="Current time in Cebu">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <circle cx="12" cy="12" r="9" />
+                    <path d="M12 7.5V12l3 2" />
+                  </svg>
+                  <span>
+                    <b data-l="clock-time" />
+                    <small>Cebu time</small>
+                  </span>
+                </span>
                 {account}
                 <MobileNav className="l-menu" />
               </div>
@@ -113,6 +123,12 @@ export function LandingScene({ copy, account }: { copy: LandingCopy; account: Re
               <span>Open daily</span>
               <span className="l-seg-hours">{copy.hoursRange}</span>
             </div>
+            <span className="l-badge">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M5 12.5l4.5 4.5L19 7.5" />
+              </svg>
+              No account needed
+            </span>
             <span data-l="open-pill" className="l-open">
               <span className="l-dot" />
               <span data-l="open-text" />

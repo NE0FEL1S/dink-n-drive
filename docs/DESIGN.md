@@ -163,21 +163,26 @@ Follows the composition of reference image 2 (the bear breaking out of ice/glass
     - "**4 paddles** to rent · ₱50", from `paddle_count` and `paddle_fee`;
     - "Book up to **30 days** ahead", from `max_advance_days`.
 
-    They form one left-aligned column near the window's right edge, **with equal 90 px gaps, centered vertically beside the paddle, each chip tilted −4°** (mirroring the booking pass) (between the nav row and the slab's bottom edge), so they read as one group. Spreading them across the full height left gaps that were too big.
-    - The chips share one parallax depth, so their edges stay aligned when the scene moves. A diagonal step was tried, but the paddle head leaves no room for it on most laptops, so the slant comes from the tilt.
-    - The column is reserved before the paddle is sized: the paddle image stays left of it, and the jagged ice break may tuck under the chips.
-    - The column is used only if the paddle stays at least 75% of its natural size; otherwise the chips hide and the paddle keeps its full size.
-    - It shows at 1366–1920 px laptops; on 1280 px and narrower the chips hide.
+    They form a **ladder**: each rung steps 40 px left of the one above (the step shrinks to 32, 24, 16 or 0 if needed). It sits below the paddle head, beside the handle, which runs lower-left, with equal gaps capped at 90 px.
+    - The full-size paddle is tried first. Only if the ladder doesn't fit under its head does the paddle shrink, to at least 75%, to make room. Otherwise the chips hide.
+    - All three share one parallax depth.
+    - They show at 1366–1920 px laptops (and at 1280×800); they're hidden at 1280×720, at 1024 px and on tablets.
     - Column chips are slightly compact (42 px tall, 13.5 px text) so they fit.
   - The paddle icon is drawn as solid shapes (face, handle and ball), because outlines at 16–18 px read as a search icon.
 - **Entrance moment:** on load the paddle smashes out with an overshoot, the cracks draw outward, the shards burst from the hole and the ball flies in. It runs once, takes about 1 s, and is skipped with `prefers-reduced-motion`.
-- **Nav (moved out of the slab 2026-11-23):** a normal site header. It's a **full-width frosted white bar pinned to the very top, edge to edge** (safe-area aware), like the header on the other pages, and its content sits in a centered 1152 px column: logo on the left, links centered (the active link is an orange-gradient chip), and an orange-gradient "Log in" on the right. The links show only when the bar is wide enough (container query, about 770 px); otherwise they fold into the orange-gradient menu button. The slab sits below the bar.
-- **Status row (replaces the nav inside the slab):** a row at the top of the slab.
-  - Left: a frosted **segmented pill group** in the old nav's style. The first segment is an **orange-gradient chip "📍 Luyang"** (like the old active nav link), then "Open daily" and the hours ("8 AM – 12 AM", from `settings`).
+- **Nav (moved out of the slab 2026-11-23):** a normal site header.
+  - It's a **full-width frosted white bar pinned to the very top, edge to edge** (safe-area aware), and **its content runs edge to edge too**: logo at the far left, the account area at the far right.
+  - The links sit in the middle; the active link is an orange-gradient chip.
+  - Before the account area there's a small frosted **live "Cebu time" clock chip** (Manila time, ticks each minute), shown only when the bar is at least 900 px wide.
+  - **Log in** is orange-gradient. Signed in, the **avatar circle is the same orange gradient as Book now** (on every page's header).
+  - The links show only when the bar is wide enough (container query, about 770 px); otherwise they fold into the orange-gradient menu button.
+  - The slab sits below the bar.
+- **Status row (replaces the nav inside the slab):** three items, evenly spaced, at the top of the slab.
+  - Left: a frosted **segmented pill group** in the old nav's style. The first segment is an **orange-gradient chip "📍 Luyang"**, then "Open daily" and the hours ("8 AM – 12 AM", from `settings`).
+  - Center: an **orange-gradient badge "✓ No account needed"**, midway between the group and the open pill. It's a true selling point (guests can book), and it's not a second CTA.
   - Right: the live **"● Open now · till 12 AM"** / **"Closed · opens 8 AM"** pill (Manila time), at the same 42 px height.
-  - On phones the pill group shows centered and the open pill is hidden.
-  - There's deliberately no second orange button here: one primary button per screen.
-  - The headline starts below the row.
+  - The badge shows only when the row is at least 720 px wide.
+  - On phones the pill group shows centered; the badge and the open pill are hidden.
 - **Logo (reworked 2026-11-23):** an orange-gradient app tile holding a bold white **"D"** (for Dink and Drive).
   - **The D** is slanted forward like a drive shot and like the italic "n'" in the wordmark.
   - **Its round hollow centre holds a lime pickleball** with a ring of six holes, framed by an even ring of the tile's orange.

@@ -24,7 +24,7 @@ export function AccountMenu({ name, email, isOwner }: Props) {
           className="grid size-12 place-items-center rounded-full active:scale-[0.98]"
           {...props}
         >
-          <span className="grid size-10 place-items-center rounded-full bg-navy-900 text-sm font-bold text-white ring-2 ring-white">
+          <span className="btn-grad grid size-10 place-items-center rounded-full text-sm ring-2 ring-white">
             {initials(name)}
           </span>
         </button>

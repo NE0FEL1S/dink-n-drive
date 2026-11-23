@@ -57,11 +57,15 @@ export function mountLandingScene(root: HTMLElement, opts: SceneOptions): () => 
   const updateOpen = () => {
     const h = new Date(Date.now() + 8 * 3_600_000).getUTCHours();
     const isOpen = h >= opts.openHour && h < opts.closeHour;
+    const now = new Date(Date.now() + 8 * 3_600_000),
+      hh = now.getUTCHours(),
+      mm = now.getUTCMinutes();
+    q("clock-time").textContent = `${hh % 12 === 0 ? 12 : hh % 12}:${String(mm).padStart(2, "0")} ${hh < 12 ? "AM" : "PM"}`;
     q("open-text").textContent = isOpen ? `Open now · till ${hourText(opts.closeHour)}` : `Closed · opens ${hourText(opts.openHour)}`;
     openPill.classList.toggle("l-closed", !isOpen);
   };
   updateOpen();
-  const openTimer = window.setInterval(updateOpen, 60_000);
+  const openTimer = window.setInterval(updateOpen, 15_000); // keeps the nav clock on the minute
   cleanups.push(() => window.clearInterval(openTimer));
 
   /* ---------- background: rays, cumulus horizon, court with a red kitchen, benches ---------- */
@@ -790,16 +794,33 @@ export function mountLandingScene(root: HTMLElement, opts: SceneOptions): () => 
         leftC = textR + 28,
         hole = K1 * RX; // break half-width as a fraction of the paddle width
       const withCol = Math.min(maxV, (imgRight - leftC) / (0.5 + hole) / AR);
-      if (colL > P.x + P.w * 0.6 && withCol >= natural * 0.75) {
-        useCol = true;
+      const cyOf = (p0: number) => Math.min(Math.max(top + K1 * RY * p0, P.y + P.h * 0.52), bottom - K1 * RY * p0);
+      const naturalCx = Math.min(right - hole * natural * AR, Math.max(left + hole * natural * AR, P.x + P.w * 0.72));
+      // The chip ladder sits BELOW the paddle head (beside the handle, which runs lower-left).
+      // Does it fit under the full-size paddle? Needs vertical room for 3 chips + gaps, and the
+      // lowest rung (two steps left) must stay clear of the handle.
+      const sumColH = colSizes.reduce((sum, [, h0]) => sum + h0, 0);
+      const ladderFits = (p0: number, cx0: number) => {
+        const pw0 = p0 * AR,
+          pt0 = cyOf(p0) - HC.v * p0,
+          pl0 = cx0 - HC.u * pw0;
+        const room = Math.min(H - 12, P.y + P.h + 40) - (pt0 + p0 * 0.58 + 12);
+        return room >= sumColH + 2 * 36 && colL - 2 * 16 >= pl0 + pw0 * 0.45 + 10;
+      };
+      if (colL > P.x + P.w * 0.6 && ladderFits(natural, naturalCx)) {
+        useCol = true; // full-size paddle, ladder underneath its head
+        ph = natural;
+        cx = naturalCx;
+      } else if (colL > P.x + P.w * 0.6 && withCol >= natural * 0.75) {
+        useCol = true; // slightly smaller paddle kept left of the chip column
         ph = withCol;
         const pwC = ph * AR;
         cx = Math.min(imgRight - 0.5 * pwC, right - hole * pwC);
       } else {
         ph = natural;
-        cx = Math.min(right - K1 * RX * ph * AR, Math.max(left + K1 * RX * ph * AR, P.x + P.w * 0.72));
+        cx = naturalCx;
       }
-      cy = Math.min(Math.max(top + K1 * RY * ph, P.y + P.h * 0.52), bottom - K1 * RY * ph);
+      cy = cyOf(ph);
     }
     ph = Math.max(ph, 60);
     const pw = ph * AR,
@@ -984,31 +1005,39 @@ export function mountLandingScene(root: HTMLElement, opts: SceneOptions): () => 
         chipPrice.hidden = b.l < 2 || b.r > W - 2 || hit(b, nr, 8) || hit(b, ballR, 8) || hit(b, hr, 8) || hit(b, cr, 8) || (!pass.hidden && hit(b, passR, 6));
       }
 
-      // Right-side chips (lights, paddles, book-ahead): one left-aligned column at colL with
-      // equal gaps (capped at COL_GAP so they read as a group), centred vertically between the
-      // nav row and the slab's bottom edge. The paddle was already kept left of this column.
+      // Right-side chips (lights, paddles, book-ahead) form a LADDER: each rung steps left of
+      // the one above, below the paddle head and beside the handle (which runs lower-left),
+      // with equal gaps (capped at COL_GAP). The step shrinks if a rung would touch the paddle,
+      // ball or text; if even a straight column can't fit, the chips hide.
       if (useCol) {
         const n = col.length,
           sumH = colSizes.reduce((sum, [, h0]) => sum + h0, 0),
-          y0 = ir.b + 18,
-          y1 = Math.min(H - 12, P.y + P.h + 8),
+          headBox = { l: pl, t: pt, r: pl + pw, b: pt + ph * 0.58 },
+          handleBox = { l: pl, t: pt + ph * 0.55, r: pl + pw * 0.45, b: pt + ph },
+          y0 = Math.max(ir.b + 18, headBox.b + 12),
+          y1 = Math.min(H - 12, P.y + P.h + 40),
           COL_GAP = 90,
           gap = Math.min(COL_GAP, (y1 - y0 - sumH) / (n - 1));
-        if (gap >= 12) {
-          // One aligned column; each chip is tilted in CSS (rotate -4deg), mirroring the booking
-          // pass. (A diagonal step was tried; the paddle head's right edge leaves no room for it
-          // on most laptops, so the tilt carries the slant consistently at every size.)
-          const blockers: Box[] = [ballR, hr, cr, ir];
-          let y = y0 + (y1 - y0 - (sumH + gap * (n - 1))) / 2;
-          col.forEach((c, i) => {
-            const [w0, h0] = colSizes[i];
-            const bx = { l: colL, t: y, r: colL + w0, b: y + h0 };
-            y += h0 + gap;
-            if (blockers.some((o) => hit(bx, o, 10))) return;
-            place(c, bx.l, bx.t);
-            c.hidden = false;
-            rightR.push(bx);
-          });
+        if (gap >= 24) {
+          const blockers: Box[] = [ballR, hr, cr, ir],
+            paddleBoxes = [headBox, handleBox]; // already the image's outer bounds: no extra margin
+          const yStart = y0 + (y1 - y0 - (sumH + gap * (n - 1))) / 2;
+          for (const step of [40, 32, 24, 16, 0]) {
+            let y = yStart;
+            const boxes = colSizes.map(([w0, h0], i) => {
+              const l = colL - step * i;
+              const bx = { l, t: y, r: l + w0, b: y + h0 };
+              y += h0 + gap;
+              return bx;
+            });
+            if (boxes.some((bx) => blockers.some((o) => hit(bx, o, 10)) || paddleBoxes.some((o) => hit(bx, o, 0)))) continue;
+            boxes.forEach((bx, i) => {
+              place(col[i], bx.l, bx.t);
+              col[i].hidden = false;
+              rightR.push(bx);
+            });
+            break;
+          }
         }
       }
     }
