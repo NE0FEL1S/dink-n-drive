@@ -70,6 +70,14 @@ export async function createTestUser(label: string, { complete = true } = {}): P
   return { id: data.user.id, email, password: TEST_PASSWORD, fullName, phone };
 }
 
+/** A tagged account with the owner role (deleted with the rest of the run's users). */
+export async function createTestOwner(label: string): Promise<TestUser> {
+  const user = await createTestUser(label);
+  const { error } = await admin().from("profiles").update({ role: "owner" }).eq("id", user.id);
+  if (error) throw new Error(`createTestOwner(${label}): ${error.message}`);
+  return user;
+}
+
 /**
  * Deletes tagged test data:
  * - `scope: "run"`   → everything from this run (global teardown)

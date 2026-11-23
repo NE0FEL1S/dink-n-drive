@@ -265,6 +265,11 @@ On phones it's a bottom sheet; on laptops, a centered dialog. `/book` renders th
 **Community / Feedback:** single-column feed. Photo cards with 16 px radius, author name and time, caption, a reaction bar (👍 😂 with counts) and a comments link. A floating "+ Post" button bottom-right, above the safe area and the nav.
 
 **Admin:** usable on a phone (the owner will check payments on the go). The Payments queue is a card list with a large screenshot preview and Approve/Reject buttons. Tables become stacked cards below 768 px. Desktop gets a left sidebar.
+- **Built (Phase 3B):** `src/app/(site)/admin/layout.tsx` + `admin-nav.tsx`. Sections: Overview · Bookings · Payments · Settings (Refunds, Customers, Feedback, Moderation join in their phases).
+  - **Below 1024 px:** a white pill row of tabs on the sky (same look as the My Bookings tabs: active `navy-900` with white text), scrolling sideways when it doesn't fit (all of 360–430 px today). The current tab is always scrolled into view.
+  - **From 1024 px:** a sticky white sidebar card (232 px) with an "ADMIN" label and 48 px rows with Lucide icons; the active row is `orange-50` with `orange-600` text, like the header nav. Its top lines up with the page's eyebrow pill.
+  - **Payments badge:** `orange-600` pill with the number of payments waiting for review (hidden at 0), streamed in after the nav renders.
+  - Each section page uses `PageHeader` (eyebrow "Admin", title = section name).
 
 ---
 
