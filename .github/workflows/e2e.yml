@@ -3,6 +3,10 @@
 # - Skips code that already passed (marker keyed by a fingerprint of the non-docs files).
 # - A newer push cancels the run in progress.
 # Test data is tagged e2e+…@dinkndrive.test and deleted by the suite (docs/SETUP.md, "Testing").
+#
+# The tests run inside Playwright's official image, which already has the browsers and
+# their system libraries. (Installing them with apt on every run took ~13 minutes.)
+# Keep the image tag equal to the @playwright/test version in package.json.
 name: e2e
 
 on:
@@ -25,9 +29,12 @@ env:
   STAGING_URL: https://dink-n-drive-git-staging-prism-technology.vercel.app
 
 jobs:
-  e2e:
+  prepare:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 20
+    outputs:
+      fingerprint: ${{ steps.fp.outputs.hash }}
+      tested: ${{ steps.passed.outputs.cache-hit }}
     steps:
       - uses: actions/checkout@v5
 
@@ -51,29 +58,26 @@ jobs:
         if: steps.passed.outputs.cache-hit != 'true'
         run: bash .github/scripts/wait-for-vercel.sh
 
+  e2e:
+    needs: prepare
+    if: needs.prepare.outputs.tested != 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    container:
+      image: mcr.microsoft.com/playwright:v1.65.1-noble
+      options: --user 1001
+    steps:
+      - uses: actions/checkout@v5
+
       - uses: actions/setup-node@v5
-        if: steps.passed.outputs.cache-hit != 'true'
         with:
           node-version: 24
           cache: npm
 
       - name: Install dependencies
-        if: steps.passed.outputs.cache-hit != 'true'
         run: npm ci
 
-      - name: Cache Playwright browsers
-        if: steps.passed.outputs.cache-hit != 'true'
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
-
-      - name: Install browsers
-        if: steps.passed.outputs.cache-hit != 'true'
-        run: npx playwright install --with-deps chromium webkit
-
       - name: Run e2e tests
-        if: steps.passed.outputs.cache-hit != 'true'
         env:
           E2E_BASE_URL: ${{ env.STAGING_URL }}
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
@@ -90,13 +94,15 @@ jobs:
           path: playwright-report/
           retention-days: 7
 
+  mark-passed:
+    needs: [prepare, e2e]
+    runs-on: ubuntu-latest
+    steps:
       - name: Remember that this code passed
-        if: success() && steps.passed.outputs.cache-hit != 'true'
         run: echo "${{ github.sha }}" > .e2e-passed
 
       - name: Save pass marker
-        if: success() && steps.passed.outputs.cache-hit != 'true'
         uses: actions/cache/save@v4
         with:
           path: .e2e-passed
-          key: e2e-passed-${{ steps.fp.outputs.hash }}
+          key: e2e-passed-${{ needs.prepare.outputs.fingerprint }}
