@@ -24,7 +24,9 @@ export async function signIn(page: Page, user: Pick<TestUser, "email" | "passwor
   await field(page, "Email").fill(user.email);
   await field(page, "Password").fill(user.password);
   await button(page, "Log in").click();
-  await expect(page).not.toHaveURL(/\/login/);
+  // The redirect renders the next page inside the action's response; a cold `next dev`
+  // compiling that route for several workers at once can take longer than the default 10 s.
+  await expect(page).not.toHaveURL(/\/login/, { timeout: 20_000 });
 }
 
 /** DESIGN.md §7: no screen may scroll sideways at phone widths. */
