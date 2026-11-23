@@ -554,6 +554,36 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_approve_payment: {
+        Args: { p_booking_id: string }
+        Returns: Database["public"]["Enums"]["booking_status"]
+      }
+      admin_create_block: {
+        Args: { p_hours: number; p_note?: string; p_start_at: string }
+        Returns: {
+          booking_id: string
+          ref_code: string
+        }[]
+      }
+      admin_reject_payment: {
+        Args: { p_booking_id: string; p_reason: string }
+        Returns: Database["public"]["Enums"]["booking_status"]
+      }
+      admin_remove_block: { Args: { p_booking_id: string }; Returns: undefined }
+      admin_summary: {
+        Args: { p_from: string; p_to: string }
+        Returns: {
+          bookings: number
+          cancel_fees: number
+          court_revenue: number
+          hours: number
+          paddle_revenue: number
+          pending_review: number
+          pending_review_amount: number
+          refunds: number
+          total_earnings: number
+        }[]
+      }
       cancel_unpaid_booking: {
         Args: { p_booking_id: string; p_guest_token?: string }
         Returns: Database["public"]["Enums"]["booking_status"]
