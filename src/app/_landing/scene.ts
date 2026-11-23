@@ -100,15 +100,81 @@ export function mountLandingScene(root: HTMLElement, opts: SceneOptions): () => 
       hz = H * 0.64,
       M = Math.max(W, H);
 
+    // winter twilight: deep indigo overhead → blue → lavender → golden horizon
     let g = ctx.createLinearGradient(0, 0, 0, hz);
-    g.addColorStop(0, "#0A3F6E");
-    g.addColorStop(0.3, "#2A6FAA");
+    g.addColorStop(0, "#0B1F47");
+    g.addColorStop(0.16, "#173E78");
+    g.addColorStop(0.36, "#2F6AA8");
     g.addColorStop(0.58, "#7DB2DC");
-    g.addColorStop(0.78, "#DCD3D8");
+    g.addColorStop(0.76, "#D9CFDB");
     g.addColorStop(0.9, "#F6C9A0");
     g.addColorStop(1, "#FBDDBE");
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, W, hz + 1);
+
+    // early stars, fading out toward the horizon
+    {
+      const rs = rng(21),
+        band = hz * 0.46,
+        n = Math.min(240, Math.round((W * band) / 2600));
+      for (let i = 0; i < n; i++) {
+        const x = rs() * W,
+          y = Math.pow(rs(), 1.6) * band,
+          fade = 1 - y / band,
+          big = rs() < 0.07,
+          r0 = big ? 1.3 + rs() * 0.6 : 0.4 + rs() * 0.8,
+          a = (0.35 + rs() * 0.6) * fade;
+        ctx.fillStyle = `rgba(255,250,240,${a.toFixed(2)})`;
+        ctx.beginPath();
+        ctx.arc(x, y, r0, 0, 6.2832);
+        ctx.fill();
+        if (big) {
+          // a small four-point glint on the brightest stars
+          ctx.strokeStyle = `rgba(255,248,230,${(a * 0.55).toFixed(2)})`;
+          ctx.lineWidth = 0.7;
+          ctx.beginPath();
+          ctx.moveTo(x - r0 * 4, y);
+          ctx.lineTo(x + r0 * 4, y);
+          ctx.moveTo(x, y - r0 * 4);
+          ctx.lineTo(x, y + r0 * 4);
+          ctx.stroke();
+        }
+      }
+    }
+
+    // crescent moon with a soft halo (laptops; on phones the slab covers this part of the sky)
+    if (!phone) {
+      const mr = Math.max(16, Math.min(30, M * 0.018)),
+        mx = W * 0.085,
+        my = Math.max(mr * 2.2, H * 0.09);
+      const halo = ctx.createRadialGradient(mx, my, mr * 0.6, mx, my, mr * 5);
+      halo.addColorStop(0, "rgba(214,228,255,0.32)");
+      halo.addColorStop(0.35, "rgba(190,210,250,0.10)");
+      halo.addColorStop(1, "rgba(190,210,250,0)");
+      ctx.fillStyle = halo;
+      ctx.fillRect(mx - mr * 5, my - mr * 5, mr * 10, mr * 10);
+      const off = document.createElement("canvas"),
+        dpr = Math.min(window.devicePixelRatio || 1, 2),
+        size = Math.ceil(mr * 2 + 4);
+      off.width = Math.ceil(size * dpr);
+      off.height = Math.ceil(size * dpr);
+      const oc = off.getContext("2d");
+      if (oc) {
+        oc.scale(dpr, dpr);
+        const mg = oc.createLinearGradient(0, 0, size, size);
+        mg.addColorStop(0, "#FFF8E6");
+        mg.addColorStop(1, "#F3E3C2");
+        oc.fillStyle = mg;
+        oc.beginPath();
+        oc.arc(size / 2, size / 2, mr, 0, 6.2832);
+        oc.fill();
+        oc.globalCompositeOperation = "destination-out";
+        oc.beginPath();
+        oc.arc(size / 2 + mr * 0.48, size / 2 - mr * 0.18, mr * 0.9, 0, 6.2832);
+        oc.fill();
+        ctx.drawImage(off, mx - size / 2, my - size / 2, size, size);
+      }
+    }
 
     // soft sun rays fanning up from behind the clouds
     const sx = W * 0.72,
@@ -145,6 +211,63 @@ export function mountLandingScene(root: HTMLElement, opts: SceneOptions): () => 
       ctx.fillRect(-rad, -rad, rad * 2, rad * 2);
       ctx.restore();
     }
+    // mid-sky cloud banks, lit pink and peach from below by the low sun, cooler lavender tops.
+    // Each bank is drawn as ONE merged shape (offscreen), then tinted and blurred, so the
+    // puffs never show as overlapping circles.
+    {
+      const rl = rng(31),
+        dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const banks: Array<[number, number, number]> = phone
+        ? [[0.18, 0.3, 0.9], [0.8, 0.42, 1.0], [0.45, 0.55, 0.75]]
+        : [[0.12, 0.27, 1.0], [0.44, 0.17, 0.75], [0.76, 0.31, 1.15], [0.97, 0.45, 0.8], [0.27, 0.5, 0.85], [0.6, 0.58, 0.65]];
+      banks.forEach(([fxp, fyp, k]) => {
+        const span = M * 0.17 * k,
+          bw = span * 2.6,
+          bh = span * 0.75,
+          cx = W * fxp,
+          base = hz * fyp, // flat cloud base
+          warm = 0.5 + (base / hz) * 0.5; // lower clouds catch more of the sunset
+        const off = document.createElement("canvas");
+        off.width = Math.ceil(bw * dpr);
+        off.height = Math.ceil(bh * dpr);
+        const oc = off.getContext("2d");
+        if (!oc) return;
+        oc.scale(dpr, dpr);
+        const by = bh * 0.82; // base line inside the offscreen canvas
+        oc.save();
+        oc.beginPath();
+        oc.rect(0, 0, bw, by);
+        oc.clip();
+        oc.fillStyle = "#fff";
+        const n = 16 + Math.floor(rl() * 7);
+        for (let i = 0; i < n; i++) {
+          const t = i / (n - 1) - 0.5,
+            hump = Math.cos(t * Math.PI),
+            rad = span * (0.07 + 0.15 * hump * (0.55 + rl() * 0.6)),
+            x = bw / 2 + t * span * 2.1 + (rl() - 0.5) * span * 0.15,
+            y = by - rad * (0.35 + rl() * 0.35) - hump * span * 0.05;
+          oc.beginPath();
+          oc.ellipse(x, y, rad * 1.15, rad, 0, 0, Math.PI * 2);
+          oc.fill();
+        }
+        oc.restore();
+        // tint the merged shape: lavender tops, rose middle, peach underside
+        oc.globalCompositeOperation = "source-in";
+        const tg = oc.createLinearGradient(0, 0, 0, by);
+        tg.addColorStop(0, "#93A6D8");
+        tg.addColorStop(0.5, "#D8B8D2");
+        tg.addColorStop(0.85, "#F7B79C");
+        tg.addColorStop(1, "#FFC9A3");
+        oc.fillStyle = tg;
+        oc.fillRect(0, 0, bw, bh);
+        ctx.save();
+        if ("filter" in ctx) ctx.filter = `blur(${phone ? 2.5 : 3.5}px)`;
+        ctx.globalAlpha = Math.min(0.85, (0.45 + 0.35 * warm) * Math.min(1, k + 0.1));
+        ctx.drawImage(off, cx - bw / 2, base - by, bw, bh);
+        ctx.restore();
+      });
+    }
+
     const rc = rng(5);
     if ("filter" in ctx) ctx.filter = "blur(1.5px)";
     const far = ["rgba(242,234,234,0.92)", "rgba(222,216,228,0.9)", "rgba(170,178,206,0.85)"];
@@ -634,16 +757,18 @@ export function mountLandingScene(root: HTMLElement, opts: SceneOptions): () => 
       place(head, P.x + 20, P.y + 20, P.w - 40);
     } else {
       const w = W < 1000 ? W * 0.82 : Math.min(W * 0.68, 1000);
-      const h = Math.min(H * 0.8, 660, w * 0.72);
       const x = (W - w) / 2 + (W < 1000 ? W * 0.05 : W * 0.07);
-      const y = (H - h) / 2 - H * 0.01;
+      // measure the nav and text first, so the slab is always tall enough to hold them
+      place(nav, x, 0, w);
+      const navH = nav.offsetHeight,
+        colW = w * 0.54;
+      place(head, x + 44, 0, colW);
+      place(cta, x + 44, 0, colW);
+      const total = head.offsetHeight + 30 + cta.offsetHeight;
+      const h = Math.min(H - 24, Math.max(Math.min(H * 0.8, 660, w * 0.72), navH + total + 64));
+      const y = Math.max(12, (H - h) / 2 - H * 0.01);
       P = { x, y, w, h };
       place(nav, P.x, P.y, P.w);
-      const navH = nav.offsetHeight,
-        colW = P.w * 0.54;
-      place(head, P.x + 44, 0, colW);
-      place(cta, P.x + 44, 0, colW);
-      const total = head.offsetHeight + 30 + cta.offsetHeight;
       const y0 = P.y + navH + Math.max(14, (P.h - navH - total) / 2);
       place(head, P.x + 44, y0);
       place(cta, P.x + 44, y0 + head.offsetHeight + 30);

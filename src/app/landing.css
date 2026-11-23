@@ -72,14 +72,23 @@
 .landing .l-logo .l-wm small { margin-top: 4px; font-size: 9.5px; font-weight: 800; letter-spacing: 0.2em; text-transform: uppercase; color: var(--l-navy-700); opacity: 0.85; }
 
 /* ---------- nav ---------- */
-/* z 9: above the text (7) and the snow (8), so the account and phone menus open on top. */
-.landing .l-nav { z-index: 9; display: flex; align-items: center; gap: 10px; }
-.landing .l-links { display: none; align-items: center; gap: 2px; margin-left: 26px; padding: 4px; border-radius: 14px; background: rgb(255 255 255 / 0.36); box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.6); }
+/* z 9: above the text (7) and the snow (8), so the account and phone menus open on top.
+   The nav is a size container: the links show (centered in the panel) only when the
+   panel itself is wide enough; otherwise they fold into the menu button. */
+.landing .l-nav { z-index: 9; container: lnav / inline-size; }
+.landing .l-nav-row { display: flex; align-items: center; gap: 10px; }
+.landing .l-links { display: none; align-items: center; gap: 2px; padding: 4px; border-radius: 14px; background: rgb(255 255 255 / 0.36); box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.6); }
 .landing .l-links a { display: flex; align-items: center; height: 38px; padding: 0 15px; border-radius: 10px; font-size: 14.5px; font-weight: 700; color: var(--l-navy-900); text-decoration: none; }
 .landing .l-links a:not([aria-current]):hover { background: rgb(255 255 255 / 0.55); }
 .landing .l-links a[aria-current="page"],
 .landing .l-grad { background: var(--l-grad); color: var(--l-white); text-shadow: 0 1px 1px rgb(150 50 0 / 0.35); box-shadow: var(--l-grad-shadow); border: 1px solid rgb(255 255 255 / 0.4); }
-.landing .l-nav-right { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+.landing .l-nav-right { display: flex; align-items: center; gap: 8px; margin-left: auto; justify-self: end; }
+.landing .l-links a { white-space: nowrap; }
+@container lnav (min-width: 770px) {
+  .landing .l-nav-row { display: grid; grid-template-columns: minmax(max-content, 1fr) auto minmax(max-content, 1fr); gap: 16px; }
+  .landing .l-links { display: flex; }
+  .landing .l-menu { display: none; }
+}
 .landing .l-login { height: 42px !important; padding: 0 20px !important; border-radius: 12px !important; font-size: 15.5px !important; font-weight: 800; }
 .landing .l-grad:active { filter: brightness(0.94); transform: scale(0.98); }
 @media (max-width: 699px) {
@@ -94,7 +103,7 @@
   .landing .l-logo .l-wm small { white-space: nowrap; }
 }
 @media (max-width: 379px) {
-  .landing .l-nav { gap: 6px; }
+  .landing .l-nav-row { gap: 6px; }
   .landing .l-logo { gap: 8px; }
   .landing .l-logo svg { width: 30px; height: 30px; }
   .landing .l-logo .l-wm b { font-size: 17px; }
@@ -103,7 +112,6 @@
 }
 @media (min-width: 700px) {
   .landing .l-nav { padding: 18px 18px 0 24px; }
-  .landing .l-links { display: flex; }
 }
 
 /* ---------- words ---------- */

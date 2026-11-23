@@ -125,7 +125,12 @@ Mobile type scale:
 Follows the composition of reference image 2 (the bear breaking out of ice/glass), without the person. Approved prototype: https://claude.ai/artifact/QfKzsLRhC5LZYXgo35ZvNR (private to the developer).
 
 - **Scene (drawn in code):**
-  - **Sky:** glacier blue with soft sun rays, and towering white cumulus on the horizon in place of the bear image's snowy peaks.
+  - **Sky (winter twilight, updated 2026-11-23):**
+    - Deep indigo overhead, fading through blue and lavender to the golden horizon, with soft sun rays.
+    - Faint early stars in the upper sky (a few with small glints).
+    - A crescent moon with a soft halo, upper left (laptops only).
+    - Mid-sky cloud banks lit pink and peach from below by the low sun, with cooler lavender tops. Each bank is one merged, blurred shape, never visible overlapping circles.
+    - Towering white cumulus on the horizon, in place of the bear image's snowy peaks.
   - **Court:** a **blue court with a red kitchen** (the non-volley zones next to the net), white lines including the kitchen lines, and a net.
   - **Benches:** wooden **benches** along both sidelines.
   - **Snow:** clearly visible **snow** at three depths, about 1 flake per 2,800 px², up to 440. Small flakes have a faint blue outline so they still show over the white glass. With `prefers-reduced-motion` it's a still frame.
@@ -150,7 +155,7 @@ Follows the composition of reference image 2 (the bear breaking out of ice/glass
 - **Booking pass (laptop showcase, fills the open column left of the slab):** a frosted ticket tilted in 3D (`rotateY(16deg) rotateZ(-4deg)`), floating and following the parallax. It shows the logo tile, "Booking pass · Dink n' Drive", a green "Confirmed" stamp, "Saturday, Nov 21 / 7:00 – 9:00 PM", tiles for Hours 2 · Paddles Rented · Paid via GCash, a perforated tear line, reference "DND-7K3Q9", total ₱550 (in orange) and a barcode. It's an illustration of what customers get after booking, not live data. It scales to the column and is hidden when the column is narrower than 250 px and on phones.
 - **Outside the glass:** on laptops, floating frosted chips: "₱250 / hour" on the left, and a live **"Open now · till 12 AM"** status (green dot, from Manila time and `settings`) above the top-right corner.
 - **Entrance moment:** on load the paddle smashes out with an overshoot, the cracks draw outward, the shards burst from the hole and the ball flies in. It runs once, takes about 1 s, and is skipped with `prefers-reduced-motion`.
-- **Nav:** on laptops it sits inside the slab: logo, then the links in a frosted pill group (the active link is an orange-gradient chip), then an orange-gradient "Log in". On phones it's a frosted top bar with the logo, "Log in" and an orange-gradient menu button.
+- **Nav:** on laptops it sits inside the slab: logo on the left, the links in a frosted pill group **centered in the slab** (the active link is an orange-gradient chip), and an orange-gradient "Log in" on the right. The links show only when the slab itself is wide enough (a container query on the nav, about 770 px); otherwise they fold into the orange-gradient menu button, so nothing wraps or overflows on tablets and small laptops. On phones it's a frosted top bar with the logo, "Log in" and the menu button.
 - **Logo:** an orange-gradient app tile with a white paddle and a lime ball, plus the wordmark **Dink *n'* Drive** (Fraunces 750, "n'" in italic orange) over "PICKLEBALL · LUYANG" in small spaced caps.
 - **Wording** (structured like the CK Grounds reference the developer liked, written in our own words):
   - Location pill: "📍 Luyang · open daily"
@@ -210,7 +215,7 @@ On phones it's a bottom sheet; on laptops, a centered dialog. `/book` renders th
 
 ## 6. Navigation
 
-- **Top navigation everywhere** (decided with the developer; no bottom tab bar). Logo on the left. On laptops the links are Home · Community · Feedback · My bookings, with the active one as an `orange-50` pill, and an orange "Log in" button (or the avatar when signed in) on the right. On phones: "Log in"/avatar plus a menu button that opens the links in a dropdown with 48 px rows.
+- **Top navigation everywhere** (decided with the developer; no bottom tab bar). Logo on the left. From 1024 px up the links (Home · Community · Feedback · My bookings) are **centered in the header**, with the active one as an `orange-50` pill, and an orange "Log in" button (or the avatar when signed in) on the right. Below 1024 px (phones and tablets): "Log in"/avatar plus a menu button that opens the links in a dropdown with 48 px rows.
 - On the landing page the nav sits inside the glass panel. On other pages it's a sticky frosted header with the same content (`top: env(safe-area-inset-top)`), over the sky band described under "Inner pages" in §5.
 - Account menu (avatar): My bookings, Profile, Admin (owner only), Sign out.
 

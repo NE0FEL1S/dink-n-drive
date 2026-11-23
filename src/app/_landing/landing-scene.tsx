@@ -64,26 +64,28 @@ export function LandingScene({ copy, account }: { copy: LandingCopy; account: Re
           ))}
 
           <nav data-l="nav" className="l-nav l-abs" aria-label="Main">
-            <Link className="l-logo" href="/" aria-label="Dink n' Drive home">
-              <LogoTile />
-              <span className="l-wm">
-                <b>
-                  Dink <em>n&apos;</em> Drive
-                </b>
-                <small>Pickleball · Luyang</small>
-              </span>
-            </Link>
-            <div className="l-links">
-              <Link href="/" aria-current="page">
-                Home
+            <div className="l-nav-row">
+              <Link className="l-logo" href="/" aria-label="Dink n' Drive home">
+                <LogoTile />
+                <span className="l-wm">
+                  <b>
+                    Dink <em>n&apos;</em> Drive
+                  </b>
+                  <small>Pickleball · Luyang</small>
+                </span>
               </Link>
-              <Link href="/community">Community</Link>
-              <Link href="/feedback">Feedback</Link>
-              <Link href="/my-bookings">My bookings</Link>
-            </div>
-            <div className="l-nav-right">
-              {account}
-              <MobileNav className="min-[700px]:hidden" />
+              <div className="l-links">
+                <Link href="/" aria-current="page">
+                  Home
+                </Link>
+                <Link href="/community">Community</Link>
+                <Link href="/feedback">Feedback</Link>
+                <Link href="/my-bookings">My bookings</Link>
+              </div>
+              <div className="l-nav-right">
+                {account}
+                <MobileNav className="l-menu" />
+              </div>
             </div>
           </nav>
 

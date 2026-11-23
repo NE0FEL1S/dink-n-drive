@@ -28,7 +28,7 @@ export function DesktopNav() {
             key={link.href}
             href={link.href}
             aria-current={active ? "page" : undefined}
-            className={`flex h-10 items-center rounded-[10px] px-4 text-[14.5px] font-bold transition-colors ${
+            className={`flex h-10 items-center rounded-[10px] px-4 text-[14.5px] font-bold whitespace-nowrap transition-colors ${
               active ? "bg-orange-50 text-orange-600" : "text-navy-900 hover:bg-white/70 active:bg-white"
             }`}
           >
