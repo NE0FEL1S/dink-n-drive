@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { Card, Eyebrow } from "@/components/ui/card";
+import { PageHeader } from "@/components/page-header";
+import { Card } from "@/components/ui/card";
 import { requireOwner } from "@/lib/auth";
 
 export const metadata: Metadata = { title: "Admin", robots: { index: false } };
@@ -21,11 +22,7 @@ async function AdminHome() {
 
   return (
     <div className="grid gap-6">
-      <div className="grid gap-2">
-        <Eyebrow>Owner</Eyebrow>
-        <h1 className="font-display text-[28px] leading-[34px] font-semibold text-navy-900">Admin</h1>
-        <span className="h-[3px] w-6 rounded-full bg-orange-500" aria-hidden="true" />
-      </div>
+      <PageHeader eyebrow="Owner" title="Admin" />
       <Card>
         <p className="text-base text-navy-700">
           Signed in as <b className="text-navy-900">{owner.full_name ?? owner.email}</b>. The payment queue, bookings,

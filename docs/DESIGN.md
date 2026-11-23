@@ -165,6 +165,17 @@ Follows the composition of reference image 2 (the bear breaking out of ice/glass
 - **Nothing else on the landing page:** no availability, no location map, no footer. Available hours appear only in the booking popup.
 - **Assets:** must be the court's own photos before launch. The prototype uses manufacturer product shots, which carry a brand logo and are copyrighted. They're also low-resolution (upscaled 2× for the prototype). Export as WebP/AVIF with transparency at 2–3× display size, via `next/image`.
 
+**Inner pages (every page except `/`)** (added with the developer, 2026-11-23)
+
+- **Sky band:** a soft golden-hour sky sits behind the sticky header and fades into the `ice-50` page. It uses the landing palette: deep blue at the top, a peach horizon, a warm sun glow low on the right, a few clouds and static snowflakes. It's about 340 px tall on phones and 420 px on laptops. Pure CSS (`.site-sky` in `globals.css`), with no canvas or animation, so it stays cheap on low-end Android. It's rendered by `SiteShell` (`src/components/site-shell.tsx`).
+- **Header** over the sky: frosted white at 82% opacity with a 14 px blur (solid 94% white fallback).
+- **Content cards** float over the sky band: white, 16 px radius, soft shadow (as in §4).
+- **Page titles that sit on the sky, not inside a card** (Admin, My bookings, Community, Feedback) use `PageHeader`:
+  - white serif H1 with a soft shadow (white on the upper sky blues is ≥ 4:1, AA for large text);
+  - a white eyebrow pill with orange text;
+  - the 24×3 px orange bar.
+  - Never put small body text directly on the sky; it goes in a card.
+
 **Booking popup** (opened by "Book now"; also reachable directly at `/book`)
 
 Steps in the sheet: date strip → hour grid → paddles toggle → **contact details** (guests: full name, email, PH mobile with `autoComplete` name/email/tel; signed-in users: prefilled, editable phone if missing) → Continue → **GCash QR + amount + 15-minute countdown, with the "Upload proof" button right below the QR** → "Pending review" confirmation with the booking reference. Guests see a note that the booking is saved in My Bookings on this browser.
@@ -200,7 +211,7 @@ On phones it's a bottom sheet; on laptops, a centered dialog. `/book` renders th
 ## 6. Navigation
 
 - **Top navigation everywhere** (decided with the developer; no bottom tab bar). Logo on the left. On laptops the links are Home · Community · Feedback · My bookings, with the active one as an `orange-50` pill, and an orange "Log in" button (or the avatar when signed in) on the right. On phones: "Log in"/avatar plus a menu button that opens the links in a dropdown with 48 px rows.
-- On the landing page the nav sits inside the glass panel. On other pages it's a sticky frosted header with the same content (`top: env(safe-area-inset-top)`).
+- On the landing page the nav sits inside the glass panel. On other pages it's a sticky frosted header with the same content (`top: env(safe-area-inset-top)`), over the sky band described under "Inner pages" in §5.
 - Account menu (avatar): My bookings, Profile, Admin (owner only), Sign out.
 
 ---
