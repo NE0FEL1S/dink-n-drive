@@ -982,19 +982,20 @@ export function mountLandingScene(root: HTMLElement, opts: SceneOptions): () => 
         c.hidden = b.l < 2 || b.r > W - 2 || b.t < 2 || hit(b, ballR, 8) || hit(b, hr, 8) || hit(b, cr, 8) || (!pass.hidden && hit(b, passR, 6));
       });
 
-      // Right-side chips (lights, paddles, book-ahead): one left-aligned column at colL,
-      // spread evenly from just below the nav row down to the slab's bottom edge, with equal
-      // gaps. The paddle was already kept left of this column (see useCol above).
+      // Right-side chips (lights, paddles, book-ahead): one left-aligned column at colL with
+      // equal gaps (capped at COL_GAP so they read as a group), centred vertically between the
+      // nav row and the slab's bottom edge. The paddle was already kept left of this column.
       if (useCol) {
         const n = col.length,
           sumH = colSizes.reduce((sum, [, h0]) => sum + h0, 0),
           y0 = nr.b + 18,
           y1 = Math.min(H - 12, P.y + P.h + 8),
-          gap = (y1 - y0 - sumH) / (n - 1);
+          COL_GAP = 36,
+          gap = Math.min(COL_GAP, (y1 - y0 - sumH) / (n - 1));
         if (gap >= 12) {
           const blockers: Box[] = [ballR, hr, cr];
           if (!chipOpen.hidden) blockers.push(rectOf(chipOpen, S));
-          let y = y0;
+          let y = y0 + (y1 - y0 - (sumH + gap * (n - 1))) / 2;
           col.forEach((c, i) => {
             const [w0, h0] = colSizes[i];
             const bx = { l: colL, t: y, r: colL + w0, b: y + h0 };
