@@ -1,6 +1,5 @@
 "use server";
 
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { postSignInPath } from "@/lib/auth";
 import { safeNextPath } from "@/lib/safe-next";
@@ -12,30 +11,6 @@ export type AuthFormState = {
   fields?: FieldErrors;
   values?: { email?: string; fullName?: string };
 };
-
-async function requestOrigin() {
-  const h = await headers();
-  const host = h.get("x-forwarded-host") ?? h.get("host");
-  const proto = h.get("x-forwarded-proto") ?? (host?.startsWith("localhost") ? "http" : "https");
-  return `${proto}://${host}`;
-}
-
-/** Starts Google OAuth. Supabase only redirects back to URLs on its allow-list (docs/SETUP.md Part 2.5). */
-export async function signInWithGoogle(formData: FormData) {
-  const next = safeNextPath(formData.get("next")?.toString());
-  const supabase = await createClient();
-  const origin = await requestOrigin();
-
-  const { data, error } = await supabase.auth.signInWithOAuth({
-    provider: "google",
-    options: { redirectTo: `${origin}/auth/callback?next=${encodeURIComponent(next)}` },
-  });
-
-  if (error || !data.url) {
-    redirect(`/login?error=google&next=${encodeURIComponent(next)}`);
-  }
-  redirect(data.url);
-}
 
 export async function signInWithEmail(_prev: AuthFormState, formData: FormData): Promise<AuthFormState> {
   const next = safeNextPath(formData.get("next")?.toString());
@@ -50,7 +25,7 @@ export async function signInWithEmail(_prev: AuthFormState, formData: FormData):
   if (error || !data.user) {
     const message =
       error?.code === "invalid_credentials"
-        ? "That email and password don't match. Signed up with Google? Use the Google button."
+        ? "That email and password don't match. Please try again."
         : "We couldn't log you in. Please try again.";
     return { error: message, values: { email: raw.email } };
   }

@@ -10,7 +10,7 @@ Booking site for a single pickleball court in Cebu, Philippines, with a communit
 
 ## Stack
 - Next.js (App Router) + TypeScript (strict), Tailwind CSS, `src/` directory, `@/*` import alias
-- Supabase: Postgres, Auth (Google + email/password), Storage, RLS, pg_cron — use `@supabase/ssr`
+- Supabase: Postgres, Auth (email/password only — no Google/social login), Storage, RLS, pg_cron — use `@supabase/ssr`
 - Hosting: Vercel · Repo: GitHub
 - Exports: `exceljs` (.xlsx), `jspdf` + `jspdf-autotable` (PDF) · Uploads compressed with `browser-image-compression`
 
@@ -64,7 +64,7 @@ Email sending of any kind, forgot/change password, booking emails, online paymen
 - Update the checkboxes below as phases are completed.
 
 ## Phases
-- [x] 1. Setup: schema, RLS, storage buckets, auth (Google + email), profile completion, owner role
+- [x] 1. Setup: schema, RLS, storage buckets, auth (email + password), profile completion, owner role
 - [ ] 2. Booking flow: hourly grid with multi-hour selection, paddle logic, payment-proof upload, holds/expiry, My Bookings
 - [ ] 3. Admin: payment queue, bookings table + filters, summary cards, Excel/PDF exports, settings
 - [ ] 4. Cancellation & refund flow (customer + admin)

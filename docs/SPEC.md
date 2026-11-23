@@ -1,10 +1,11 @@
-# Dink n' Drive — Pickleball Court Website · Build Spec (v1.4)
+# Dink n' Drive — Pickleball Court Website · Build Spec (v1.5)
 
-Status: **Approved plan** · Last updated 2026-11-19
+Status: **Approved plan** · Last updated 2026-11-23
 
 Portfolio project by Arbien Armenion; may be handed over to the court owner for real use.
 
 Changelog
+- v1.5 — **Email + password only:** Google sign-in dropped (decided with the developer, 2026-11-23). No emails are sent, so accounts are not email-verified; forgotten passwords go through the owner-assisted reset.
 - v1.4 — **Guest booking:** anyone can book with name, email and phone; accounts are optional for booking (still required to post, comment, react or give feedback). My Bookings also shows guest bookings made in the same browser. Payment proof is uploaded right below the GCash QR. Customer cancellation of a paid booking is now a **request** the owner approves or declines; the ₱100 fee counts as earnings once the refund is marked completed. The unpaid-booking limit is per phone number. Landing page is one screen; booking opens in a popup.
 - v1.3 — Pre-build review. Paddle carry-over removed: every booking with paddles pays the flat ₱50. Owner can block hours and cancel any booking with a full refund. New limits: how far ahead people can book and how many unpaid bookings a customer can hold. Cancellation fee is saved on the booking; unpaid bookings cancel free at any time. Comments and reactions use real foreign keys. Rate limits added for feedback and comments. Next.js 16 `proxy` replaces `middleware`.
 - v1.2 — Court named **Dink n' Drive**. No maximum booking length; bookings are whole hours only, always on the hour.
@@ -41,7 +42,7 @@ All prices, hours, hold time, cutoff, fees and limits live in a `settings` row s
 ## 2. Stack
 
 - **Next.js 16 (App Router) + TypeScript**, Tailwind CSS
-- **Supabase**: Postgres, Auth (Google + email/password), Storage, Row-Level Security, pg_cron; `@supabase/ssr` for the Next.js client
+- **Supabase**: Postgres, Auth (email/password), Storage, Row-Level Security, pg_cron; `@supabase/ssr` for the Next.js client
 - **Vercel** hosting, **GitHub** repo
 - Exports: `exceljs` (.xlsx) and `jspdf` + `jspdf-autotable` (PDF), generated in the browser
 - Image compression in the browser before upload (`browser-image-compression`)
@@ -52,8 +53,8 @@ All prices, hours, hold time, cutoff, fees and limits live in a `settings` row s
 
 ## 3. Auth & roles
 
-- Sign-in: **Google** (primary button) and **email + password** (email confirmation turned off in Supabase).
-- A trigger on `auth.users` creates the `profiles` row on sign-up and prefills the name from Google when available.
+- Sign-in: **email + password** only (email confirmation turned off in Supabase; no Google or other social login in v1). Emails are not verified, so an account proves nothing about the email address.
+- A trigger on `auth.users` creates the `profiles` row on sign-up and prefills the name from the sign-up form.
 - First sign-in → complete profile: full name and phone number (required) before posting, commenting, reacting or giving feedback. Signed-in users who book without a phone on file enter it in the booking popup and it is saved to their profile. Phone must be a PH mobile number entered as `09XXXXXXXXX`; stored as `+639XXXXXXXXX`.
 - **Guests** (no account) can book; see §5. Accounts give prefilled details and My Bookings on any device.
 - Roles: `customer` (default) and `owner`. Customers can never change `role`. The first owner is set by hand with SQL (see `docs/SETUP.md`).
@@ -219,7 +220,7 @@ Opening hours are checked in the function, not by a CHECK constraint, because th
 
 ## 11. Build phases
 
-1. Project setup, database schema, RLS, storage buckets, auth (Google + email), profile completion, owner role
+1. Project setup, database schema, RLS, storage buckets, auth (email + password), profile completion, owner role
 2. Booking flow: hourly grid with multi-hour selection, paddle logic, payment-proof upload, holds and expiry, My Bookings
 3. Admin: payment queue, bookings table with filters, summary cards, exports, settings, block hours
 4. Cancellation and refund flow (customer + admin, including owner cancellation)

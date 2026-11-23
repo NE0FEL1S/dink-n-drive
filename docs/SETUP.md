@@ -1,6 +1,6 @@
 # Dink n' Drive — Setup Guide (do these by hand)
 
-You need: Node.js 20 or newer, Git, a GitHub account, a Supabase account, a Google account, and Claude Code installed.
+You need: Node.js 20 or newer, Git, a GitHub account, a Supabase account, and Claude Code installed.
 
 Dashboard menu names can shift slightly over time; if a label differs, look for the closest match.
 
@@ -79,21 +79,9 @@ Dashboard menu names can shift slightly over time; if a label differs, look for 
 
 ---
 
-## Part 3 — Google sign-in
+## Part 3 — Google sign-in (not used)
 
-1. console.cloud.google.com → project picker → **New project** → name `dink-n-drive` → Create, then select it.
-2. **APIs & Services → OAuth consent screen** (may appear as **Google Auth Platform**)
-   - App name: `Dink n' Drive`
-   - User support email + developer contact: your email
-   - Audience / user type: **External**
-   - Scopes: the defaults (email, profile, openid) are enough
-3. **Credentials → Create credentials → OAuth client ID**
-   - Application type: **Web application**
-   - Authorized JavaScript origins: `http://localhost:3000`
-   - Authorized redirect URIs: `https://<project-ref>.supabase.co/auth/v1/callback`
-   - Create → copy the **Client ID** and **Client secret**
-4. Back in Supabase: Authentication → **Sign In / Providers** → **Google** → enable, paste Client ID and Client secret → Save.
-5. **Publish the app:** in the OAuth consent screen / Audience page, click **Publish app** so anyone can sign in. While it's in "Testing", only test users you add can log in. With only the basic email/profile scopes, Google doesn't require a review.
+Dropped in spec v1.5: the site uses **email + password only**. Leave Google (and every other provider) **disabled** in Supabase → Authentication → Sign In / Providers. Nothing to do here.
 
 ---
 
@@ -140,4 +128,3 @@ Customers can never change their own role; this SQL step is the only way to crea
 2. Add the three environment variables from `.env.local`.
 3. Deploy, then copy the Vercel URL into:
    - Supabase → Authentication → URL Configuration (Site URL + Redirect URLs)
-   - Google Cloud → OAuth client → Authorized JavaScript origins
