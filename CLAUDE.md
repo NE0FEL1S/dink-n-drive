@@ -22,6 +22,7 @@ Booking site for a single pickleball court in Cebu, Philippines, with a communit
 - `npx supabase db push --remote` — apply migrations to the linked remote project (CLI v3 targets a **local** stack unless you pass `--remote`; `--linked` is deprecated)
 - `npx supabase gen types --lang=typescript --remote --schema public > src/types/database.ts` — regenerate DB types after schema changes
 - `npx supabase db query --remote -f <file.sql>` — run SQL against the remote DB (wrap checks in `begin; … rollback;`)
+- `npx supabase db query --remote --yes -o table -f supabase/checks/<name>.sql` — rolled-back check suites (`schema_rls_checks.sql`, `booking_checks.sql`); run after schema changes. The CLI asks before touching the remote DB: get the developer's OK before passing `--yes`
 - `npx supabase db advisors --remote` — security/performance lints; run after each migration
 
 ## Core business rules (details in docs/SPEC.md)
