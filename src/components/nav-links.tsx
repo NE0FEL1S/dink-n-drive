@@ -41,10 +41,10 @@ export function DesktopNav() {
 }
 
 /** Phone: orange-gradient menu button opening the links as 48px rows. */
-export function MobileNav() {
+export function MobileNav({ className = "md:hidden" }: { className?: string }) {
   const pathname = usePathname();
   return (
-    <div className="md:hidden">
+    <div className={className}>
       <Dropdown
         trigger={(props) => (
           <button
