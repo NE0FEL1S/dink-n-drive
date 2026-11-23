@@ -122,9 +122,40 @@ Customers can never change their own role; this SQL step is the only way to crea
 
 ---
 
-## Part 6 — Later (Phase 7): Deploy to Vercel
+## Part 6 — Connect Vercel (done at the start of Phase 2)
 
-1. vercel.com → **Add New → Project** → import `dink-n-drive` from GitHub.
-2. Add the three environment variables from `.env.local`.
-3. Deploy, then copy the Vercel URL into:
-   - Supabase → Authentication → URL Configuration (Site URL + Redirect URLs)
+1. vercel.com → **Add New → Project** → import `dink-n-drive` from GitHub (team "PRISM TECHNOLOGY", Hobby).
+2. Add the three environment variables from `.env.local` for **Production and Preview** (mark `SUPABASE_SECRET_KEY` sensitive).
+3. Deploy. Then **Settings → Deployment Protection → Vercel Authentication: off**, so preview links (staging, PRs) open without a Vercel login. The e2e tests need this.
+4. Supabase → Authentication → URL Configuration → **Redirect URLs**: add `https://dink-n-drive.vercel.app/**` and `https://*-prism-technology.vercel.app/**`. Keep Site URL on `http://localhost:3000` until the Phase 7 launch.
+
+URLs:
+- Production (`main`): https://dink-n-drive.vercel.app
+- Staging (`staging`): https://dink-n-drive-git-staging-prism-technology.vercel.app
+- Each PR branch: `dink-n-drive-git-<branch>-prism-technology.vercel.app` (Vercel posts the link on the PR)
+
+At the Phase 7 launch: set Supabase **Site URL** to the production URL.
+
+---
+
+## Part 7 — Testing (end-to-end, Playwright)
+
+The tests run in a phone-sized iPhone (WebKit), an Android phone (Chromium) and desktop Chrome, against the one Supabase project. Every user and booking they create is tagged `e2e+<run>-…@dinkndrive.test` and deleted when the run ends (leftovers from crashed runs are deleted at the start of the next run, after an hour).
+
+**On GitHub (automatic).** `.github/workflows/e2e.yml` runs on every push to `staging` (so after you merge a PR): it waits until the staging URL serves the pushed commit (`/api/version`), then runs the suite. Docs-only changes and code that already passed are skipped; a newer push cancels the older run. Failed runs upload a `playwright-report` artifact (Actions → the run → Artifacts).
+
+One-time setup — GitHub repo → **Settings → Secrets and variables → Actions → New repository secret**, add:
+
+| Name | Value |
+|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | same as in `.env.local` |
+| `SUPABASE_SECRET_KEY` | same as in `.env.local` |
+
+**On your computer.**
+```bash
+npx playwright install chromium webkit   # once
+npm run test:e2e                          # starts `npm run dev` if it isn't running
+npx playwright test --project=iphone      # one device only
+E2E_BASE_URL=https://dink-n-drive-git-staging-prism-technology.vercel.app npm run test:e2e   # against staging
+npx playwright show-report                # open the last report
+```
