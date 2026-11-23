@@ -1,0 +1,102 @@
+# End-to-end tests against the Vercel deployment of each push to `staging`.
+# - Only `staging` (never main or work branches), and not for docs-only changes.
+# - Skips code that already passed (marker keyed by a fingerprint of the non-docs files).
+# - A newer push cancels the run in progress.
+# Test data is tagged e2e+…@dinkndrive.test and deleted by the suite (docs/SETUP.md, "Testing").
+name: e2e
+
+on:
+  push:
+    branches: [staging]
+    paths-ignore:
+      - "docs/**"
+      - "**/*.md"
+  workflow_dispatch:
+
+concurrency:
+  group: e2e-staging
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  # Vercel's URL for the newest build of the `staging` branch (not secret).
+  STAGING_URL: https://dink-n-drive-git-staging-prism-technology.vercel.app
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Fingerprint the code (docs excluded)
+        id: fp
+        run: echo "hash=$(git ls-files -s -- . ':(exclude)docs' ':(exclude)*.md' | sha256sum | cut -c1-40)" >> "$GITHUB_OUTPUT"
+
+      - name: Check whether this exact code already passed
+        id: passed
+        uses: actions/cache/restore@v4
+        with:
+          path: .e2e-passed
+          key: e2e-passed-${{ steps.fp.outputs.hash }}
+          lookup-only: true
+
+      - name: Already tested
+        if: steps.passed.outputs.cache-hit == 'true'
+        run: echo "::notice::This code already passed e2e (fingerprint ${{ steps.fp.outputs.hash }}). Skipping."
+
+      - name: Wait for Vercel to deploy this commit
+        if: steps.passed.outputs.cache-hit != 'true'
+        run: bash .github/scripts/wait-for-vercel.sh
+
+      - uses: actions/setup-node@v5
+        if: steps.passed.outputs.cache-hit != 'true'
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        if: steps.passed.outputs.cache-hit != 'true'
+        run: npm ci
+
+      - name: Cache Playwright browsers
+        if: steps.passed.outputs.cache-hit != 'true'
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+
+      - name: Install browsers
+        if: steps.passed.outputs.cache-hit != 'true'
+        run: npx playwright install --with-deps chromium webkit
+
+      - name: Run e2e tests
+        if: steps.passed.outputs.cache-hit != 'true'
+        env:
+          E2E_BASE_URL: ${{ env.STAGING_URL }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+        run: |
+          echo "Testing ${E2E_BASE_URL}"
+          npx playwright test
+
+      - name: Upload report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
+
+      - name: Remember that this code passed
+        if: success() && steps.passed.outputs.cache-hit != 'true'
+        run: echo "${{ github.sha }}" > .e2e-passed
+
+      - name: Save pass marker
+        if: success() && steps.passed.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: .e2e-passed
+          key: e2e-passed-${{ steps.fp.outputs.hash }}
