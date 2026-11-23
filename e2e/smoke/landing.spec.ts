@@ -23,21 +23,15 @@ test.describe("landing page", () => {
   });
 });
 
-test.describe("court photos", () => {
-  test("open in a lightbox, swipe to the next photo, close", async ({ page }) => {
+test.describe("court photo", () => {
+  test("laptops show the real court photo card; phones keep the clean hero", async ({ page, isMobile }) => {
     await gotoLanding(page);
-    // laptops show the photo card; phones (and narrow laptops) the "See the court" tile
-    await page.getByRole("button", { name: /See (photos of )?the court/ }).filter({ visible: true }).first().click();
-
-    const gallery = page.getByRole("dialog", { name: "Photos of the court" });
-    await expect(gallery).toBeVisible();
-    await expect(gallery.getByRole("img")).toHaveCount(2);
-    await expect(gallery.getByText("Luyang · 1 / 2")).toBeVisible();
-
-    await gallery.getByRole("button", { name: "Next photo" }).click();
-    await expect(gallery.getByText("Luyang · 2 / 2")).toBeVisible();
-
-    await gallery.getByRole("button", { name: "Close photos" }).click();
-    await expect(gallery).toBeHidden();
+    const photo = page.getByRole("img", { name: /players .* on the Dink n' Drive court/ });
+    if (isMobile) {
+      await expect(photo).toBeHidden();
+    } else {
+      await expect(photo).toBeVisible();
+      await expect(page.getByText("The real court").filter({ visible: true })).toBeVisible();
+    }
   });
 });

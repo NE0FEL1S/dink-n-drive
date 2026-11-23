@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useEffect, useRef, type ReactNode } from "react";
 import { LogoMark } from "@/components/logo";
 import { MobileNav } from "@/components/nav-links";
-import { COURT_PHOTOS, CourtGallery } from "./court-gallery";
 import { mountLandingScene } from "./scene";
 
 export type LandingCopy = {
@@ -37,8 +36,6 @@ const SHARDS = 9;
  */
 export function LandingScene({ copy, account }: { copy: LandingCopy; account: ReactNode }) {
   const rootRef = useRef<HTMLDivElement>(null);
-  const galleryRef = useRef<HTMLDialogElement>(null);
-  const openGallery = () => galleryRef.current?.showModal();
 
   useEffect(() => {
     if (!rootRef.current) return;
@@ -165,19 +162,6 @@ export function LandingScene({ copy, account }: { copy: LandingCopy; account: Re
                   <path d="M5 12h14M13 6l6 6-6 6" />
                 </svg>
               </Link>
-              {/* Into the court photos: a square photo tile beside Book now on phones (no extra height, so the
-                  paddle keeps its size); a labelled chip on laptops too narrow for the photo card. */}
-              <button type="button" data-l="see" className="l-see" onClick={openGallery} aria-haspopup="dialog">
-                <span className="l-see-thumb">
-                  <Image src={COURT_PHOTOS[0].src} alt="" fill sizes="(max-width: 699px) 112px, 64px" draggable={false} />
-                  <i aria-hidden="true">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M14 4h6v6M10 20H4v-6M20 4l-7 7M4 20l7-7" />
-                    </svg>
-                  </i>
-                </span>
-                <span className="l-see-label">See the court</span>
-              </button>
             </div>
           </div>
 
@@ -257,25 +241,33 @@ export function LandingScene({ copy, account }: { copy: LandingCopy; account: Re
             </span>
           </span>
 
-          {/* The real court (laptops): a tilted frosted photo card in the open column left of the slab. */}
-          <button type="button" data-l="photo" className="l-photo" onClick={openGallery} aria-haspopup="dialog" aria-label="See photos of the court">
+          {/* The real court (laptops): a tilted frosted photo card in the open column left of the slab.
+              Bystanders were edited out of the photo; originals stay in docs/reference/private/court-photos/. */}
+          <figure data-l="photo" className="l-photo">
             <span className="l-photo-in">
               <span className="l-photo-img">
-                <Image src={COURT_PHOTOS[0].src} alt="" fill sizes="280px" draggable={false} />
+                <Image
+                  src="/landing/court.webp"
+                  alt="Four players raising their paddles at the net on the Dink n' Drive court in Luyang"
+                  fill
+                  sizes="280px"
+                  draggable={false}
+                />
               </span>
-              <span className="l-photo-cap">
+              <figcaption className="l-photo-cap">
                 <span>
                   <b>The real court</b>
-                  <small>Luyang · {COURT_PHOTOS.length} photos</small>
+                  <small>Luyang, Cebu</small>
                 </span>
                 <i aria-hidden="true">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M14 4h6v6M10 20H4v-6M20 4l-7 7M4 20l7-7" />
+                    <path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21Z" />
+                    <circle cx="12" cy="9.5" r="2.4" />
                   </svg>
                 </i>
-              </span>
+              </figcaption>
             </span>
-          </button>
+          </figure>
 
           <div data-l="ball" className="l-ball">
             <div className="l-par">
@@ -287,7 +279,6 @@ export function LandingScene({ copy, account }: { copy: LandingCopy; account: Re
       </main>
 
       <canvas data-l="snow" className="l-snow" aria-hidden="true" />
-      <CourtGallery dialogRef={galleryRef} />
     </div>
   );
 }

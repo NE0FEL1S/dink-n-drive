@@ -51,7 +51,6 @@ export function mountLandingScene(root: HTMLElement, opts: SceneOptions): () => 
   const info = q("info"); // status row inside the slab (location + open/closed)
   const openPill = q("open-pill");
   const photo = q("photo"); // the real court photo card (laptops)
-  const see = q("see"); // "See the court" chip under Book now (phones, or when the card has no room)
   const shards = [...root.querySelectorAll<HTMLElement>('[data-l="shard"]')];
 
   /* ---------- open / closed chip (Manila time, from settings) ---------- */
@@ -717,7 +716,7 @@ export function mountLandingScene(root: HTMLElement, opts: SceneOptions): () => 
   }
 
   // text that the paddle's ice break must stay clear of (laptop layout)
-  const TEXT_SEL = '[data-l="head"] h1 span, [data-l="head"] .l-para, [data-l="head"] .l-steps li, [data-l="head"] .l-book, [data-l="head"] .l-see, [data-l="cta"] .l-features li';
+  const TEXT_SEL = '[data-l="head"] h1 span, [data-l="head"] .l-para, [data-l="head"] .l-steps li, [data-l="head"] .l-book, [data-l="cta"] .l-features li';
 
   function layout() {
     const W = stage.clientWidth,
@@ -736,7 +735,6 @@ export function mountLandingScene(root: HTMLElement, opts: SceneOptions): () => 
         bottom = H - ctaH - 36;
       P = { x: 0, y: top, w: W, h: Math.max(320, bottom - top) };
       place(info, P.x + 20, P.y + 18, P.w - 40);
-      see.hidden = false;
       head.style.height = "";
       place(head, P.x + 20, P.y + 18 + info.offsetHeight, P.w - 40);
     } else {
@@ -745,8 +743,6 @@ export function mountLandingScene(root: HTMLElement, opts: SceneOptions): () => 
       const w = W < 1000 ? W * 0.82 : Math.min(W * 0.68, 1000);
       // shifted right of centre to leave a column for the court photo card on the left
       const x = (W - w) / 2 + (W < 1000 ? W * 0.05 : W * 0.078);
-      // the card needs a 250px column; without it, the "See the court" chip shows under Book now instead
-      see.hidden = x >= 250;
       // measure the status row, text and feature cards first
       place(info, x + 44, 0, w - 88);
       const ib = 26 + info.offsetHeight, // status row block at the top of the slab
@@ -781,7 +777,7 @@ export function mountLandingScene(root: HTMLElement, opts: SceneOptions): () => 
       cr = rectOf(cta, S),
       nr = rectOf(nav, S),
       ir = rectOf(info, S);
-    const textEls = phone ? head.querySelectorAll("h1 span, .l-para, .l-book, .l-see") : root.querySelectorAll(TEXT_SEL);
+    const textEls = phone ? head.querySelectorAll("h1 span, .l-para, .l-book") : root.querySelectorAll(TEXT_SEL);
     const textR = Math.max(...[...textEls].map((e) => rectOf(e, S).r));
 
     // Right-hand chips (laptops) form a LADDER: three rungs with equal gaps, each rung a step
