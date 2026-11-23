@@ -106,6 +106,8 @@ npx supabase link --project-ref <project-ref>
 ```
 It will ask for the database password from Part 2.
 
+Supabase CLI v3 targets a **local** database by default. For this project's remote database always pass `--remote` (e.g. `npx supabase db push --remote`).
+
 ---
 
 ## Part 5 — Start building with Claude Code

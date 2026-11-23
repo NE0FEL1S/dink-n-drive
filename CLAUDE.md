@@ -18,8 +18,10 @@ Booking site for a single pickleball court in Cebu, Philippines, with a communit
 - `npm run dev` — local dev at http://localhost:3000
 - `npm run build` / `npm run lint` — run both before saying a phase is done
 - `npx supabase migration new <name>` — create a migration in `supabase/migrations/`
-- `npx supabase db push` — apply migrations to the linked remote project
-- `npx supabase gen types typescript --linked > src/types/database.ts` — regenerate DB types after schema changes
+- `npx supabase db push --remote` — apply migrations to the linked remote project (CLI v3 targets a **local** stack unless you pass `--remote`; `--linked` is deprecated)
+- `npx supabase gen types --lang=typescript --remote --schema public > src/types/database.ts` — regenerate DB types after schema changes
+- `npx supabase db query --remote -f <file.sql>` — run SQL against the remote DB (wrap checks in `begin; … rollback;`)
+- `npx supabase db advisors --remote` — security/performance lints; run after each migration
 
 ## Core business rules (details in docs/SPEC.md)
 - One court. Open 8:00 AM – 12:00 AM daily, Asia/Manila time.
@@ -62,7 +64,7 @@ Email sending of any kind, forgot/change password, booking emails, online paymen
 - Update the checkboxes below as phases are completed.
 
 ## Phases
-- [ ] 1. Setup: schema, RLS, storage buckets, auth (Google + email), profile completion, owner role
+- [x] 1. Setup: schema, RLS, storage buckets, auth (Google + email), profile completion, owner role
 - [ ] 2. Booking flow: hourly grid with multi-hour selection, paddle logic, payment-proof upload, holds/expiry, My Bookings
 - [ ] 3. Admin: payment queue, bookings table + filters, summary cards, Excel/PDF exports, settings
 - [ ] 4. Cancellation & refund flow (customer + admin)
