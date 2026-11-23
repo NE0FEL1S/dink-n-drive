@@ -657,6 +657,10 @@ export function mountLandingScene(root: HTMLElement, opts: SceneOptions): () => 
 
   /* ---------- layout: slab, paddle, ice break, ball, chips, pass, shards ---------- */
   const AR = 586 / 1156; // paddle image aspect ratio
+  // Right edge of the opaque paddle in 24 horizontal bands, as a fraction of the image width
+  // (measured from /landing/paddle.webp). The head is full width near the top, its edge pulls
+  // in from ~40% down, and the handle sits near 0.3. Used so the chip ladder can follow it.
+  const PADDLE_RIGHT = [0.93, 0.986, 0.998, 0.998, 0.983, 0.962, 0.945, 0.933, 0.915, 0.894, 0.863, 0.841, 0.795, 0.703, 0.539, 0.415, 0.389, 0.36, 0.338, 0.317, 0.295, 0.273, 0.253, 0.244];
   const HC = { u: 0.5, v: 0.36 }; // the break is centred behind the paddle head
   const K1 = 1.25,
     RX = 0.55,
@@ -711,6 +715,9 @@ export function mountLandingScene(root: HTMLElement, opts: SceneOptions): () => 
     return { hole, r };
   }
 
+  // text that the paddle's ice break must stay clear of (laptop layout)
+  const TEXT_SEL = '[data-l="head"] h1 span, [data-l="head"] .l-para, [data-l="head"] .l-book, [data-l="cta"] .l-features li';
+
   function layout() {
     const W = stage.clientWidth,
       H = stage.clientHeight;
@@ -735,20 +742,24 @@ export function mountLandingScene(root: HTMLElement, opts: SceneOptions): () => 
       const w = W < 1000 ? W * 0.82 : Math.min(W * 0.68, 1000);
       // shifted right of centre to leave a column for the booking pass on the left
       const x = (W - w) / 2 + (W < 1000 ? W * 0.05 : W * 0.078);
-      // measure the status row and text first, so the slab is always tall enough to hold them
+      // measure the status row, text and feature cards first
       place(info, x + 44, 0, w - 88);
       const ib = 26 + info.offsetHeight, // status row block at the top of the slab
         colW = w * 0.54;
       place(head, x + 44, 0, colW);
       place(cta, x + 44, 0, colW);
-      const total = head.offsetHeight + 30 + cta.offsetHeight;
-      const h = Math.min(avail - 12, Math.max(Math.min(avail * 0.86, 660, w * 0.72), ib + total + 64));
+      const headH = head.offsetHeight,
+        ctaH = cta.offsetHeight,
+        contentH = ib + 40 + headH + 36 + ctaH + 30;
+      // tall enough for the full-size paddle and the chip ladder beside it
+      const h = Math.min(avail - 12, Math.max(Math.min(avail * 0.86, 660, w * 0.72), contentH));
       const y = top0 + Math.max(0, (avail - h) / 2 - avail * 0.01);
       P = { x, y, w, h };
       place(info, P.x + 44, P.y + 26, P.w - 88);
-      const y0 = P.y + ib + Math.max(14, (P.h - ib - total) / 2);
-      place(head, P.x + 44, y0);
-      place(cta, P.x + 44, y0 + head.offsetHeight + 30);
+      // feature cards sit on the slab's bottom edge; the headline block is centred above them
+      const ctaY = P.y + P.h - 30 - ctaH;
+      place(cta, P.x + 44, ctaY);
+      place(head, P.x + 44, P.y + ib + Math.max(20, (ctaY - (P.y + ib) - headH) / 2));
     }
     place(panel, P.x, P.y, P.w, P.h);
     shadowSvg.setAttribute("viewBox", `0 0 ${W} ${H}`);
@@ -757,21 +768,20 @@ export function mountLandingScene(root: HTMLElement, opts: SceneOptions): () => 
       cr = rectOf(cta, S),
       nr = rectOf(nav, S),
       ir = rectOf(info, S);
-    const textEls = phone
-      ? head.querySelectorAll("h1 span, .l-para, .l-book")
-      : root.querySelectorAll('[data-l="head"] h1 span, [data-l="head"] .l-para, [data-l="head"] .l-book, [data-l="cta"] .l-features li');
+    const textEls = phone ? head.querySelectorAll("h1 span, .l-para, .l-book") : root.querySelectorAll(TEXT_SEL);
     const textR = Math.max(...[...textEls].map((e) => rectOf(e, S).r));
 
-    // Right-hand chip column (laptops): measured first, so the paddle can be kept left of it.
-    // The column is reserved only if the paddle stays at least 75% of its natural size;
-    // otherwise the chips hide and the paddle keeps its full size.
+    // Right-hand chips (laptops) form a LADDER: three rungs with equal gaps, each rung a step
+    // left of the one above, following the paddle's tilted right edge (PADDLE_RIGHT). The
+    // full-size paddle is tried first; it shrinks only if no ladder fits; otherwise chips hide.
     const col = [chipLights, chipPaddles, chipAhead];
     col.forEach((c) => (c.hidden = false)); // measurable
     const colSizes = col.map((c) => [c.offsetWidth, c.offsetHeight] as const);
     col.forEach((c) => (c.hidden = true));
     const colW = Math.max(...colSizes.map(([w0]) => w0)),
-      colL = W - 12 - colW;
-    let useCol = false;
+      colL = W - 12 - colW, // the top rung hugs the window's right edge
+      sumColH = colSizes.reduce((sum, [, h0]) => sum + h0, 0);
+    let ladder: Box[] | null = null;
 
     // paddle: in front of the glass; the break sits behind its head and stays fully inside the slab
     let ph: number, cx: number, cy: number;
@@ -785,42 +795,83 @@ export function mountLandingScene(root: HTMLElement, opts: SceneOptions): () => 
         bottom = P.y + P.h - 10,
         left = textR + 40,
         right = P.x + P.w - 10,
+        hole = K1 * RX, // break half-width as a fraction of the paddle width
         maxV = Math.min(P.h * 0.9, (bottom - top) / (2 * K1 * RY));
       // natural size: the whole ice break fits between the text and the slab's right edge
       const natural = Math.min(maxV, (right - left) / (2 * K1 * RX * AR));
-      // with the chip column: the paddle IMAGE stays left of the column (the jagged break may
-      // tuck under the chips) and the break may come a little closer to the text
-      const imgRight = colL - 8,
-        leftC = textR + 28,
-        hole = K1 * RX; // break half-width as a fraction of the paddle width
-      const withCol = Math.min(maxV, (imgRight - leftC) / (0.5 + hole) / AR);
       const cyOf = (p0: number) => Math.min(Math.max(top + K1 * RY * p0, P.y + P.h * 0.52), bottom - K1 * RY * p0);
-      const naturalCx = Math.min(right - hole * natural * AR, Math.max(left + hole * natural * AR, P.x + P.w * 0.72));
-      // The chip ladder sits BELOW the paddle head (beside the handle, which runs lower-left).
-      // Does it fit under the full-size paddle? Needs vertical room for 3 chips + gaps, and the
-      // lowest rung (two steps left) must stay clear of the handle.
-      const sumColH = colSizes.reduce((sum, [, h0]) => sum + h0, 0);
-      const ladderFits = (p0: number, cx0: number) => {
+      const cxOf = (p0: number, hugText: boolean) =>
+        hugText ? left + hole * p0 * AR : Math.min(right - hole * p0 * AR, Math.max(left + hole * p0 * AR, P.x + P.w * 0.72));
+
+      // rightmost opaque paddle x between stage-y t and b, for a paddle of height p0 at (cx0, cy0)
+      const paddleRight = (p0: number, cx0: number, cy0: number, t: number, b: number) => {
         const pw0 = p0 * AR,
-          pt0 = cyOf(p0) - HC.v * p0,
-          pl0 = cx0 - HC.u * pw0;
-        const room = Math.min(H - 12, P.y + P.h + 40) - (pt0 + p0 * 0.58 + 12);
-        return room >= sumColH + 2 * 36 && colL - 2 * 16 >= pl0 + pw0 * 0.45 + 10;
+          pt0 = cy0 - HC.v * p0,
+          pl0 = cx0 - HC.u * pw0,
+          N = PADDLE_RIGHT.length;
+        let m = -Infinity;
+        for (let i = 0; i < N; i++) {
+          const bt = pt0 + (p0 * i) / N,
+            bb = pt0 + (p0 * (i + 1)) / N;
+          if (bb >= t && bt <= b) m = Math.max(m, pl0 + pw0 * PADDLE_RIGHT[i]);
+        }
+        return m;
       };
-      if (colL > P.x + P.w * 0.6 && ladderFits(natural, naturalCx)) {
-        useCol = true; // full-size paddle, ladder underneath its head
-        ph = natural;
-        cx = naturalCx;
-      } else if (colL > P.x + P.w * 0.6 && withCol >= natural * 0.75) {
-        useCol = true; // slightly smaller paddle kept left of the chip column
-        ph = withCol;
-        const pwC = ph * AR;
-        cx = Math.min(imgRight - 0.5 * pwC, right - hole * pwC);
-      } else {
-        ph = natural;
-        cx = naturalCx;
+      // find a ladder with the given gap, as close to vertically centred as possible
+      const findLadder = (p0: number, cx0: number, cy0: number, gap: number): Box[] | null => {
+        if (colL < P.x + P.w * 0.6) return null;
+        const yLo = ir.b + 18,
+          yMax = Math.min(H - 12, P.y + P.h + 40);
+        {
+          const stackH = sumColH + gap * (col.length - 1),
+            yHi = yMax - stackH;
+          if (yHi < yLo) return null;
+          const ideal = (yLo + yHi) / 2;
+          for (const step of [40, 32, 24]) {
+            for (let k = 0; k <= yHi - yLo + 6; k += 6) {
+              for (const yS of k ? [ideal - k, ideal + k] : [ideal]) {
+                if (yS < yLo || yS > yHi) continue;
+                let y = yS;
+                const boxes = colSizes.map(([w0, h0], i) => {
+                  const l = colL - step * i;
+                  const bx = { l, t: y, r: l + w0, b: y + h0 };
+                  y += h0 + gap;
+                  return bx;
+                });
+                const clear = boxes.every(
+                  (bx) => bx.l >= paddleRight(p0, cx0, cy0, bx.t - 12, bx.b + 12) + 14 && ![hr, cr, ir].some((o) => hit(bx, o, 10)),
+                );
+                if (clear) return boxes;
+              }
+            }
+          }
+        }
+        return null;
+      };
+      // The 90px gap comes first (the spacing asked for): the biggest paddle that allows it,
+      // down to 85%. Then smaller gaps, then smaller paddles (down to 78%); else no chips.
+      ph = natural;
+      cx = cxOf(natural, false);
+      cy = cyOf(natural);
+      const tries: Array<[number, number]> = [
+        [90, 1], [90, 0.92], [90, 0.85],
+        [80, 1], [80, 0.92], [80, 0.85],
+        [70, 1], [70, 0.92], [70, 0.85],
+        [90, 0.78], [80, 0.78], [70, 0.78],
+      ];
+      for (const [gap, f] of tries) {
+        const p0 = natural * f,
+          cx0 = cxOf(p0, f < 1),
+          cy0 = cyOf(p0);
+        const found = findLadder(p0, cx0, cy0, gap);
+        if (found) {
+          ph = p0;
+          cx = cx0;
+          cy = cy0;
+          ladder = found;
+          break;
+        }
       }
-      cy = cyOf(ph);
     }
     ph = Math.max(ph, 60);
     const pw = ph * AR,
@@ -1005,40 +1056,14 @@ export function mountLandingScene(root: HTMLElement, opts: SceneOptions): () => 
         chipPrice.hidden = b.l < 2 || b.r > W - 2 || hit(b, nr, 8) || hit(b, ballR, 8) || hit(b, hr, 8) || hit(b, cr, 8) || (!pass.hidden && hit(b, passR, 6));
       }
 
-      // Right-side chips (lights, paddles, book-ahead) form a LADDER: each rung steps left of
-      // the one above, below the paddle head and beside the handle (which runs lower-left),
-      // with equal gaps (capped at COL_GAP). The step shrinks if a rung would touch the paddle,
-      // ball or text; if even a straight column can't fit, the chips hide.
-      if (useCol) {
-        const n = col.length,
-          sumH = colSizes.reduce((sum, [, h0]) => sum + h0, 0),
-          headBox = { l: pl, t: pt, r: pl + pw, b: pt + ph * 0.58 },
-          handleBox = { l: pl, t: pt + ph * 0.55, r: pl + pw * 0.45, b: pt + ph },
-          y0 = Math.max(ir.b + 18, headBox.b + 12),
-          y1 = Math.min(H - 12, P.y + P.h + 40),
-          COL_GAP = 90,
-          gap = Math.min(COL_GAP, (y1 - y0 - sumH) / (n - 1));
-        if (gap >= 24) {
-          const blockers: Box[] = [ballR, hr, cr, ir],
-            paddleBoxes = [headBox, handleBox]; // already the image's outer bounds: no extra margin
-          const yStart = y0 + (y1 - y0 - (sumH + gap * (n - 1))) / 2;
-          for (const step of [40, 32, 24, 16, 0]) {
-            let y = yStart;
-            const boxes = colSizes.map(([w0, h0], i) => {
-              const l = colL - step * i;
-              const bx = { l, t: y, r: l + w0, b: y + h0 };
-              y += h0 + gap;
-              return bx;
-            });
-            if (boxes.some((bx) => blockers.some((o) => hit(bx, o, 10)) || paddleBoxes.some((o) => hit(bx, o, 0)))) continue;
-            boxes.forEach((bx, i) => {
-              place(col[i], bx.l, bx.t);
-              col[i].hidden = false;
-              rightR.push(bx);
-            });
-            break;
-          }
-        }
+      // Right-side ladder (found together with the paddle size, above)
+      if (ladder) {
+        ladder.forEach((bx, i) => {
+          if (hit(bx, ballR, 8)) return;
+          place(col[i], bx.l, bx.t);
+          col[i].hidden = false;
+          rightR.push(bx);
+        });
       }
     }
 

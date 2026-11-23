@@ -88,8 +88,8 @@
   .landing .l-nav { background: rgb(255 255 255 / 0.82); -webkit-backdrop-filter: blur(14px) saturate(140%); backdrop-filter: blur(14px) saturate(140%); }
 }
 .landing .l-nav-row { display: flex; align-items: center; gap: 10px; height: 64px; }
-.landing .l-links { display: none; align-items: center; gap: 2px; padding: 4px; border-radius: 14px; background: rgb(255 255 255 / 0.36); box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.6); }
-.landing .l-links a { display: flex; align-items: center; height: 38px; padding: 0 15px; border-radius: 10px; font-size: 14.5px; font-weight: 700; color: var(--l-navy-900); text-decoration: none; }
+.landing .l-links { display: none; align-items: center; gap: 8px; padding: 4px; border-radius: 14px; background: rgb(255 255 255 / 0.36); box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.6); }
+.landing .l-links a { display: flex; align-items: center; height: 38px; padding: 0 18px; border-radius: 10px; font-size: 14.5px; font-weight: 700; color: var(--l-navy-900); text-decoration: none; }
 .landing .l-links a:not([aria-current]):hover { background: rgb(255 255 255 / 0.55); }
 .landing .l-links a[aria-current="page"],
 .landing .l-grad { background: var(--l-grad); color: var(--l-white); text-shadow: 0 1px 1px rgb(150 50 0 / 0.35); box-shadow: var(--l-grad-shadow); border: 1px solid rgb(255 255 255 / 0.4); }
@@ -203,6 +203,24 @@
 .landing .l-features { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 14px; font-weight: 600; }
 .landing .l-features li { display: inline-flex; align-items: center; gap: 7px; white-space: nowrap; }
 .landing .l-features svg { width: 17px; height: 17px; color: var(--l-cta-mid); flex: none; }
+.landing .l-features li > span { display: grid; line-height: 1.15; }
+.landing .l-features li b { font-weight: inherit; }
+.landing .l-features li small { display: none; }
+@media (min-width: 700px) {
+  /* three small frosted cards on the slab's bottom edge, each with an orange icon circle */
+  .landing .l-features { gap: 7px; flex-wrap: nowrap; }
+  .landing .l-features li {
+    gap: 7px; padding: 6px 11px 6px 6px; border-radius: 14px;
+    background: rgb(255 255 255 / 0.55);
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.85), 0 4px 12px rgb(4 24 48 / 0.06);
+  }
+  .landing .l-features li > svg {
+    box-sizing: content-box; width: 14px; height: 14px; padding: 6px; border-radius: 50%;
+    background: var(--l-grad); color: var(--l-white); box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.4);
+  }
+  .landing .l-features li b { font-size: 12.5px; font-weight: 800; color: var(--l-navy-900); }
+  .landing .l-features li small { display: block; font-size: 11px; font-weight: 600; color: var(--l-slate-500); }
+}
 @media (max-width: 699px) {
   .landing .l-head { text-align: center; }
   .landing .l-head h1 span { margin-inline: auto; }

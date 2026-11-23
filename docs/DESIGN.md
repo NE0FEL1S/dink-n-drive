@@ -163,16 +163,16 @@ Follows the composition of reference image 2 (the bear breaking out of ice/glass
     - "**4 paddles** to rent · ₱50", from `paddle_count` and `paddle_fee`;
     - "Book up to **30 days** ahead", from `max_advance_days`.
 
-    They form a **ladder**: each rung steps 40 px left of the one above (the step shrinks to 32, 24, 16 or 0 if needed). It sits below the paddle head, beside the handle, which runs lower-left, with equal gaps capped at 90 px.
-    - The full-size paddle is tried first. Only if the ladder doesn't fit under its head does the paddle shrink, to at least 75%, to make room. Otherwise the chips hide.
-    - All three share one parallax depth.
-    - They show at 1366–1920 px laptops (and at 1280×800); they're hidden at 1280×720, at 1024 px and on tablets.
+    They form a **ladder**: each rung steps 40 px left of the one above (32 or 24 px if needed), **following the paddle's tilted right edge**, with **equal 90 px gaps** (the spacing asked for).
+    - The paddle's real outline is measured from the image (`PADDLE_RIGHT` in `scene.ts`), so the rungs hug the edge as it pulls in toward the handle.
+    - The 90 px gap comes first, with the biggest paddle that allows it, down to 85% of full size. Then 80 or 70 px gaps, then paddles down to 78%. Otherwise the chips hide.
+    - Results: 90 px gaps at 1440 (paddle 85%), 1536 and 1920 (full size); 80 px at 1366 (a short screen). The chips are hidden at 1280 px and below.
     - Column chips are slightly compact (42 px tall, 13.5 px text) so they fit.
   - The paddle icon is drawn as solid shapes (face, handle and ball), because outlines at 16–18 px read as a search icon.
 - **Entrance moment:** on load the paddle smashes out with an overshoot, the cracks draw outward, the shards burst from the hole and the ball flies in. It runs once, takes about 1 s, and is skipped with `prefers-reduced-motion`.
 - **Nav (moved out of the slab 2026-11-23):** a normal site header.
   - It's a **full-width frosted white bar pinned to the very top, edge to edge** (safe-area aware), and **its content runs edge to edge too**: logo at the far left, the account area at the far right.
-  - The links sit in the middle; the active link is an orange-gradient chip.
+  - The links sit in the middle with generous spacing (8 px gaps, 18 px side padding); the active link is an orange-gradient chip. The inner-page header uses the same wider spacing.
   - Before the account area there's a small frosted **live "Cebu time" clock chip** (Manila time, ticks each minute), shown only when the bar is at least 900 px wide.
   - **Log in** is orange-gradient. Signed in, the **avatar circle is the same orange gradient as Book now** (on every page's header).
   - The links show only when the bar is wide enough (container query, about 770 px); otherwise they fold into the orange-gradient menu button.
@@ -193,7 +193,7 @@ Follows the composition of reference image 2 (the bear breaking out of ice/glass
   - Location pill: "📍 Luyang · open daily" (in the status row)
   - Headline: **"Book your hour." / "*Own the kitchen.*"** (the second line is italic with an orange gradient; "the kitchen" is the players' name for the non-volley zone)
   - Paragraph: "Luyang's own pickleball court, open **8 AM to midnight**. Pick your hours, pay with GCash, then just show up and play." Phones show only the first sentence.
-  - Features row (at the bottom of the screen on phones, under the button on laptops).
+  - Features row: at the bottom of the screen on phones (white text). On laptops it's **three small frosted cards on the slab's bottom edge**, each with an orange icon circle, a bold label and a short second line: "15-min slot hold / while you pay", "Pay with GCash / scan, then upload", "Paddles for ₱50 / per booking". The cards are no wider than the headline text. The headline block is centered between the status row and the cards, so the slab has no empty band at the bottom.
   - One button, **"Book now →"**, directly under the paragraph. On phones the whole text block and the button are **centered**; on laptops they're left-aligned. "My bookings" lives only in the nav and menu, never as a second hero button.
   - Features: "15-min slot hold" · "Pay with GCash" · "Paddles for ₱50"
   - Hours, prices and hold minutes in the copy must come from `settings`.

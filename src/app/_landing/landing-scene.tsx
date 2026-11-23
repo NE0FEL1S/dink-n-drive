@@ -163,18 +163,27 @@ export function LandingScene({ copy, account }: { copy: LandingCopy; account: Re
                   <circle cx="12" cy="13" r="8" />
                   <path d="M12 9v4l2.5 1.5M9.5 2.5h5" />
                 </svg>
-                {copy.holdMinutes}-min slot hold
+                <span>
+                  <b>{copy.holdMinutes}-min slot hold</b>
+                  <small>while you pay</small>
+                </span>
               </li>
               <li>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                   <rect x="6.5" y="2.5" width="11" height="19" rx="2.5" />
                   <path d="M10.5 18h3" />
                 </svg>
-                Pay with GCash
+                <span>
+                  <b>Pay with GCash</b>
+                  <small>scan, then upload</small>
+                </span>
               </li>
               <li>
                 <PaddleIcon />
-                Paddles for {copy.paddleFeeText}
+                <span>
+                  <b>Paddles for {copy.paddleFeeText}</b>
+                  <small>per booking</small>
+                </span>
               </li>
             </ul>
           </div>
