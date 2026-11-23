@@ -1,7 +1,5 @@
 import { Suspense } from "react";
-import Link from "next/link";
-import { getProfile } from "@/lib/auth";
-import { AccountMenu } from "./account-menu";
+import { AccountArea } from "./account-area";
 import { Logo } from "./logo";
 import { DesktopNav, MobileNav } from "./nav-links";
 
@@ -26,28 +24,5 @@ export function SiteHeader() {
         </div>
       </div>
     </header>
-  );
-}
-
-async function AccountArea() {
-  const profile = await getProfile();
-
-  if (!profile) {
-    return (
-      <Link
-        href="/login"
-        className="btn-grad flex h-11 items-center rounded-[var(--radius-control)] px-4 text-[15px] whitespace-nowrap active:scale-[0.98] sm:px-5"
-      >
-        Log in
-      </Link>
-    );
-  }
-
-  return (
-    <AccountMenu
-      name={profile.full_name ?? profile.email ?? "Account"}
-      email={profile.email}
-      isOwner={profile.role === "owner"}
-    />
   );
 }

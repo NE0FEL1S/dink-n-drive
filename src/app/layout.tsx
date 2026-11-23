@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from "next";
 import { Fraunces, Plus_Jakarta_Sans } from "next/font/google";
-import { SiteHeader } from "@/components/site-header";
 import "./globals.css";
 
 const fraunces = Fraunces({
@@ -34,13 +33,12 @@ export const viewport: Viewport = {
   colorScheme: "light",
 };
 
+// The landing page (/) draws its own nav inside the ice panel; every other page
+// gets the sticky header from src/app/(site)/layout.tsx.
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className={`${fraunces.variable} ${jakarta.variable} antialiased`}>
-      <body className="flex min-h-dvh flex-col">
-        <SiteHeader />
-        <div className="flex flex-1 flex-col">{children}</div>
-      </body>
+      <body className="flex min-h-dvh flex-col">{children}</body>
     </html>
   );
 }
