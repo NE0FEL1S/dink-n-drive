@@ -554,7 +554,71 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      cancel_unpaid_booking: {
+        Args: { p_booking_id: string; p_guest_token?: string }
+        Returns: Database["public"]["Enums"]["booking_status"]
+      }
+      check_payment_upload: {
+        Args: { p_booking_id: string; p_guest_token?: string }
+        Returns: boolean
+      }
+      claim_guest_bookings: { Args: { p_guest_token: string }; Returns: number }
+      create_booking: {
+        Args: {
+          p_email?: string
+          p_guest_token?: string
+          p_hours: number
+          p_name?: string
+          p_paddles?: boolean
+          p_phone?: string
+          p_start_at: string
+        }
+        Returns: {
+          booking_id: string
+          hold_expires_at: string
+          ref_code: string
+          total: number
+        }[]
+      }
+      get_availability: {
+        Args: { p_day: string }
+        Returns: {
+          end_at: string
+          start_at: string
+        }[]
+      }
+      my_bookings: {
+        Args: { p_guest_token?: string }
+        Returns: {
+          cancel_fee: number
+          cancelled_at: string
+          cancelled_by: Database["public"]["Enums"]["booking_actor"]
+          contact_email: string
+          contact_name: string
+          contact_phone: string
+          court_fee: number
+          created_at: string
+          end_at: string
+          has_payment_proof: boolean
+          hold_expires_at: string
+          hourly_rate: number
+          hours: number
+          id: string
+          is_guest: boolean
+          paddle_fee: number
+          paddle_rented: boolean
+          payment_submitted_at: string
+          ref_code: string
+          reject_reason: string
+          start_at: string
+          status: Database["public"]["Enums"]["booking_status"]
+          total: number
+        }[]
+      }
+      submit_payment_proof: {
+        Args: { p_booking_id: string; p_guest_token?: string; p_path: string }
+        Returns: Database["public"]["Enums"]["booking_status"]
+      }
     }
     Enums: {
       booking_actor: "customer" | "owner"
