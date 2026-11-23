@@ -255,6 +255,12 @@ On phones it's a bottom sheet; on laptops, a centered dialog. `/book` renders th
 - "Upload payment screenshot": a big dashed-border drop area (`accept="image/*"`, which opens the photo picker or camera on both platforms), with a preview and a "Change" option before submitting.
 
 **My Bookings:** tabs "Upcoming / Past". Each booking is a card with ref code, date, time, total, status badge, and the next action (Upload proof · Cancel · View refund).
+- **Built (Phase 2E):** `PageHeader` on the sky ("Your games" / "My bookings"), then for guests a white note ("These are the bookings made on **this browser**. Log in or create an account to keep them on any device."). Tabs are a white pill with "Upcoming (n)" / "Past (n)"; the active one is `navy-900`.
+  - **Cards:** status badge + reference on top, day, time range (large), "2 hours · paddles rented · ₱550", then one line for the state: pending payment shows the `#FDF3E1` "Pay within mm:ss or the hours are released." with **Pay now** (orange gradient) and **Cancel**; pending review / confirmed / expired / cancelled each get a short sentence; rejected shows the owner's reason in a red tint.
+  - **Upcoming** = active and not finished, soonest first; **Past** = finished, cancelled, expired or rejected, newest first. A hold that runs out moves to Past on its own.
+  - **Pay now** opens the same pay step as the booking popup in a sheet. **Cancel** (unpaid only) opens a sheet: "It's free, because you haven't paid yet…", a red-text "Yes, cancel booking" and "Keep it". Paid bookings get their cancel request in Phase 4.
+  - Empty: "No upcoming games." with **Book the court** (opens the booking popup).
+  - Signing in or creating an account on this browser moves its guest bookings to the account.
 
 **Community / Feedback:** single-column feed. Photo cards with 16 px radius, author name and time, caption, a reaction bar (👍 😂 with counts) and a comments link. A floating "+ Post" button bottom-right, above the safe area and the nav.
 

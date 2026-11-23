@@ -12,7 +12,7 @@ export default async function globalSetup(config: FullConfig) {
 
   const baseURL = config.projects[0]?.use.baseURL;
   if (baseURL?.startsWith("http://localhost")) {
-    for (const path of ["/", "/book", "/login", "/profile"]) {
+    for (const path of ["/", "/book", "/login", "/profile", "/my-bookings"]) {
       await fetch(new URL(path, baseURL), { redirect: "manual" }).catch(() => undefined);
     }
   }
