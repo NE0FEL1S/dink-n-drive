@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { AccountArea } from "@/components/account-area";
-import { hourWords, peso } from "@/lib/format";
+import { hourLabel, hourWords, peso } from "@/lib/format";
 import { getPublicSettings } from "@/lib/settings";
 import { LandingScene, type LandingCopy } from "./_landing/landing-scene";
 import "./landing.css";
@@ -13,9 +13,13 @@ export default async function Home() {
     openHour: s.open_hour,
     closeHour: s.close_hour,
     hoursText: `${hourWords(s.open_hour)} to ${hourWords(s.close_hour)}`,
+    hoursRange: `${hourLabel(s.open_hour)} – ${hourLabel(s.close_hour)}`,
     rateText: peso(s.hourly_rate),
     paddleFeeText: peso(s.paddle_fee),
     holdMinutes: s.hold_minutes,
+    maxAdvanceDays: s.max_advance_days,
+    closeWords: hourWords(s.close_hour),
+    paddleCount: s.paddle_count,
     sampleTotalText: peso(2 * s.hourly_rate + s.paddle_fee),
   };
 

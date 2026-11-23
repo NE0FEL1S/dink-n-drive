@@ -72,29 +72,53 @@
 .landing .l-logo .l-wm small { margin-top: 4px; font-size: 9.5px; font-weight: 800; letter-spacing: 0.2em; text-transform: uppercase; color: var(--l-navy-700); opacity: 0.85; }
 
 /* ---------- nav ---------- */
-/* z 9: above the text (7) and the snow (8), so the account and phone menus open on top. */
-.landing .l-nav { z-index: 9; display: flex; align-items: center; gap: 10px; }
-.landing .l-links { display: none; align-items: center; gap: 2px; margin-left: 26px; padding: 4px; border-radius: 14px; background: rgb(255 255 255 / 0.36); box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.6); }
-.landing .l-links a { display: flex; align-items: center; height: 38px; padding: 0 15px; border-radius: 10px; font-size: 14.5px; font-weight: 700; color: var(--l-navy-900); text-decoration: none; }
+/* z 9: above the text (7) and the snow (8), so the account and phone menus open on top.
+   The nav is a size container: the links show (centered in the panel) only when the
+   panel itself is wide enough; otherwise they fold into the menu button. */
+/* Site header: a full-width frosted bar pinned to the very top, edge to edge, with its
+   content edge to edge too (logo far left, account far right). */
+.landing .l-nav {
+  position: fixed !important; top: 0; left: 0; right: 0; z-index: 9; container: lnav / inline-size;
+  padding: env(safe-area-inset-top, 0px) max(16px, env(safe-area-inset-right, 0px)) 0 max(16px, env(safe-area-inset-left, 0px));
+  background: rgb(255 255 255 / 0.94);
+  border-bottom: 1px solid rgb(255 255 255 / 0.6);
+  box-shadow: 0 1px 0 rgb(15 27 51 / 0.05), 0 8px 24px rgb(4 24 48 / 0.12);
+}
+@supports (backdrop-filter: blur(1px)) {
+  .landing .l-nav { background: rgb(255 255 255 / 0.82); -webkit-backdrop-filter: blur(14px) saturate(140%); backdrop-filter: blur(14px) saturate(140%); }
+}
+.landing .l-nav-row { display: flex; align-items: center; gap: 10px; height: 64px; }
+.landing .l-links { display: none; align-items: center; gap: 8px; padding: 4px; border-radius: 14px; background: rgb(255 255 255 / 0.36); box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.6); }
+.landing .l-links a { display: flex; align-items: center; height: 38px; padding: 0 18px; border-radius: 10px; font-size: 14.5px; font-weight: 700; color: var(--l-navy-900); text-decoration: none; }
 .landing .l-links a:not([aria-current]):hover { background: rgb(255 255 255 / 0.55); }
 .landing .l-links a[aria-current="page"],
 .landing .l-grad { background: var(--l-grad); color: var(--l-white); text-shadow: 0 1px 1px rgb(150 50 0 / 0.35); box-shadow: var(--l-grad-shadow); border: 1px solid rgb(255 255 255 / 0.4); }
-.landing .l-nav-right { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+.landing .l-nav-right { display: flex; align-items: center; gap: 10px; margin-left: auto; justify-self: end; }
+/* live Cebu (Manila) time, a small frosted chip beside the account area (wide bars only) */
+.landing .l-clock {
+  display: none; align-items: center; gap: 8px; height: 40px; padding: 0 14px 0 10px; border-radius: 12px;
+  background: rgb(255 255 255 / 0.6); box-shadow: inset 0 0 0 1px rgb(15 27 51 / 0.07);
+  color: var(--l-navy-900); white-space: nowrap; line-height: 1.1;
+}
+.landing .l-clock svg { width: 18px; height: 18px; color: var(--l-cta-bot); flex: none; }
+.landing .l-clock b { font-size: 14px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.landing .l-clock small { display: block; font-size: 10.5px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--l-slate-500); }
+@container lnav (min-width: 900px) { .landing .l-clock { display: inline-flex; } }
+.landing .l-links a { white-space: nowrap; }
+@container lnav (min-width: 770px) {
+  .landing .l-nav-row { display: grid; grid-template-columns: minmax(max-content, 1fr) auto minmax(max-content, 1fr); gap: 16px; }
+  .landing .l-links { display: flex; }
+  .landing .l-menu { display: none; }
+}
 .landing .l-login { height: 42px !important; padding: 0 20px !important; border-radius: 12px !important; font-size: 15.5px !important; font-weight: 800; }
 .landing .l-grad:active { filter: brightness(0.94); transform: scale(0.98); }
 @media (max-width: 699px) {
-  .landing .l-nav {
-    padding: 6px 6px 6px 10px; border-radius: 20px;
-    background: var(--l-frost), rgb(255 255 255 / 0.66); background-size: 180px 180px, auto;
-    -webkit-backdrop-filter: blur(14px) saturate(150%); backdrop-filter: blur(14px) saturate(150%);
-    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.8), inset 0 0 16px rgb(255 255 255 / 0.5), 0 8px 24px rgb(4 24 48 / 0.18);
-  }
   .landing .l-logo svg { width: 34px; height: 34px; }
   .landing .l-logo .l-wm b { font-size: 19px; }
   .landing .l-logo .l-wm small { white-space: nowrap; }
 }
 @media (max-width: 379px) {
-  .landing .l-nav { gap: 6px; }
+  .landing .l-nav-row { gap: 6px; }
   .landing .l-logo { gap: 8px; }
   .landing .l-logo svg { width: 30px; height: 30px; }
   .landing .l-logo .l-wm b { font-size: 17px; }
@@ -102,21 +126,58 @@
   .landing .l-login { padding: 0 14px !important; font-size: 15px !important; }
 }
 @media (min-width: 700px) {
-  .landing .l-nav { padding: 18px 18px 0 24px; }
-  .landing .l-links { display: flex; }
+  .landing .l-nav-row { height: 72px; }
+  .landing .l-nav { padding-left: max(24px, env(safe-area-inset-left, 0px)); padding-right: max(24px, env(safe-area-inset-right, 0px)); }
+}
+
+/* ---------- status row at the top of the slab (where the nav used to be) ---------- */
+/* group | orange badge | open pill, evenly spaced so the badge sits midway between the two */
+.landing .l-info {
+  z-index: 7; container: linfo / inline-size;
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+}
+/* centred orange badge (button-like, not a second CTA) */
+.landing .l-badge {
+  display: none; align-items: center; gap: 7px; height: 42px; padding: 0 18px 0 14px; border-radius: 14px;
+  background: var(--l-grad); color: var(--l-white); text-shadow: 0 1px 1px rgb(150 50 0 / 0.35);
+  box-shadow: var(--l-grad-shadow); border: 1px solid rgb(255 255 255 / 0.4);
+  font-size: 13.5px; font-weight: 800; white-space: nowrap;
+}
+.landing .l-badge svg { width: 16px; height: 16px; filter: drop-shadow(0 1px 1px rgb(150 50 0 / 0.35)); }
+@container linfo (min-width: 720px) { .landing .l-badge { display: inline-flex; } }
+.landing .l-seg {
+  display: inline-flex; align-items: center; gap: 2px; padding: 4px; border-radius: 14px;
+  background: rgb(255 255 255 / 0.42); box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.7), 0 4px 12px rgb(4 24 48 / 0.06);
+}
+.landing .l-seg > span {
+  display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 13px; border-radius: 10px;
+  font-size: 13.5px; font-weight: 700; color: var(--l-navy-900); white-space: nowrap;
+}
+.landing .l-seg > .l-seg-on {
+  background: var(--l-grad); color: var(--l-white); text-shadow: 0 1px 1px rgb(150 50 0 / 0.35);
+  box-shadow: var(--l-grad-shadow); border: 1px solid rgb(255 255 255 / 0.4); padding-left: 10px;
+}
+.landing .l-seg-on svg { width: 15px; height: 15px; filter: drop-shadow(0 1px 1px rgb(150 50 0 / 0.35)); }
+.landing .l-open {
+  display: inline-flex; align-items: center; gap: 8px; height: 42px; padding: 0 16px 0 14px; border-radius: 14px;
+  background: rgb(255 255 255 / 0.82); color: var(--l-navy-900);
+  font-size: 13.5px; font-weight: 700; white-space: nowrap;
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.95), 0 4px 12px rgb(4 24 48 / 0.08);
+}
+.landing .l-open .l-dot { width: 9px; height: 9px; border-radius: 50%; background: #22C55E; box-shadow: 0 0 0 4px rgb(34 197 94 / 0.22); }
+.landing .l-open.l-closed .l-dot { background: var(--l-slate-300); box-shadow: 0 0 0 4px rgb(138 151 168 / 0.25); }
+@media (max-width: 699px) {
+  .landing .l-info { justify-content: center; }
+  .landing .l-open { display: none; }
 }
 
 /* ---------- words ---------- */
 .landing .l-head { z-index: 7; }
-.landing .l-loc {
-  display: inline-flex; align-items: center; gap: 7px; height: 32px; padding: 0 14px 0 6px; border-radius: 999px;
-  background: rgb(255 255 255 / 0.82); color: var(--l-navy-900);
-  font-size: 13.5px; font-weight: 700;
-  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.95), 0 4px 12px rgb(4 24 48 / 0.08);
+/* laptops: the headline block is stretched to fill the slab (height set by the layout script);
+   the extra room goes evenly between the headline, paragraph, steps and button */
+@media (min-width: 700px) {
+  .landing .l-head { display: flex; flex-direction: column; justify-content: space-between; align-items: flex-start; }
 }
-.landing .l-loc i { width: 22px; height: 22px; border-radius: 50%; background: var(--l-grad); display: grid; place-items: center; }
-.landing .l-loc i svg { width: 13px; height: 13px; color: var(--l-white); }
-.landing .l-loc span { color: var(--l-slate-500); font-weight: 600; }
 .landing h1 {
   margin: 14px 0 0;
   font-family: var(--l-display); font-weight: 760; font-variation-settings: "opsz" 144;
@@ -131,7 +192,23 @@
 }
 .landing .l-para { margin: 12px 0 0; font-size: 15px; line-height: 22px; font-weight: 500; color: var(--l-navy-700); width: fit-content; max-width: 36ch; }
 .landing .l-para b { font-weight: 700; color: var(--l-navy-900); }
-@media (max-width: 699px) { .landing .l-para .l-more { display: none; } }
+/* numbered "how it works" row under the paragraph (laptops only) */
+.landing .l-steps { display: none; }
+@media (min-width: 700px) {
+  .landing .l-steps {
+    display: flex; align-items: center; gap: 8px; list-style: none; margin: 20px 0 0; padding: 0;
+    font-size: 13.5px; font-weight: 700; color: var(--l-navy-900); white-space: nowrap;
+  }
+  .landing .l-steps li { display: inline-flex; align-items: center; gap: 7px; }
+  .landing .l-steps li + li::before {
+    content: ""; width: 12px; height: 2px; border-radius: 2px; background: rgb(15 27 51 / 0.2); margin-right: 1px;
+  }
+  .landing .l-steps b {
+    display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%;
+    background: var(--l-grad); color: var(--l-white); font-size: 10.5px; font-weight: 800; letter-spacing: 0.02em;
+    text-shadow: 0 1px 1px rgb(150 50 0 / 0.35); box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.4), 0 4px 10px rgb(236 102 32 / 0.25);
+  }
+}
 
 /* ---------- call to action ---------- */
 .landing .l-cta { z-index: 7; display: grid; gap: 14px; }
@@ -147,6 +224,24 @@
 .landing .l-features { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 14px; font-weight: 600; }
 .landing .l-features li { display: inline-flex; align-items: center; gap: 7px; white-space: nowrap; }
 .landing .l-features svg { width: 17px; height: 17px; color: var(--l-cta-mid); flex: none; }
+.landing .l-features li > span { display: grid; line-height: 1.15; }
+.landing .l-features li b { font-weight: inherit; }
+.landing .l-features li small { display: none; }
+@media (min-width: 700px) {
+  /* three small frosted cards on the slab's bottom edge, each with an orange icon circle */
+  .landing .l-features { gap: 16px; flex-wrap: nowrap; }
+  .landing .l-features li {
+    gap: 6px; padding: 6px 9px 6px 6px; border-radius: 14px;
+    background: rgb(255 255 255 / 0.55);
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.85), 0 4px 12px rgb(4 24 48 / 0.06);
+  }
+  .landing .l-features li > svg {
+    box-sizing: content-box; width: 14px; height: 14px; padding: 6px; border-radius: 50%;
+    background: var(--l-grad); color: var(--l-white); box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.4);
+  }
+  .landing .l-features li b { font-size: 12px; font-weight: 800; color: var(--l-navy-900); }
+  .landing .l-features li small { display: block; font-size: 10.5px; font-weight: 600; color: var(--l-slate-500); }
+}
 @media (max-width: 699px) {
   .landing .l-head { text-align: center; }
   .landing .l-head h1 span { margin-inline: auto; }
@@ -157,7 +252,7 @@
   .landing .l-features svg { color: #FFB27F; filter: drop-shadow(0 1px 2px rgb(4 24 48 / 0.5)); }
 }
 @media (min-width: 700px) {
-  .landing h1 { font-size: clamp(50px, 4.5vw, 70px); margin-top: 18px; line-height: 0.96; }
+  .landing h1 { font-size: clamp(50px, 4.5vw, 70px); margin-top: 0; line-height: 0.96; }
   .landing .l-para { font-size: clamp(16px, 1.25vw, 18px); line-height: 1.6; margin-top: 18px; }
   .landing .l-book-wrap { margin-top: 28px; }
   .landing .l-book { height: 60px; padding: 0 28px 0 30px; font-size: 19.5px; }
@@ -177,8 +272,10 @@
 .landing .l-chip b { font-weight: 800; font-variant-numeric: tabular-nums; }
 .landing .l-chip i { width: 32px; height: 32px; border-radius: 50%; background: var(--l-grad); display: grid; place-items: center; box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.4); }
 .landing .l-chip i svg { width: 17px; height: 17px; color: var(--l-white); }
-.landing .l-chip .l-dot { width: 10px; height: 10px; border-radius: 50%; background: #22C55E; box-shadow: 0 0 0 4px rgb(34 197 94 / 0.22); margin-left: 8px; }
-.landing .l-chip.l-closed .l-dot { background: var(--l-slate-300); box-shadow: 0 0 0 4px rgb(138 151 168 / 0.25); }
+/* right-hand column chips: same look, a touch more compact so the column fits beside the paddle */
+.landing .l-chip.l-chip-col { height: 42px; gap: 8px; padding: 0 15px 0 6px; font-size: 13.5px; }
+.landing .l-chip.l-chip-col i { width: 30px; height: 30px; }
+.landing .l-chip.l-chip-col i svg { width: 16px; height: 16px; }
 
 /* ---------- booking pass (laptop showcase; illustration, not live data) ---------- */
 .landing .l-pass { position: absolute; z-index: 6; width: 250px; pointer-events: none; transform: translate3d(calc(var(--mx, 0) * 20px), calc(var(--my, 0) * 14px), 0) perspective(900px) rotateY(16deg) rotateZ(-4deg) scale(var(--k, 1)); }

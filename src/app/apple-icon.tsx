@@ -1,16 +1,11 @@
 import { ImageResponse } from "next/og";
+import { logoMarkupString } from "@/components/logo-mark";
 
 export const size = { width: 180, height: 180 };
 export const contentType = "image/png";
 
-// iOS "Add to Home Screen" icon: the logo tile, full-bleed (iOS rounds the corners itself).
-const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40" width="180" height="180">
-<defs><linearGradient id="t" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FB8C47"/><stop offset="1" stop-color="#E8601C"/></linearGradient></defs>
-<rect width="40" height="40" fill="url(#t)"/>
-<g transform="rotate(-38 19 21)"><rect x="12.5" y="7" width="13" height="16" rx="6" fill="#fff"/><rect x="15.5" y="12" width="7" height="1.6" rx="0.8" fill="#EC6620" opacity="0.55"/><rect x="17" y="22" width="4" height="11" rx="2" fill="#fff"/></g>
-<circle cx="29.5" cy="10.5" r="4.6" fill="#D4F02E" stroke="#0F1B33" stroke-width="1.2"/>
-<circle cx="28.2" cy="9.4" r="0.8" fill="#0F1B33" opacity="0.6"/><circle cx="30.9" cy="11.6" r="0.8" fill="#0F1B33" opacity="0.6"/>
-</svg>`;
+// iOS "Add to Home Screen" icon: the logo mark, full-bleed (iOS rounds the corners itself).
+const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40" width="180" height="180">${logoMarkupString("t", { rounded: false })}</svg>`;
 
 export default function AppleIcon() {
   return new ImageResponse(

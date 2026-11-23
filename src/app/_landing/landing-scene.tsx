@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, type ReactNode } from "react";
+import { LogoMark } from "@/components/logo";
 import { MobileNav } from "@/components/nav-links";
 import { mountLandingScene } from "./scene";
 
@@ -11,11 +12,19 @@ export type LandingCopy = {
   closeHour: number;
   /** "8 AM to midnight" */
   hoursText: string;
+  /** "8 AM – 12 AM" */
+  hoursRange: string;
   /** "₱250" */
   rateText: string;
   /** "₱50" */
   paddleFeeText: string;
   holdMinutes: number;
+  /** How far ahead people can book (settings.max_advance_days). */
+  maxAdvanceDays: number;
+  /** "midnight" (closing time in words) */
+  closeWords: string;
+  /** settings.paddle_count (display only) */
+  paddleCount: number;
   /** Booking pass illustration: 2 hours + paddles at current prices, e.g. "₱550". */
   sampleTotalText: string;
 };
@@ -63,40 +72,70 @@ export function LandingScene({ copy, account }: { copy: LandingCopy; account: Re
             </div>
           ))}
 
-          <nav data-l="nav" className="l-nav l-abs" aria-label="Main">
-            <Link className="l-logo" href="/" aria-label="Dink n' Drive home">
-              <LogoTile />
-              <span className="l-wm">
-                <b>
-                  Dink <em>n&apos;</em> Drive
-                </b>
-                <small>Pickleball · Luyang</small>
-              </span>
-            </Link>
-            <div className="l-links">
-              <Link href="/" aria-current="page">
-                Home
+          <nav data-l="nav" className="l-nav" aria-label="Main">
+            <div className="l-nav-row">
+              <Link className="l-logo" href="/" aria-label="Dink n' Drive home">
+                <LogoMark className="" gradientId="l-tile-nav" />
+                <span className="l-wm">
+                  <b>
+                    Dink <em>n&apos;</em> Drive
+                  </b>
+                  <small>Pickleball · Luyang</small>
+                </span>
               </Link>
-              <Link href="/community">Community</Link>
-              <Link href="/feedback">Feedback</Link>
-              <Link href="/my-bookings">My bookings</Link>
-            </div>
-            <div className="l-nav-right">
-              {account}
-              <MobileNav className="min-[700px]:hidden" />
+              <div className="l-links">
+                <Link href="/" aria-current="page">
+                  Home
+                </Link>
+                <Link href="/community">Community</Link>
+                <Link href="/feedback">Feedback</Link>
+                <Link href="/my-bookings">My bookings</Link>
+              </div>
+              <div className="l-nav-right">
+                <span className="l-clock" aria-label="Current time in Cebu">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <circle cx="12" cy="12" r="9" />
+                    <path d="M12 7.5V12l3 2" />
+                  </svg>
+                  <span>
+                    <b data-l="clock-time" />
+                    <small>Cebu time</small>
+                  </span>
+                </span>
+                {account}
+                <MobileNav className="l-menu" />
+              </div>
             </div>
           </nav>
 
-          <div data-l="head" className="l-head l-abs">
-            <span className="l-loc">
-              <i>
+          {/* Status row at the top of the slab (replaces the old in-slab nav): where + whether it's open now. */}
+          <div data-l="info" className="l-info l-abs">
+            {/* Segmented pill group in the old nav's style: the orange-gradient chip is the place,
+                then when it's open. */}
+            <div className="l-seg">
+              <span className="l-seg-on">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                   <path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21Z" />
                   <circle cx="12" cy="9.5" r="2.4" />
                 </svg>
-              </i>
-              Luyang <span>· open daily</span>
+                Luyang
+              </span>
+              <span>Open daily</span>
+              <span className="l-seg-hours">{copy.hoursRange}</span>
+            </div>
+            <span className="l-badge">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M5 12.5l4.5 4.5L19 7.5" />
+              </svg>
+              No account needed
             </span>
+            <span data-l="open-pill" className="l-open">
+              <span className="l-dot" />
+              <span data-l="open-text" />
+            </span>
+          </div>
+
+          <div data-l="head" className="l-head l-abs">
             <h1>
               <span>Book your hour.</span>
               <span>
@@ -105,8 +144,19 @@ export function LandingScene({ copy, account }: { copy: LandingCopy; account: Re
             </h1>
             <p className="l-para">
               Luyang&apos;s own pickleball court, open <b>{copy.hoursText}</b>.
-              <span className="l-more"> Pick your hours, pay with GCash, then just show up and play.</span>
             </p>
+            {/* How it works (laptops): numbered steps, as in DESIGN.md's palette-1 style */}
+            <ol className="l-steps" aria-label="How it works">
+              <li>
+                <b>01</b> Pick your hours
+              </li>
+              <li>
+                <b>02</b> Pay with GCash
+              </li>
+              <li>
+                <b>03</b> Show up &amp; play
+              </li>
+            </ol>
             <div className="l-book-wrap">
               <Link className="l-book l-grad" href="/book">
                 Book now
@@ -124,23 +174,27 @@ export function LandingScene({ copy, account }: { copy: LandingCopy; account: Re
                   <circle cx="12" cy="13" r="8" />
                   <path d="M12 9v4l2.5 1.5M9.5 2.5h5" />
                 </svg>
-                {copy.holdMinutes}-min slot hold
+                <span>
+                  <b>{copy.holdMinutes}-min slot hold</b>
+                  <small>while you pay</small>
+                </span>
               </li>
               <li>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                   <rect x="6.5" y="2.5" width="11" height="19" rx="2.5" />
                   <path d="M10.5 18h3" />
                 </svg>
-                Pay with GCash
+                <span>
+                  <b>Pay with GCash</b>
+                  <small>scan, then upload</small>
+                </span>
               </li>
               <li>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <g transform="rotate(-35 12 12)">
-                    <rect x="7.5" y="2.5" width="9" height="11" rx="4.2" />
-                    <path d="M12 13.5v8" />
-                  </g>
-                </svg>
-                Paddles for {copy.paddleFeeText}
+                <PaddleIcon />
+                <span>
+                  <b>Paddles for {copy.paddleFeeText}</b>
+                  <small>per booking</small>
+                </span>
               </li>
             </ul>
           </div>
@@ -156,16 +210,44 @@ export function LandingScene({ copy, account }: { copy: LandingCopy; account: Re
               <b>{copy.rateText}</b> / hour
             </span>
           </span>
-          <span data-l="chip-open" className="l-chip" aria-hidden="true" style={{ "--depth": "-14px" } as React.CSSProperties}>
-            <span className="l-dot" />
-            <span data-l="open-text" />
+          <span data-l="chip-lights" className="l-chip l-chip-col" aria-hidden="true" style={{ "--depth": "-14px" } as React.CSSProperties}>
+            <i>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="5" y="3" width="14" height="7" rx="1.6" />
+                <path d="M8.5 6.5h0M12 6.5h0M15.5 6.5h0" strokeWidth="2.8" />
+                <path d="M12 10v11M8.5 21h7M7 13.5l-2.5 2M17 13.5l2.5 2" />
+              </svg>
+            </i>
+            <span>
+              <b>Night games</b> till {copy.closeWords}
+            </span>
+          </span>
+          <span data-l="chip-paddles" className="l-chip l-chip-col" aria-hidden="true" style={{ "--depth": "-14px" } as React.CSSProperties}>
+            <i>
+              <PaddleIcon />
+            </i>
+            <span>
+              <b>{copy.paddleCount} paddles</b> to rent · {copy.paddleFeeText}
+            </span>
+          </span>
+          <span data-l="chip-ahead" className="l-chip l-chip-col" aria-hidden="true" style={{ "--depth": "-14px" } as React.CSSProperties}>
+            <i>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3.5" y="5" width="17" height="15.5" rx="3" />
+                <path d="M3.5 10h17M8 3v4M16 3v4" />
+                <path d="M8.5 14.5h2M13.5 14.5h2" />
+              </svg>
+            </i>
+            <span>
+              Book up to <b>{copy.maxAdvanceDays} days</b> ahead
+            </span>
           </span>
 
           {/* Illustration of what customers get after booking, not live data (DESIGN.md §5). */}
           <div data-l="pass" className="l-pass" aria-hidden="true">
             <div className="l-pass-in">
               <div className="l-pass-top">
-                <LogoTile simple />
+                <LogoMark className="" gradientId="l-tile-pass" />
                 <div>
                   <small>Booking pass</small>
                   <b>Dink n&apos; Drive</b>
@@ -224,30 +306,15 @@ export function LandingScene({ copy, account }: { copy: LandingCopy; account: Re
   );
 }
 
-function LogoTile({ simple = false }: { simple?: boolean }) {
-  const id = simple ? "l-tile-pass" : "l-tile-nav";
+/** Pickleball paddle + ball as solid shapes (reads clearly at 16px; outlines looked like a search icon). */
+function PaddleIcon() {
   return (
-    <svg viewBox="0 0 40 40" aria-hidden="true">
-      <defs>
-        <linearGradient id={id} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#FB8C47" />
-          <stop offset="1" stopColor="#E8601C" />
-        </linearGradient>
-      </defs>
-      <rect width="40" height="40" rx="12" fill={`url(#${id})`} />
-      {!simple && <rect x="0.75" y="0.75" width="38.5" height="38.5" rx="11.25" fill="none" stroke="#fff" strokeOpacity="0.35" strokeWidth="1.5" />}
-      <g transform="rotate(-38 19 21)">
-        <rect x="12.5" y="7" width="13" height="16" rx="6" fill="#fff" />
-        {!simple && <rect x="15.5" y="12" width="7" height="1.6" rx="0.8" fill="#EC6620" opacity="0.55" />}
-        <rect x="17" y="22" width="4" height="11" rx="2" fill="#fff" />
+    <svg viewBox="0 0 24 24" fill="currentColor" stroke="none" aria-hidden="true">
+      <g transform="rotate(-22 11 12)">
+        <rect x="5.5" y="1" width="12" height="12.5" rx="4" />
+        <rect x="9.9" y="12.5" width="3.2" height="10.5" rx="1.5" />
       </g>
-      <circle cx="29.5" cy="10.5" r="4.6" fill="#D4F02E" stroke="#0F1B33" strokeWidth="1.2" />
-      {!simple && (
-        <>
-          <circle cx="28.2" cy="9.4" r="0.8" fill="#0F1B33" opacity="0.6" />
-          <circle cx="30.9" cy="11.6" r="0.8" fill="#0F1B33" opacity="0.6" />
-        </>
-      )}
+      <circle cx="20" cy="19.2" r="2.7" />
     </svg>
   );
 }

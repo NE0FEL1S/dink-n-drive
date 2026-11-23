@@ -45,7 +45,11 @@ export function mountLandingScene(root: HTMLElement, opts: SceneOptions): () => 
   const shadowSvg = q<SVGSVGElement>("shadow");
   const shadowPath = q<SVGPathElement>("shadow-path");
   const chipPrice = q("chip-price");
-  const chipOpen = q("chip-open");
+  const chipAhead = q("chip-ahead");
+  const chipLights = q("chip-lights");
+  const chipPaddles = q("chip-paddles");
+  const info = q("info"); // status row inside the slab (location + open/closed)
+  const openPill = q("open-pill");
   const pass = q("pass");
   const shards = [...root.querySelectorAll<HTMLElement>('[data-l="shard"]')];
 
@@ -53,11 +57,15 @@ export function mountLandingScene(root: HTMLElement, opts: SceneOptions): () => 
   const updateOpen = () => {
     const h = new Date(Date.now() + 8 * 3_600_000).getUTCHours();
     const isOpen = h >= opts.openHour && h < opts.closeHour;
+    const now = new Date(Date.now() + 8 * 3_600_000),
+      hh = now.getUTCHours(),
+      mm = now.getUTCMinutes();
+    q("clock-time").textContent = `${hh % 12 === 0 ? 12 : hh % 12}:${String(mm).padStart(2, "0")} ${hh < 12 ? "AM" : "PM"}`;
     q("open-text").textContent = isOpen ? `Open now · till ${hourText(opts.closeHour)}` : `Closed · opens ${hourText(opts.openHour)}`;
-    chipOpen.classList.toggle("l-closed", !isOpen);
+    openPill.classList.toggle("l-closed", !isOpen);
   };
   updateOpen();
-  const openTimer = window.setInterval(updateOpen, 60_000);
+  const openTimer = window.setInterval(updateOpen, 15_000); // keeps the nav clock on the minute
   cleanups.push(() => window.clearInterval(openTimer));
 
   /* ---------- background: rays, cumulus horizon, court with a red kitchen, benches ---------- */
@@ -65,27 +73,72 @@ export function mountLandingScene(root: HTMLElement, opts: SceneOptions): () => 
   const sansFamily =
     getComputedStyle(document.documentElement).getPropertyValue("--font-jakarta").trim() || "system-ui, sans-serif";
 
-  function cloudBank(r: () => number, cx: number, base: number, scale: number, tint: string[]) {
-    const n = 11 + Math.floor(r() * 6);
+  /**
+   * One shared cumulus painter, used for every cloud so they all look the same:
+   * a bumpy base row, a middle tier and a domed top (tall, not thin), drawn as one
+   * merged shape offscreen. Base colour is a soft blue-grey shade; each puff then gets
+   * a white highlight shifted up, which leaves shading in the creases and underneath.
+   * Bottoms stay round and bumpy (never flat).
+   */
+  function cumulus(r: () => number, cx: number, baseY: number, w: number, alpha: number, stretch = 1) {
+    // `stretch` widens the cloud (more puffs across a wider span) without making it taller
+    const dpr = Math.min(window.devicePixelRatio || 1, 2),
+      h = w * 0.58,
+      pad = w * 0.16,
+      sw = w * stretch,
+      bw = sw + pad * 2,
+      bh = h + pad * 2,
+      Y0 = pad + h; // cloud base inside the offscreen canvas
     const puffs: Array<[number, number, number]> = [];
-    for (let i = 0; i < n; i++) {
-      const t = i / (n - 1) - 0.5,
-        rise = Math.cos(t * Math.PI);
-      const rad = scale * (0.32 + 0.55 * rise * (0.7 + r() * 0.5));
-      puffs.push([cx + t * scale * 3.4 + (r() - 0.5) * scale * 0.35, base - rad * 0.45 - rise * scale * (0.5 + r() * 0.6), rad]);
+    // base row: many medium puffs; their varied sizes make the underside bumpy
+    const nb = Math.round((7 + Math.floor(r() * 3)) * stretch);
+    for (let i = 0; i < nb; i++) {
+      const t = (i + 0.5) / nb - 0.5,
+        rad = w * (0.085 + 0.045 * r()) * (0.75 + 0.35 * Math.cos(t * Math.PI));
+      puffs.push([pad + sw / 2 + t * sw * 0.86 + (r() - 0.5) * w * 0.03, Y0 - rad * (0.72 + r() * 0.18), rad]);
     }
-    puffs
-      .sort((a, b) => a[1] - b[1])
-      .forEach(([x, y, rad]) => {
-        const g = ctx.createLinearGradient(0, y - rad, 0, y + rad);
-        g.addColorStop(0, tint[0]);
-        g.addColorStop(0.55, tint[1]);
-        g.addColorStop(1, tint[2]);
-        ctx.fillStyle = g;
-        ctx.beginPath();
-        ctx.arc(x, y, rad, 0, Math.PI * 2);
-        ctx.fill();
-      });
+    // middle tier: bigger puffs, narrower
+    const nm = Math.round((4 + Math.floor(r() * 2)) * stretch);
+    for (let i = 0; i < nm; i++) {
+      const t = (i + 0.5) / nm - 0.5,
+        rad = w * (0.13 + 0.05 * r()) * (0.8 + 0.25 * Math.cos(t * Math.PI));
+      puffs.push([pad + sw / 2 + t * sw * 0.6 + (r() - 0.5) * w * 0.05, Y0 - h * (0.42 + r() * 0.08), rad]);
+    }
+    // domed top: one to three large puffs near the middle
+    const nt = Math.round((1 + Math.floor(r() * 3)) * stretch);
+    for (let i = 0; i < nt; i++) {
+      const rad = w * (0.15 + 0.05 * r());
+      puffs.push([pad + sw / 2 + (r() - 0.5) * sw * 0.32, Y0 - h * (0.66 + r() * 0.08), rad]);
+    }
+
+    const off = document.createElement("canvas");
+    off.width = Math.ceil(bw * dpr);
+    off.height = Math.ceil(bh * dpr);
+    const oc = off.getContext("2d");
+    if (!oc) return;
+    oc.scale(dpr, dpr);
+    const disc = (x: number, y: number, rad: number) => {
+      oc.beginPath();
+      oc.arc(x, y, rad, 0, Math.PI * 2);
+      oc.fill();
+    };
+    // body in the shade colour
+    const body = oc.createLinearGradient(0, Y0 - h, 0, Y0 + w * 0.04);
+    body.addColorStop(0, "#E4EDF7");
+    body.addColorStop(1, "#BCCDE2");
+    oc.fillStyle = body;
+    puffs.forEach(([x, y, rad]) => disc(x, y, rad));
+    // white highlights on top of each puff (source-atop keeps them inside the shape)
+    oc.globalCompositeOperation = "source-atop";
+    oc.filter = "blur(" + (w * 0.012).toFixed(1) + "px)";
+    oc.fillStyle = "#FFFFFF";
+    puffs.forEach(([x, y, rad]) => disc(x - rad * 0.06, y - rad * 0.2, rad * 0.88));
+    oc.filter = "none";
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    if ("filter" in ctx) ctx.filter = "blur(0.6px)";
+    ctx.drawImage(off, cx - bw / 2, baseY - Y0, bw, bh);
+    ctx.restore();
   }
 
   function drawBG() {
@@ -100,15 +153,47 @@ export function mountLandingScene(root: HTMLElement, opts: SceneOptions): () => 
       hz = H * 0.64,
       M = Math.max(W, H);
 
+    // winter twilight: deep indigo overhead → blue → lavender → golden horizon
     let g = ctx.createLinearGradient(0, 0, 0, hz);
-    g.addColorStop(0, "#0A3F6E");
-    g.addColorStop(0.3, "#2A6FAA");
+    g.addColorStop(0, "#0B1F47");
+    g.addColorStop(0.16, "#173E78");
+    g.addColorStop(0.36, "#2F6AA8");
     g.addColorStop(0.58, "#7DB2DC");
-    g.addColorStop(0.78, "#DCD3D8");
+    g.addColorStop(0.76, "#D9CFDB");
     g.addColorStop(0.9, "#F6C9A0");
     g.addColorStop(1, "#FBDDBE");
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, W, hz + 1);
+
+    // early stars, fading out toward the horizon
+    {
+      const rs = rng(21),
+        band = hz * 0.46,
+        n = Math.min(240, Math.round((W * band) / 2600));
+      for (let i = 0; i < n; i++) {
+        const x = rs() * W,
+          y = Math.pow(rs(), 1.6) * band,
+          fade = 1 - y / band,
+          big = rs() < 0.07,
+          r0 = big ? 1.3 + rs() * 0.6 : 0.4 + rs() * 0.8,
+          a = (0.35 + rs() * 0.6) * fade;
+        ctx.fillStyle = `rgba(255,250,240,${a.toFixed(2)})`;
+        ctx.beginPath();
+        ctx.arc(x, y, r0, 0, 6.2832);
+        ctx.fill();
+        if (big) {
+          // a small four-point glint on the brightest stars
+          ctx.strokeStyle = `rgba(255,248,230,${(a * 0.55).toFixed(2)})`;
+          ctx.lineWidth = 0.7;
+          ctx.beginPath();
+          ctx.moveTo(x - r0 * 4, y);
+          ctx.lineTo(x + r0 * 4, y);
+          ctx.moveTo(x, y - r0 * 4);
+          ctx.lineTo(x, y + r0 * 4);
+          ctx.stroke();
+        }
+      }
+    }
 
     // soft sun rays fanning up from behind the clouds
     const sx = W * 0.72,
@@ -145,14 +230,25 @@ export function mountLandingScene(root: HTMLElement, opts: SceneOptions): () => 
       ctx.fillRect(-rad, -rad, rad * 2, rad * 2);
       ctx.restore();
     }
-    const rc = rng(5);
-    if ("filter" in ctx) ctx.filter = "blur(1.5px)";
-    const far = ["rgba(242,234,234,0.92)", "rgba(222,216,228,0.9)", "rgba(170,178,206,0.85)"];
-    const near = ["rgba(255,255,255,1)", "rgba(251,242,234,0.98)", "rgba(196,184,202,0.95)"];
-    const s = phone ? H * 0.075 : M * 0.06;
-    [[0.08, 0.9], [0.36, 0.75], [0.64, 1.05], [0.95, 0.85]].forEach(([f, k]) => cloudBank(rc, W * f, hz + 4, s * k * 1.15, far));
-    [[-0.02, 0.8], [0.22, 1.1], [0.5, 0.7], [0.78, 1.25], [1.04, 0.9]].forEach(([f, k]) => cloudBank(rc, W * f, hz + 6, s * k, near));
-    if ("filter" in ctx) ctx.filter = "none";
+    // upper-sky cumulus (same painter as the horizon bank, so every cloud matches)
+    {
+      const rt = rng(31);
+      const tops: Array<[number, number, number]> = phone
+        ? [[0.12, 0.22, 0.42], [0.86, 0.3, 0.46], [0.5, 0.16, 0.34]]
+        : [[0.1, 0.2, 0.15], [0.36, 0.13, 0.11], [0.66, 0.18, 0.13], [0.9, 0.26, 0.15], [0.2, 0.42, 0.1], [0.8, 0.48, 0.11]];
+      // stretched wider than the horizon clouds, so the upper sky reads as long, drifting banks
+      tops.forEach(([fxp, fyp, fw]) => cumulus(rt, W * fxp, hz * fyp, (phone ? W : M) * fw, 0.96, 1.5));
+    }
+
+    // horizon bank: two overlapping rows of the same cumulus (far row smaller and fainter)
+    {
+      const rh = rng(5),
+        unit = phone ? W * 0.34 : M * 0.15;
+      const far = [0.04, 0.2, 0.37, 0.53, 0.69, 0.85, 1.0];
+      const near = [-0.03, 0.13, 0.3, 0.47, 0.63, 0.8, 0.97];
+      far.forEach((f) => cumulus(rh, W * f, hz + unit * 0.06, unit * (0.85 + rh() * 0.3), 0.82));
+      near.forEach((f) => cumulus(rh, W * f, hz + unit * 0.22, unit * (1.05 + rh() * 0.35), 1));
+    }
     g = ctx.createRadialGradient(sx, sy, 0, sx, sy, M * 0.55);
     g.addColorStop(0, "rgba(255,226,186,0.75)");
     g.addColorStop(0.15, "rgba(255,196,146,0.32)");
@@ -561,6 +657,10 @@ export function mountLandingScene(root: HTMLElement, opts: SceneOptions): () => 
 
   /* ---------- layout: slab, paddle, ice break, ball, chips, pass, shards ---------- */
   const AR = 586 / 1156; // paddle image aspect ratio
+  // Right edge of the opaque paddle in 24 horizontal bands, as a fraction of the image width
+  // (measured from /landing/paddle.webp). The head is full width near the top, its edge pulls
+  // in from ~40% down, and the handle sits near 0.3. Used so the chip ladder can follow it.
+  const PADDLE_RIGHT = [0.93, 0.986, 0.998, 0.998, 0.983, 0.962, 0.945, 0.933, 0.915, 0.894, 0.863, 0.841, 0.795, 0.703, 0.539, 0.415, 0.389, 0.36, 0.338, 0.317, 0.295, 0.273, 0.253, 0.244];
   const HC = { u: 0.5, v: 0.36 }; // the break is centred behind the paddle head
   const K1 = 1.25,
     RX = 0.55,
@@ -615,6 +715,9 @@ export function mountLandingScene(root: HTMLElement, opts: SceneOptions): () => 
     return { hole, r };
   }
 
+  // text that the paddle's ice break must stay clear of (laptop layout)
+  const TEXT_SEL = '[data-l="head"] h1 span, [data-l="head"] .l-para, [data-l="head"] .l-steps li, [data-l="head"] .l-book, [data-l="cta"] .l-features li';
+
   function layout() {
     const W = stage.clientWidth,
       H = stage.clientHeight;
@@ -622,42 +725,72 @@ export function mountLandingScene(root: HTMLElement, opts: SceneOptions): () => 
     const phone = W < 700;
     const S = stage.getBoundingClientRect();
     let P: { x: number; y: number; w: number; h: number };
+    // the nav is a full-width bar pinned to the top of the page (CSS); content starts below it
+    const navB = nav.getBoundingClientRect().bottom - S.top;
     if (phone) {
-      place(nav, 0, 0, W);
-      const navH = nav.offsetHeight;
       place(cta, 0, 0, W);
       const ctaH = cta.offsetHeight;
       place(cta, 0, H - ctaH - 8);
-      const top = navH + 12,
+      const top = navB + 12,
         bottom = H - ctaH - 36;
       P = { x: 0, y: top, w: W, h: Math.max(320, bottom - top) };
-      place(head, P.x + 20, P.y + 20, P.w - 40);
+      place(info, P.x + 20, P.y + 18, P.w - 40);
+      head.style.height = "";
+      place(head, P.x + 20, P.y + 18 + info.offsetHeight, P.w - 40);
     } else {
+      const top0 = navB + 18, // slab starts below the nav bar
+        avail = H - top0;
       const w = W < 1000 ? W * 0.82 : Math.min(W * 0.68, 1000);
-      const h = Math.min(H * 0.8, 660, w * 0.72);
-      const x = (W - w) / 2 + (W < 1000 ? W * 0.05 : W * 0.07);
-      const y = (H - h) / 2 - H * 0.01;
+      // shifted right of centre to leave a column for the booking pass on the left
+      const x = (W - w) / 2 + (W < 1000 ? W * 0.05 : W * 0.078);
+      // measure the status row, text and feature cards first
+      place(info, x + 44, 0, w - 88);
+      const ib = 26 + info.offsetHeight, // status row block at the top of the slab
+        colW = w * 0.54;
+      head.style.height = ""; // natural height first (it may be stretched below)
+      place(head, x + 44, 0, colW);
+      place(cta, x + 44, 0, colW);
+      const headH = head.offsetHeight,
+        ctaH = cta.offsetHeight,
+        contentH = ib + 40 + headH + 36 + ctaH + 30;
+      // tall enough for the full-size paddle and the chip ladder beside it
+      const h = Math.min(avail - 12, Math.max(Math.min(avail * 0.86, 660, w * 0.72), contentH));
+      const y = top0 + Math.max(0, (avail - h) / 2 - avail * 0.01);
       P = { x, y, w, h };
-      place(nav, P.x, P.y, P.w);
-      const navH = nav.offsetHeight,
-        colW = P.w * 0.54;
-      place(head, P.x + 44, 0, colW);
-      place(cta, P.x + 44, 0, colW);
-      const total = head.offsetHeight + 30 + cta.offsetHeight;
-      const y0 = P.y + navH + Math.max(14, (P.h - navH - total) / 2);
-      place(head, P.x + 44, y0);
-      place(cta, P.x + 44, y0 + head.offsetHeight + 30);
+      place(info, P.x + 44, P.y + 26, P.w - 88);
+      // feature cards sit on the slab's bottom edge; the headline block fills the room above
+      // them: beyond comfortable 48px outer gaps, up to 32px more goes between each text group
+      // (headline / paragraph / steps / button, via flex space-between), so there are no big
+      // empty bands above the headline or after the Book now button.
+      const ctaY = P.y + P.h - 30 - ctaH;
+      place(cta, P.x + 44, ctaY);
+      const span = ctaY - (P.y + ib),
+        grow = Math.min(Math.max(0, span - headH - 2 * 48), 3 * 32),
+        hh = headH + grow;
+      head.style.height = `${hh}px`;
+      place(head, P.x + 44, P.y + ib + Math.max(20, (span - hh) / 2));
     }
     place(panel, P.x, P.y, P.w, P.h);
     shadowSvg.setAttribute("viewBox", `0 0 ${W} ${H}`);
 
     const hr = rectOf(head, S),
       cr = rectOf(cta, S),
-      nr = rectOf(nav, S);
-    const textEls = phone
-      ? head.querySelectorAll(".l-loc, h1 span, .l-para, .l-book")
-      : root.querySelectorAll('[data-l="head"] .l-loc, [data-l="head"] h1 span, [data-l="head"] .l-para, [data-l="head"] .l-book, [data-l="cta"] .l-features li');
+      nr = rectOf(nav, S),
+      ir = rectOf(info, S);
+    const textEls = phone ? head.querySelectorAll("h1 span, .l-para, .l-book") : root.querySelectorAll(TEXT_SEL);
     const textR = Math.max(...[...textEls].map((e) => rectOf(e, S).r));
+
+    // Right-hand chips (laptops) form a LADDER: three rungs with equal gaps, each rung a step
+    // left of the one above, following the paddle's tilted right edge (PADDLE_RIGHT). The
+    // full-size paddle is tried first; it shrinks only if no ladder fits; otherwise chips hide.
+    const col = [chipLights, chipPaddles, chipAhead];
+    col.forEach((c) => (c.hidden = false)); // measurable
+    const colSizes = col.map((c) => [c.offsetWidth, c.offsetHeight] as const);
+    col.forEach((c) => (c.hidden = true));
+    const colW = Math.max(...colSizes.map(([w0]) => w0)),
+      colL = W + 8 - colW, // the top rung hugs the window's right edge (16px clear; parallax drifts ≤14px)
+      sumColH = colSizes.reduce((sum, [, h0]) => sum + h0, 0);
+    let ladder: Box[] | null = null;
 
     // paddle: in front of the glass; the break sits behind its head and stays fully inside the slab
     let ph: number, cx: number, cy: number;
@@ -667,13 +800,85 @@ export function mountLandingScene(root: HTMLElement, opts: SceneOptions): () => 
       cy = hr.b + 8 + K1 * RY * ph;
       cx = P.x + P.w * 0.6;
     } else {
-      const top = nr.b + 6,
+      const top = ir.b + 6,
         bottom = P.y + P.h - 10,
         left = textR + 40,
-        right = P.x + P.w - 10;
-      ph = Math.min(P.h * 0.9, (bottom - top) / (2 * K1 * RY), (right - left) / (2 * K1 * RX * AR));
-      cy = Math.min(Math.max(top + K1 * RY * ph, P.y + P.h * 0.52), bottom - K1 * RY * ph);
-      cx = Math.min(right - K1 * RX * ph * AR, Math.max(left + K1 * RX * ph * AR, P.x + P.w * 0.72));
+        right = P.x + P.w - 10,
+        hole = K1 * RX, // break half-width as a fraction of the paddle width
+        maxV = Math.min(P.h * 0.9, (bottom - top) / (2 * K1 * RY));
+      // natural size: the whole ice break fits between the text and the slab's right edge
+      const natural = Math.min(maxV, (right - left) / (2 * K1 * RX * AR));
+      const cyOf = (p0: number) => Math.min(Math.max(top + K1 * RY * p0, P.y + P.h * 0.52), bottom - K1 * RY * p0);
+      const cxOf = (p0: number, hugText: boolean) =>
+        hugText ? left + hole * p0 * AR : Math.min(right - hole * p0 * AR, Math.max(left + hole * p0 * AR, P.x + P.w * 0.72));
+
+      // rightmost opaque paddle x between stage-y t and b, for a paddle of height p0 at (cx0, cy0)
+      const paddleRight = (p0: number, cx0: number, cy0: number, t: number, b: number) => {
+        const pw0 = p0 * AR,
+          pt0 = cy0 - HC.v * p0,
+          pl0 = cx0 - HC.u * pw0,
+          N = PADDLE_RIGHT.length;
+        let m = -Infinity;
+        for (let i = 0; i < N; i++) {
+          const bt = pt0 + (p0 * i) / N,
+            bb = pt0 + (p0 * (i + 1)) / N;
+          if (bb >= t && bt <= b) m = Math.max(m, pl0 + pw0 * PADDLE_RIGHT[i]);
+        }
+        return m;
+      };
+      // find a ladder with the given gap, placed as HIGH as it can go while clearing the paddle
+      const findLadder = (p0: number, cx0: number, cy0: number, gap: number): Box[] | null => {
+        if (colL < P.x + P.w * 0.6) return null;
+        const yLo = ir.b + 18,
+          yMax = Math.min(H - 12, P.y + P.h + 40);
+        {
+          const stackH = sumColH + gap * (col.length - 1),
+            yHi = yMax - stackH;
+          if (yHi < yLo) return null;
+          for (const step of [28, 22, 18]) {
+            for (let yS = yLo; yS <= yHi; yS += 4) {
+              {
+                let y = yS;
+                const boxes = colSizes.map(([w0, h0], i) => {
+                  const l = colL - step * i;
+                  const bx = { l, t: y, r: l + w0, b: y + h0 };
+                  y += h0 + gap;
+                  return bx;
+                });
+                const clear = boxes.every(
+                  (bx) => bx.l >= paddleRight(p0, cx0, cy0, bx.t - 12, bx.b + 12) + 14 && ![hr, cr, ir].some((o) => hit(bx, o, 10)),
+                );
+                if (clear) return boxes;
+              }
+            }
+          }
+        }
+        return null;
+      };
+      // The 90px gap comes first (the spacing asked for): the biggest paddle that allows it,
+      // down to 78%. Then 80/70px gaps, but only with a paddle of at least 85%; else no chips
+      // (a tiny paddle is worse than no ladder).
+      ph = natural;
+      cx = cxOf(natural, false);
+      cy = cyOf(natural);
+      const tries: Array<[number, number]> = [
+        [90, 1], [90, 0.92], [90, 0.85], [90, 0.78],
+        [80, 1], [80, 0.92], [80, 0.85],
+        [70, 1], [70, 0.92], [70, 0.85],
+      ];
+      for (const [gap, f] of tries) {
+        const p0 = natural * f,
+          cx0 = cxOf(p0, f < 1),
+          cy0 = cyOf(p0);
+        const found = findLadder(p0, cx0, cy0, gap);
+        if (found) {
+          ph = p0;
+          cx = cx0;
+          cy = cy0;
+          ladder = found;
+          break;
+        }
+      }
     }
     ph = Math.max(ph, 60);
     const pw = ph * AR,
@@ -682,7 +887,7 @@ export function mountLandingScene(root: HTMLElement, opts: SceneOptions): () => 
     place(pFront, cx - HC.u * pw, cy - HC.v * ph, pw, ph);
 
     // the break
-    const yMin = phone ? 10 : nr.b - P.y + 4;
+    const yMin = phone ? 10 : ir.b - P.y + 4;
     const hx = cx - P.x,
       hy = cy - P.y;
     const B = shatter(hx, hy, rx, ry, P, yMin, phone);
@@ -695,7 +900,7 @@ export function mountLandingScene(root: HTMLElement, opts: SceneOptions): () => 
     shadowPath.setAttribute("d", canHole ? `${outer} ${holeD}` : outer);
     shadowPath.setAttribute("transform", `translate(${P.x} ${P.y})`);
 
-    const txt = [hr, cr].map((b) => ({ l: b.l - P.x - 12, t: b.t - P.y - 12, r: b.r - P.x + 12, b: b.b - P.y + 12 }));
+    const txt = [hr, cr, ir].map((b) => ({ l: b.l - P.x - 12, t: b.t - P.y - 12, r: b.r - P.x + 12, b: b.b - P.y + 12 }));
     const underText = (x: number, y: number) => txt.some((b) => x > b.l && x < b.r && y > b.t && y < b.b);
     let s = `<defs>
       <filter id="l-soft" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="${phone ? 7 : 11}"/></filter>
@@ -838,31 +1043,40 @@ export function mountLandingScene(root: HTMLElement, opts: SceneOptions): () => 
     pass.hidden = phone || P.x < 250;
     let passR: Box = { l: 0, t: 0, r: 0, b: 0 };
     if (!pass.hidden) {
-      const k = Math.min(1.14, (P.x - 36) / 250);
+      const k = Math.min(1.02, (P.x - 36) / 250);
       pass.style.setProperty("--k", k.toFixed(3));
       const hh = pass.offsetHeight,
-        ccx = P.x / 2 + 6,
+        ccx = P.x / 2 - 4,
         ccy = P.y + P.h * 0.58;
       place(pass, ccx - 125, ccy - hh / 2);
       passR = { l: ccx - 125 * k, t: ccy - (hh * k) / 2, r: ccx + 125 * k, b: ccy + (hh * k) / 2 };
     }
 
     // floating chips (laptop only)
-    [chipPrice, chipOpen].forEach((c) => {
-      c.hidden = phone;
-    });
+    chipPrice.hidden = phone;
+    col.forEach((c) => (c.hidden = true)); // shown only if placed below
+    const rightR: Box[] = [];
     if (!phone) {
-      place(chipPrice, Math.max(8, P.x / 2 - chipPrice.offsetWidth / 2 - 10), Math.max(8, Math.min(P.y + P.h * 0.08, passR.t - chipPrice.offsetHeight - 40)));
-      place(chipOpen, P.x + P.w - chipOpen.offsetWidth - 14, P.y - chipOpen.offsetHeight - 14);
-      [chipPrice, chipOpen].forEach((c) => {
-        const b = rectOf(c, S);
-        c.hidden = b.l < 2 || b.r > W - 2 || b.t < 2 || hit(b, ballR, 8) || hit(b, hr, 8) || hit(b, cr, 8) || (!pass.hidden && hit(b, passR, 6));
-      });
+      place(chipPrice, Math.max(8, P.x / 2 - chipPrice.offsetWidth / 2 - 10), Math.max(nr.b + 14, Math.min(P.y + P.h * 0.08, passR.t - chipPrice.offsetHeight - 40)));
+      {
+        const b = rectOf(chipPrice, S);
+        chipPrice.hidden = b.l < 2 || b.r > W - 2 || hit(b, nr, 8) || hit(b, ballR, 8) || hit(b, hr, 8) || hit(b, cr, 8) || (!pass.hidden && hit(b, passR, 6));
+      }
+
+      // Right-side ladder (found together with the paddle size, above)
+      if (ladder) {
+        ladder.forEach((bx, i) => {
+          if (hit(bx, ballR, 8)) return;
+          place(col[i], bx.l, bx.t);
+          col[i].hidden = false;
+          rightR.push(bx);
+        });
+      }
     }
 
     // shards flying outward from the break
     const k = phone ? 0.6 : 1,
-      avoid = [hr, cr, nr, ballR],
+      avoid = [hr, cr, nr, ir, ballR, ...rightR],
       rs = rng(53);
     shards.forEach((el, i) => {
       const a = -2.9 + i * 0.68 + (rs() - 0.5) * 0.3,
@@ -941,6 +1155,7 @@ export function mountLandingScene(root: HTMLElement, opts: SceneOptions): () => 
   const ro = new ResizeObserver(redraw);
   ro.observe(stage);
   ro.observe(nav); // the account area streams in and can change the nav height
+  ro.observe(info);
   let alive = true;
   document.fonts?.ready.then(() => {
     if (alive) redraw();
