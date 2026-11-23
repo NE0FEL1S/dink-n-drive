@@ -714,20 +714,19 @@ export function mountLandingScene(root: HTMLElement, opts: SceneOptions): () => 
     const phone = W < 700;
     const S = stage.getBoundingClientRect();
     let P: { x: number; y: number; w: number; h: number };
-    // the nav is a frosted bar across the top of the page (all sizes)
-    place(nav, 0, 0, W);
-    const navH = nav.offsetHeight;
+    // the nav is a full-width bar pinned to the top of the page (CSS); content starts below it
+    const navB = nav.getBoundingClientRect().bottom - S.top;
     if (phone) {
       place(cta, 0, 0, W);
       const ctaH = cta.offsetHeight;
       place(cta, 0, H - ctaH - 8);
-      const top = navH + 12,
+      const top = navB + 12,
         bottom = H - ctaH - 36;
       P = { x: 0, y: top, w: W, h: Math.max(320, bottom - top) };
       place(info, P.x + 20, P.y + 18, P.w - 40);
       place(head, P.x + 20, P.y + 18 + info.offsetHeight, P.w - 40);
     } else {
-      const top0 = navH + 18, // slab starts below the nav bar
+      const top0 = navB + 18, // slab starts below the nav bar
         avail = H - top0;
       const w = W < 1000 ? W * 0.82 : Math.min(W * 0.68, 1000);
       // shifted right of centre to leave a column for the booking pass on the left
@@ -996,13 +995,16 @@ export function mountLandingScene(root: HTMLElement, opts: SceneOptions): () => 
           COL_GAP = 90,
           gap = Math.min(COL_GAP, (y1 - y0 - sumH) / (n - 1));
         if (gap >= 12) {
-          const blockers: Box[] = [ballR, hr, cr];
+          // One aligned column; each chip is tilted in CSS (rotate -4deg), mirroring the booking
+          // pass. (A diagonal step was tried; the paddle head's right edge leaves no room for it
+          // on most laptops, so the tilt carries the slant consistently at every size.)
+          const blockers: Box[] = [ballR, hr, cr, ir];
           let y = y0 + (y1 - y0 - (sumH + gap * (n - 1))) / 2;
           col.forEach((c, i) => {
             const [w0, h0] = colSizes[i];
             const bx = { l: colL, t: y, r: colL + w0, b: y + h0 };
             y += h0 + gap;
-            if (blockers.some((o) => hit(bx, o, 8))) return;
+            if (blockers.some((o) => hit(bx, o, 10))) return;
             place(c, bx.l, bx.t);
             c.hidden = false;
             rightR.push(bx);

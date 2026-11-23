@@ -12,6 +12,8 @@ export type LandingCopy = {
   closeHour: number;
   /** "8 AM to midnight" */
   hoursText: string;
+  /** "8 AM – 12 AM" */
+  hoursRange: string;
   /** "₱250" */
   rateText: string;
   /** "₱50" */
@@ -70,7 +72,7 @@ export function LandingScene({ copy, account }: { copy: LandingCopy; account: Re
             </div>
           ))}
 
-          <nav data-l="nav" className="l-nav l-abs" aria-label="Main">
+          <nav data-l="nav" className="l-nav" aria-label="Main">
             <div className="l-nav-row">
               <Link className="l-logo" href="/" aria-label="Dink n' Drive home">
                 <LogoMark className="" gradientId="l-tile-nav" />
@@ -98,15 +100,19 @@ export function LandingScene({ copy, account }: { copy: LandingCopy; account: Re
 
           {/* Status row at the top of the slab (replaces the old in-slab nav): where + whether it's open now. */}
           <div data-l="info" className="l-info l-abs">
-            <span className="l-loc">
-              <i>
+            {/* Segmented pill group in the old nav's style: the orange-gradient chip is the place,
+                then when it's open. */}
+            <div className="l-seg">
+              <span className="l-seg-on">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                   <path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21Z" />
                   <circle cx="12" cy="9.5" r="2.4" />
                 </svg>
-              </i>
-              Luyang <span>· open daily</span>
-            </span>
+                Luyang
+              </span>
+              <span>Open daily</span>
+              <span className="l-seg-hours">{copy.hoursRange}</span>
+            </div>
             <span data-l="open-pill" className="l-open">
               <span className="l-dot" />
               <span data-l="open-text" />
