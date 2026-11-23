@@ -232,6 +232,12 @@ On phones it's a bottom sheet; on laptops, a centered dialog. `/book` renders th
   - Past: hidden for today, or shown collapsed as "Earlier hours".
   - Interaction: tap a start hour, then tap a later hour to extend the range (or use the "+ 1 hour" / "− 1 hour" buttons in the sticky bar). The selection stops at the next taken hour.
 - **Sticky bottom bar** (thumb zone, above the home indicator): "3 hours · 8:00–11:00 AM", paddles toggle, total `₱800`, and a primary "Continue" button. It's always visible once something is selected.
+- **Built (Phase 2C):**
+  - The popup is `src/app/@modal/(.)book` (a native `<dialog>`: bottom sheet below 640 px, centred 560 px dialog above). Esc, the ✕ button or a tap on the dimmed backdrop go back in history. `/book` renders the same `BookingFlow` as a page, with the bar sticking to the bottom of the window.
+  - Tapping: a free hour starts a selection; a later or earlier free hour extends it if every hour between is free (otherwise it starts a new selection there); tapping inside the selection shrinks it (the first hour alone clears it). − / + in the bar do the same one hour at a time.
+  - Availability refreshes every minute and when the tab comes back. If someone books part of the selection meanwhile, it's dropped with a notice ("Someone just booked part of those hours").
+  - After the last hour of the day has started, the popup opens on tomorrow. Today's passed hours collapse into one line ("Earlier hours (8:00 AM – 2:00 PM) have passed").
+  - Paddles: a switch in the bar, "Rent paddles · ₱50 / Flat fee per booking · 4 paddles". The calendar button opens the native date picker limited to the booking window.
 
 **Pay** (after confirming)
 - Hold countdown ("Pay within 14:32") in a `#FDF3E1` banner.

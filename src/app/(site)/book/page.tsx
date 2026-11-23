@@ -1,31 +1,31 @@
 import type { Metadata } from "next";
-import { ButtonLink } from "@/components/ui/button";
-import { Card, Eyebrow } from "@/components/ui/card";
-import { hourLabel, peso } from "@/lib/format";
-import { getPublicSettings } from "@/lib/settings";
+import { Suspense } from "react";
+import { Card } from "@/components/ui/card";
+import { BookingData, BookingSkeleton, BookingSubtitle } from "./booking-data";
 
 export const metadata: Metadata = { title: "Book the court" };
 
-// Placeholder until the booking flow (Phase 2) replaces it.
-export default async function BookPage() {
-  const s = await getPublicSettings();
-
+/**
+ * /book as a full page (direct links, refresh). "Book now" on the landing page opens the
+ * same UI as a popup instead (src/app/@modal/(.)book).
+ */
+export default function BookPage() {
   return (
-    <main className="mx-auto w-full max-w-md px-4 pt-8 pb-[calc(2rem+env(safe-area-inset-bottom))] min-[390px]:px-5 sm:pt-14">
-      <Card className="grid gap-4 p-5 sm:p-7">
-        <Eyebrow>Coming soon</Eyebrow>
+    <main className="mx-auto w-full max-w-xl px-4 pt-6 min-[390px]:px-5 sm:pt-12">
+      <Card className="p-5 sm:p-7">
         <h1 className="font-display text-[28px] leading-[34px] font-semibold text-navy-900">Book the court</h1>
-        <p className="text-base text-navy-700">
-          Online booking opens soon. The court is open{" "}
-          <b className="text-navy-900">
-            {hourLabel(s.open_hour)} – {hourLabel(s.close_hour)}
-          </b>{" "}
-          daily at <b className="tabular text-navy-900">{peso(s.hourly_rate)}</b> per hour.
+        <p className="mt-1 text-[15px] text-slate-500">
+          <Suspense fallback={null}>
+            <BookingSubtitle />
+          </Suspense>
         </p>
-        <ButtonLink href="/" variant="secondary" className="w-full">
-          Back to home
-        </ButtonLink>
+        <div className="mt-5">
+          <Suspense fallback={<BookingSkeleton />}>
+            <BookingData variant="page" />
+          </Suspense>
+        </div>
       </Card>
+      <div className="h-[calc(2rem+env(safe-area-inset-bottom))]" />
     </main>
   );
 }

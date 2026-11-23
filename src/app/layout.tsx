@@ -34,11 +34,15 @@ export const viewport: Viewport = {
 };
 
 // The landing page (/) draws its own nav inside the ice panel; every other page
-// gets the sticky header from src/app/(site)/layout.tsx.
-export default function RootLayout({ children }: LayoutProps<"/">) {
+// gets the sticky header from src/app/(site)/layout.tsx. `modal` is the @modal slot:
+// popups opened over the current page (the "Book now" booking sheet).
+export default function RootLayout({ children, modal }: LayoutProps<"/">) {
   return (
     <html lang="en" className={`${fraunces.variable} ${jakarta.variable} antialiased`}>
-      <body className="flex min-h-dvh flex-col">{children}</body>
+      <body className="flex min-h-dvh flex-col">
+        {children}
+        {modal}
+      </body>
     </html>
   );
 }
