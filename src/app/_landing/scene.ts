@@ -45,6 +45,7 @@ export function mountLandingScene(root: HTMLElement, opts: SceneOptions): () => 
   const shadowSvg = q<SVGSVGElement>("shadow");
   const shadowPath = q<SVGPathElement>("shadow-path");
   const chipPrice = q("chip-price");
+  const chipAhead = q("chip-ahead");
   const chipOpen = q("chip-open");
   const pass = q("pass");
   const shards = [...root.querySelectorAll<HTMLElement>('[data-l="shard"]')];
@@ -142,40 +143,6 @@ export function mountLandingScene(root: HTMLElement, opts: SceneOptions): () => 
       }
     }
 
-    // crescent moon with a soft halo (laptops; on phones the slab covers this part of the sky)
-    if (!phone) {
-      const mr = Math.max(16, Math.min(30, M * 0.018)),
-        mx = W * 0.085,
-        my = Math.max(mr * 2.2, H * 0.09);
-      const halo = ctx.createRadialGradient(mx, my, mr * 0.6, mx, my, mr * 5);
-      halo.addColorStop(0, "rgba(214,228,255,0.32)");
-      halo.addColorStop(0.35, "rgba(190,210,250,0.10)");
-      halo.addColorStop(1, "rgba(190,210,250,0)");
-      ctx.fillStyle = halo;
-      ctx.fillRect(mx - mr * 5, my - mr * 5, mr * 10, mr * 10);
-      const off = document.createElement("canvas"),
-        dpr = Math.min(window.devicePixelRatio || 1, 2),
-        size = Math.ceil(mr * 2 + 4);
-      off.width = Math.ceil(size * dpr);
-      off.height = Math.ceil(size * dpr);
-      const oc = off.getContext("2d");
-      if (oc) {
-        oc.scale(dpr, dpr);
-        const mg = oc.createLinearGradient(0, 0, size, size);
-        mg.addColorStop(0, "#FFF8E6");
-        mg.addColorStop(1, "#F3E3C2");
-        oc.fillStyle = mg;
-        oc.beginPath();
-        oc.arc(size / 2, size / 2, mr, 0, 6.2832);
-        oc.fill();
-        oc.globalCompositeOperation = "destination-out";
-        oc.beginPath();
-        oc.arc(size / 2 + mr * 0.48, size / 2 - mr * 0.18, mr * 0.9, 0, 6.2832);
-        oc.fill();
-        ctx.drawImage(off, mx - size / 2, my - size / 2, size, size);
-      }
-    }
-
     // soft sun rays fanning up from behind the clouds
     const sx = W * 0.72,
       sy = hz - H * 0.03,
@@ -211,9 +178,9 @@ export function mountLandingScene(root: HTMLElement, opts: SceneOptions): () => 
       ctx.fillRect(-rad, -rad, rad * 2, rad * 2);
       ctx.restore();
     }
-    // mid-sky cloud banks, lit pink and peach from below by the low sun, cooler lavender tops.
-    // Each bank is drawn as ONE merged shape (offscreen), then tinted and blurred, so the
-    // puffs never show as overlapping circles.
+    // mid-sky cumulus: pure white with a faint cool shade underneath, round and bumpy all
+    // the way around (no flat bottoms). Each bank is drawn as ONE merged shape offscreen,
+    // then shaded and softly blurred, so the puffs never show as overlapping circles.
     {
       const rl = rng(31),
         dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -221,49 +188,52 @@ export function mountLandingScene(root: HTMLElement, opts: SceneOptions): () => 
         ? [[0.18, 0.3, 0.9], [0.8, 0.42, 1.0], [0.45, 0.55, 0.75]]
         : [[0.12, 0.27, 1.0], [0.44, 0.17, 0.75], [0.76, 0.31, 1.15], [0.97, 0.45, 0.8], [0.27, 0.5, 0.85], [0.6, 0.58, 0.65]];
       banks.forEach(([fxp, fyp, k]) => {
-        const span = M * 0.17 * k,
-          bw = span * 2.6,
-          bh = span * 0.75,
+        const span = M * 0.15 * k,
+          bw = span * 2.7,
+          bh = span * 1.1,
           cx = W * fxp,
-          base = hz * fyp, // flat cloud base
-          warm = 0.5 + (base / hz) * 0.5; // lower clouds catch more of the sunset
+          cy = hz * fyp,
+          mid = bh * 0.6; // cloud centre line inside the offscreen canvas
         const off = document.createElement("canvas");
         off.width = Math.ceil(bw * dpr);
         off.height = Math.ceil(bh * dpr);
         const oc = off.getContext("2d");
         if (!oc) return;
         oc.scale(dpr, dpr);
-        const by = bh * 0.82; // base line inside the offscreen canvas
-        oc.save();
-        oc.beginPath();
-        oc.rect(0, 0, bw, by);
-        oc.clip();
         oc.fillStyle = "#fff";
-        const n = 16 + Math.floor(rl() * 7);
+        const blob = (x: number, y: number, r0: number) => {
+          oc.beginPath();
+          oc.arc(x, y, r0, 0, Math.PI * 2);
+          oc.fill();
+        };
+        // billowing body: big puffs in the middle, smaller toward the ends, piled upward
+        const n = 14 + Math.floor(rl() * 6);
         for (let i = 0; i < n; i++) {
           const t = i / (n - 1) - 0.5,
             hump = Math.cos(t * Math.PI),
-            rad = span * (0.07 + 0.15 * hump * (0.55 + rl() * 0.6)),
-            x = bw / 2 + t * span * 2.1 + (rl() - 0.5) * span * 0.15,
-            y = by - rad * (0.35 + rl() * 0.35) - hump * span * 0.05;
-          oc.beginPath();
-          oc.ellipse(x, y, rad * 1.15, rad, 0, 0, Math.PI * 2);
-          oc.fill();
+            r0 = span * (0.08 + 0.15 * hump * (0.6 + rl() * 0.5));
+          blob(bw / 2 + t * span * 2.1 + (rl() - 0.5) * span * 0.12, mid - hump * span * 0.16 - rl() * r0 * 0.4, r0);
         }
-        oc.restore();
-        // tint the merged shape: lavender tops, rose middle, peach underside
+        // scalloped underside: small puffs hanging below at random depths
+        const m = 7 + Math.floor(rl() * 4);
+        for (let i = 0; i < m; i++) {
+          const t = (i + 0.5) / m - 0.5,
+            hump = Math.cos(t * Math.PI),
+            r0 = span * (0.06 + 0.07 * hump * (0.5 + rl() * 0.7));
+          blob(bw / 2 + t * span * 1.8 + (rl() - 0.5) * span * 0.1, mid + span * 0.04 + rl() * span * 0.06, r0);
+        }
+        // shade the merged shape: bright white body, faint cool shadow toward the bottom
         oc.globalCompositeOperation = "source-in";
-        const tg = oc.createLinearGradient(0, 0, 0, by);
-        tg.addColorStop(0, "#93A6D8");
-        tg.addColorStop(0.5, "#D8B8D2");
-        tg.addColorStop(0.85, "#F7B79C");
-        tg.addColorStop(1, "#FFC9A3");
+        const tg = oc.createLinearGradient(0, mid - span * 0.45, 0, mid + span * 0.2);
+        tg.addColorStop(0, "#FFFFFF");
+        tg.addColorStop(0.65, "#FBFDFF");
+        tg.addColorStop(1, "#DCE8F4");
         oc.fillStyle = tg;
         oc.fillRect(0, 0, bw, bh);
         ctx.save();
-        if ("filter" in ctx) ctx.filter = `blur(${phone ? 2.5 : 3.5}px)`;
-        ctx.globalAlpha = Math.min(0.85, (0.45 + 0.35 * warm) * Math.min(1, k + 0.1));
-        ctx.drawImage(off, cx - bw / 2, base - by, bw, bh);
+        if ("filter" in ctx) ctx.filter = `blur(${phone ? 2 : 2.5}px)`;
+        ctx.globalAlpha = Math.min(0.95, 0.72 + 0.2 * k);
+        ctx.drawImage(off, cx - bw / 2, cy - mid, bw, bh);
         ctx.restore();
       });
     }
@@ -973,9 +943,10 @@ export function mountLandingScene(root: HTMLElement, opts: SceneOptions): () => 
     }
 
     // floating chips (laptop only)
-    [chipPrice, chipOpen].forEach((c) => {
+    [chipPrice, chipOpen, chipAhead].forEach((c) => {
       c.hidden = phone;
     });
+    let aheadR: Box | null = null;
     if (!phone) {
       place(chipPrice, Math.max(8, P.x / 2 - chipPrice.offsetWidth / 2 - 10), Math.max(8, Math.min(P.y + P.h * 0.08, passR.t - chipPrice.offsetHeight - 40)));
       place(chipOpen, P.x + P.w - chipOpen.offsetWidth - 14, P.y - chipOpen.offsetHeight - 14);
@@ -983,11 +954,34 @@ export function mountLandingScene(root: HTMLElement, opts: SceneOptions): () => 
         const b = rectOf(c, S);
         c.hidden = b.l < 2 || b.r > W - 2 || b.t < 2 || hit(b, ballR, 8) || hit(b, hr, 8) || hit(b, cr, 8) || (!pass.hidden && hit(b, passR, 6));
       });
+
+      // "Book up to N days ahead": straddles the slab's right edge, below the paddle head,
+      // filling the open strip on the right. Paddle = head box + handle box (handle runs lower-left).
+      const headBox = { l: pl, t: pt, r: pl + pw, b: pt + ph * 0.58 },
+        handleBox = { l: pl, t: pt + ph * 0.55, r: pl + pw * 0.45, b: pt + ph };
+      const aw = chipAhead.offsetWidth,
+        ah = chipAhead.offsetHeight,
+        ax = Math.min(P.x + P.w - aw * 0.42, W - 10 - aw);
+      chipAhead.hidden = true;
+      for (const f of [0.74, 0.84, 0.64]) {
+        const ay = P.y + P.h * f - ah / 2;
+        const b = { l: ax, t: ay, r: ax + aw, b: ay + ah };
+        const clear =
+          b.l >= 2 && b.r <= W - 2 && b.b <= H - 2 &&
+          ![headBox, handleBox, ballR, hr, cr].some((o) => hit(b, o, 10)) &&
+          !(!chipOpen.hidden && hit(b, rectOf(chipOpen, S), 10));
+        if (clear) {
+          place(chipAhead, ax, ay);
+          chipAhead.hidden = false;
+          aheadR = b;
+          break;
+        }
+      }
     }
 
     // shards flying outward from the break
     const k = phone ? 0.6 : 1,
-      avoid = [hr, cr, nr, ballR],
+      avoid = aheadR ? [hr, cr, nr, ballR, aheadR] : [hr, cr, nr, ballR],
       rs = rng(53);
     shards.forEach((el, i) => {
       const a = -2.9 + i * 0.68 + (rs() - 0.5) * 0.3,

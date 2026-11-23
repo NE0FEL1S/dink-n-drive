@@ -128,8 +128,8 @@ Follows the composition of reference image 2 (the bear breaking out of ice/glass
   - **Sky (winter twilight, updated 2026-11-23):**
     - Deep indigo overhead, fading through blue and lavender to the golden horizon, with soft sun rays.
     - Faint early stars in the upper sky (a few with small glints).
-    - A crescent moon with a soft halo, upper left (laptops only).
-    - Mid-sky cloud banks lit pink and peach from below by the low sun, with cooler lavender tops. Each bank is one merged, blurred shape, never visible overlapping circles.
+    - Mid-sky cumulus in **pure white**, with only a faint cool shade underneath, so the orange accents stand out. They are round and bumpy all the way around: **never flat bottoms**. Each bank is one merged, softly blurred shape, never visible overlapping circles.
+    - No moon (tried; it looked out of place).
     - Towering white cumulus on the horizon, in place of the bear image's snowy peaks.
   - **Court:** a **blue court with a red kitchen** (the non-volley zones next to the net), white lines including the kitchen lines, and a net.
   - **Benches:** wooden **benches** along both sidelines.
@@ -154,6 +154,7 @@ Follows the composition of reference image 2 (the bear breaking out of ice/glass
 - **Ball hitting the paddle:** the ball sits on the paddle face (upper-left), half in front of the glass. It has speed lines trailing toward the lower-left where it came from, an impact burst of short white rays, and a ring that pulses every 2.2 s. On laptops it never overlaps the text column.
 - **Booking pass (laptop showcase, fills the open column left of the slab):** a frosted ticket tilted in 3D (`rotateY(16deg) rotateZ(-4deg)`), floating and following the parallax. It shows the logo tile, "Booking pass · Dink n' Drive", a green "Confirmed" stamp, "Saturday, Nov 21 / 7:00 – 9:00 PM", tiles for Hours 2 · Paddles Rented · Paid via GCash, a perforated tear line, reference "DND-7K3Q9", total ₱550 (in orange) and a barcode. It's an illustration of what customers get after booking, not live data. It scales to the column and is hidden when the column is narrower than 250 px and on phones.
 - **Outside the glass:** on laptops, floating frosted chips: "₱250 / hour" on the left, and a live **"Open now · till 12 AM"** status (green dot, from Manila time and `settings`) above the top-right corner.
+  - On the right, a "Book up to **30 days** ahead" chip with a calendar icon (the number comes from `max_advance_days`). It straddles the slab's right edge below the paddle head and fills the open strip there. It hides itself when it would touch the paddle, the ball or the text (for example at 1024 px and on tablets).
 - **Entrance moment:** on load the paddle smashes out with an overshoot, the cracks draw outward, the shards burst from the hole and the ball flies in. It runs once, takes about 1 s, and is skipped with `prefers-reduced-motion`.
 - **Nav:** on laptops it sits inside the slab: logo on the left, the links in a frosted pill group **centered in the slab** (the active link is an orange-gradient chip), and an orange-gradient "Log in" on the right. The links show only when the slab itself is wide enough (a container query on the nav, about 770 px); otherwise they fold into the orange-gradient menu button, so nothing wraps or overflows on tablets and small laptops. On phones it's a frosted top bar with the logo, "Log in" and the menu button.
 - **Logo:** an orange-gradient app tile with a white paddle and a lime ball, plus the wordmark **Dink *n'* Drive** (Fraunces 750, "n'" in italic orange) over "PICKLEBALL · LUYANG" in small spaced caps.

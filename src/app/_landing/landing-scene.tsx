@@ -16,6 +16,8 @@ export type LandingCopy = {
   /** "₱50" */
   paddleFeeText: string;
   holdMinutes: number;
+  /** How far ahead people can book (settings.max_advance_days). */
+  maxAdvanceDays: number;
   /** Booking pass illustration: 2 hours + paddles at current prices, e.g. "₱550". */
   sampleTotalText: string;
 };
@@ -156,6 +158,18 @@ export function LandingScene({ copy, account }: { copy: LandingCopy; account: Re
             </i>
             <span>
               <b>{copy.rateText}</b> / hour
+            </span>
+          </span>
+          <span data-l="chip-ahead" className="l-chip" aria-hidden="true" style={{ "--depth": "-18px" } as React.CSSProperties}>
+            <i>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3.5" y="5" width="17" height="15.5" rx="3" />
+                <path d="M3.5 10h17M8 3v4M16 3v4" />
+                <path d="M8.5 14.5h2M13.5 14.5h2" />
+              </svg>
+            </i>
+            <span>
+              Book up to <b>{copy.maxAdvanceDays} days</b> ahead
             </span>
           </span>
           <span data-l="chip-open" className="l-chip" aria-hidden="true" style={{ "--depth": "-14px" } as React.CSSProperties}>

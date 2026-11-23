@@ -16,6 +16,7 @@ export default async function Home() {
     rateText: peso(s.hourly_rate),
     paddleFeeText: peso(s.paddle_fee),
     holdMinutes: s.hold_minutes,
+    maxAdvanceDays: s.max_advance_days,
     sampleTotalText: peso(2 * s.hourly_rate + s.paddle_fee),
   };
 
