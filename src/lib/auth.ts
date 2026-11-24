@@ -55,10 +55,13 @@ export async function requireOwner(): Promise<Profile> {
   return profile;
 }
 
-/** Where to send a user right after signing in: complete the profile first if needed. */
+/** Where to send a user right after signing in: complete the profile first if needed; /admin only for the owner. */
 export async function postSignInPath(userId: string, next: string): Promise<string> {
   const supabase = await createClient();
-  const { data } = await supabase.from("profiles").select("full_name, phone").eq("id", userId).maybeSingle();
+  const { data } = await supabase.from("profiles").select("full_name, phone, role").eq("id", userId).maybeSingle();
+  // Only the owner may open /admin. Send anyone else home here, so the address bar shows
+  // "/" too (a redirect from inside the admin page would leave "/admin/…" in it).
+  if (/^\/admin(\/|\?|$)/.test(next) && data?.role !== "owner") next = "/";
   if (!isProfileComplete(data)) {
     return `/profile?welcome=1&next=${encodeURIComponent(next)}`;
   }

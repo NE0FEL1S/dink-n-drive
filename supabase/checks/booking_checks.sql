@@ -52,7 +52,7 @@ declare
   t1 text := 'e2eCheckTokenOneAAAAAAAAAAAAAAAAAAAAAAAAAA1';
   t2 text := 'e2eCheckTokenTwoBBBBBBBBBBBBBBBBBBBBBBBBBB2';
   today date := (now() at time zone 'Asia/Manila')::date;
-  d date := today + 20;  -- far ahead, away from demo bookings
+  d date;                 -- a day with no bookings yet (picked below)
   ph1 text := '+639990000001';
   ph2 text := '+639990000002';
   r text;
@@ -60,6 +60,21 @@ declare
   v_id uuid; v_id2 uuid; v_ref text; v_total int; v_hold timestamptz;
   b public.bookings;
 begin
+  -- A day 5–29 days ahead that nothing is booked on yet. e2e runs claim days in this window
+  -- (freeTestDay books their 11 PM hour), so a fixed day would collide with them now and then.
+  select x::date into d
+  from generate_series(today + 29, today + 5, interval '-1 day') as x
+  where not exists (
+    select 1 from public.bookings bk
+    where bk.status in ('pending_payment', 'pending_review', 'confirmed', 'cancel_requested', 'blocked')
+      and bk.start_at < ((x::date + 1)::timestamp at time zone 'Asia/Manila')
+      and bk.end_at > (x::date::timestamp at time zone 'Asia/Manila')
+  )
+  limit 1;
+  if d is null then
+    raise exception 'no free day between today + 5 and today + 29 for the checks';
+  end if;
+
   -- helper: Manila wall-clock time on day d at hour h
   -- (inline: ((d + make_interval(hours => h))::timestamp at time zone 'Asia/Manila'))
 

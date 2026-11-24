@@ -80,9 +80,12 @@ test.describe("Admin customers", () => {
 
   test("customers can't open the page", async ({ page }) => {
     const cust = await createTestUser("cust-nosy");
-    await signIn(page, cust, "/");
-    await page.goto("/admin/customers");
+    // logging in from an admin link lands on the home page, address bar included
+    await signIn(page, cust, "/admin/customers");
     await expect(page).toHaveURL(/\/$/);
     await expect(heading(page, "Customers")).toHaveCount(0);
+    // and opening it directly is turned away by the proxy
+    await page.goto("/admin/customers");
+    await expect(page).toHaveURL(/\/$/);
   });
 });

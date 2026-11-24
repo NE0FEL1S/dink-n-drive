@@ -12,7 +12,7 @@ const inputClass =
   "outline-none transition-[border-color,box-shadow] duration-150 focus:border-orange-600 focus:ring-2 focus:ring-orange-500/40";
 
 const selectArrow =
-  "appearance-none bg-[url(\"data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='20'%20height='20'%20fill='none'%20stroke='%231F3453'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='m5%208%205%205%205-5'/%3E%3C/svg%3E\")] bg-[right_12px_center] bg-no-repeat pr-10";
+  `appearance-none bg-[url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='20'%20height='20'%20fill='none'%20stroke='%231F3453'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='m5%208%205%205%205-5'/%3E%3C/svg%3E")] bg-[right_12px_center] bg-no-repeat pr-10`;
 
 /** Search + sort, as a GET form: everything lives in the URL, so the page renders on the server. */
 export function CustomerFilters({ q, sort }: { q: string; sort: CustomerSort }) {
