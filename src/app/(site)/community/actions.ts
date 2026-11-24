@@ -1,7 +1,8 @@
 "use server";
 
 import { z } from "zod";
-import { COMMUNITY_BUCKET, type FeedPost } from "@/lib/community";
+import { getProfile } from "@/lib/auth";
+import { COMMUNITY_BUCKET, type FeedComment, type FeedPost, type ReactionType } from "@/lib/community";
 import { communityError } from "@/lib/community-errors";
 import { fetchFeedPage } from "@/lib/community-feed";
 import { createClient } from "@/lib/supabase/server";
@@ -76,5 +77,64 @@ export async function deletePost(postId: string): Promise<PostActionResult> {
     const { error: removeError } = await supabase.storage.from(COMMUNITY_BUCKET).remove(paths);
     if (removeError) console.error("deletePost: photo files not removed", postId, removeError);
   }
+  return { ok: true };
+}
+
+const reactionSchema = z.object({ postId: z.uuid(), type: z.enum(["like", "haha"]).nullable() });
+
+/** 👍 / 😂 (adds or switches), or null to remove. Returns the post's new counts. */
+export async function reactToPost(input: {
+  postId: string;
+  type: ReactionType | null;
+}): Promise<PostActionResult<{ likeCount: number; hahaCount: number; myReaction: ReactionType | null }>> {
+  const parsed = reactionSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: communityError("not_found") };
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .rpc("set_post_reaction", { p_post_id: parsed.data.postId, p_type: parsed.data.type as ReactionType })
+    .single();
+  if (error || !data) return { ok: false, error: communityError(error?.message ?? "") };
+  return { ok: true, likeCount: data.like_count, hahaCount: data.haha_count, myReaction: data.my_reaction ?? null };
+}
+
+/** A post's comments, oldest first (anyone can read them). */
+export async function loadComments(postId: string): Promise<PostActionResult<{ comments: FeedComment[]; now: number }>> {
+  if (!z.uuid().safeParse(postId).success) return { ok: false, error: communityError("not_found") };
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("post_comments", { p_post_id: postId });
+  if (error) return { ok: false, error: "We couldn't load the comments. Please try again." };
+  return { ok: true, comments: (data ?? []) as FeedComment[], now: Date.now() };
+}
+
+const commentSchema = z.object({
+  postId: z.uuid(),
+  body: z.string().trim().min(1, "Write something first.").max(1000, "Comments can be up to 1,000 characters."),
+});
+
+/** Adds a comment (30 an hour, checked by the database) and returns it ready to show. */
+export async function addComment(input: { postId: string; body: string }): Promise<PostActionResult<{ comment: FeedComment }>> {
+  const parsed = commentSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? communityError("invalid_comment") };
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .rpc("comment_on_post", { p_post_id: parsed.data.postId, p_body: parsed.data.body })
+    .single();
+  if (error || !data) return { ok: false, error: communityError(error?.message ?? "", error?.details) };
+
+  const profile = await getProfile();
+  return {
+    ok: true,
+    comment: { id: data.id, created_at: data.created_at, body: parsed.data.body, author_name: profile?.full_name ?? "You", is_mine: true },
+  };
+}
+
+/** The author deletes their own comment (the owner can delete any; see Admin → Moderation). */
+export async function deleteComment(commentId: string): Promise<PostActionResult> {
+  if (!z.uuid().safeParse(commentId).success) return { ok: false, error: communityError("not_found") };
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("delete_comment", { p_comment_id: commentId });
+  if (error) return { ok: false, error: communityError(error.message) };
   return { ok: true };
 }

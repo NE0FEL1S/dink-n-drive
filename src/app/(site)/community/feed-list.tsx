@@ -3,12 +3,13 @@
 import { useCallback, useState, useTransition } from "react";
 import Link from "next/link";
 import { Camera, Plus } from "lucide-react";
+import { CommentThread } from "@/components/feed/comment-thread";
 import { PostCard } from "@/components/feed/post-card";
 import { Button, ButtonLink, buttonClass, Spinner } from "@/components/ui/button";
 import { Sheet } from "@/components/ui/sheet";
 import { Toast } from "@/components/ui/toast";
-import type { FeedPost, Viewer } from "@/lib/community";
-import { loadMorePosts } from "./actions";
+import { applyReaction, type FeedPost, type ReactionType, type Viewer } from "@/lib/community";
+import { addComment, deleteComment, loadComments, loadMorePosts, reactToPost } from "./actions";
 import { PostComposer } from "./composer";
 import { OwnPostMenu } from "./own-post-menu";
 
@@ -32,7 +33,8 @@ export function FeedList({ initialPosts, initialHasMore, serverNow, viewer, me }
   const [failed, setFailed] = useState(false);
   const [pending, startTransition] = useTransition();
   const [composing, setComposing] = useState(false);
-  const [toast, setToast] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ tone: "success" | "error"; text: string } | null>(null);
+  const [commentsFor, setCommentsFor] = useState<string | null>(null);
   const dismissToast = useCallback(() => setToast(null), []);
 
   const loadMore = () => {
@@ -57,19 +59,32 @@ export function FeedList({ initialPosts, initialHasMore, serverNow, viewer, me }
   const update = (id: string, change: Partial<FeedPost>) =>
     setPosts((current) => current.map((p) => (p.id === id ? { ...p, ...change } : p)));
 
+  /** Shows the new counts at once, then the server's; puts them back if it fails. */
+  const react = async (post: FeedPost, type: ReactionType | null) => {
+    const before = { like_count: post.like_count, haha_count: post.haha_count, my_reaction: post.my_reaction };
+    update(post.id, applyReaction(before, type));
+    const result = await reactToPost({ postId: post.id, type });
+    if (result.ok) {
+      update(post.id, { like_count: result.likeCount, haha_count: result.hahaCount, my_reaction: result.myReaction });
+    } else {
+      update(post.id, before);
+      setToast({ tone: "error", text: result.error });
+    }
+  };
+
   const posted = (post: FeedPost) => {
     setComposing(false);
     setNow(Date.now());
     setPosts((current) => [post, ...current]);
-    setToast("Posted! Your photos are on the community feed.");
+    setToast({ tone: "success", text: "Posted! Your photos are on the community feed." });
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   return (
     <>
       {toast && (
-        <Toast tone="success" onDismiss={dismissToast}>
-          {toast}
+        <Toast tone={toast.tone} onDismiss={dismissToast}>
+          {toast.text}
         </Toast>
       )}
 
@@ -90,15 +105,17 @@ export function FeedList({ initialPosts, initialHasMore, serverNow, viewer, me }
                     post={post}
                     onEdited={(caption, editedAt) => {
                       update(post.id, { caption, edited_at: editedAt });
-                      setToast("Caption saved.");
+                      setToast({ tone: "success", text: "Caption saved." });
                     }}
                     onDeleted={() => {
                       setPosts((current) => current.filter((p) => p.id !== post.id));
-                      setToast("Post deleted.");
+                      setToast({ tone: "success", text: "Post deleted." });
                     }}
                   />
                 ) : undefined
               }
+              onReact={viewer === "member" ? (type) => react(post, type) : undefined}
+              onComments={() => setCommentsFor(post.id)}
             />
           ))}
 
@@ -119,6 +136,20 @@ export function FeedList({ initialPosts, initialHasMore, serverNow, viewer, me }
       )}
 
       <PostButton viewer={viewer} onPost={() => setComposing(true)} />
+
+      <Sheet open={commentsFor !== null} onClose={() => setCommentsFor(null)} title="Comments">
+        {commentsFor && (
+          <CommentThread
+            key={commentsFor}
+            viewer={viewer}
+            returnPath="/community"
+            load={() => loadComments(commentsFor)}
+            add={(body) => addComment({ postId: commentsFor, body })}
+            remove={deleteComment}
+            onCountChange={(count) => update(commentsFor, { comment_count: count })}
+          />
+        )}
+      </Sheet>
 
       {me && (
         <Sheet open={composing} onClose={() => setComposing(false)} title="New post">

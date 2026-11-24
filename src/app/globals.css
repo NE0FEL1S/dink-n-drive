@@ -185,6 +185,9 @@
     box-shadow: 0 24px 60px rgb(15 27 51 / 0.28);
   }
   .booking-sheet[open] { animation-name: sheet-fade; }
+  /* Sheets other than "Book now" are as tall as their content (inset: 0 would stretch them
+     to max-height) and stay centred; long content still scrolls inside. */
+  .booking-sheet.sheet-fit { height: fit-content; }
 }
 @media (prefers-reduced-motion: reduce) {
   .booking-sheet[open], .booking-sheet::backdrop { animation: none; }

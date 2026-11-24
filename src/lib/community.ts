@@ -68,3 +68,25 @@ export function postTimeLabel(iso: string, nowMs: number): string {
   const time = d.toLocaleTimeString("en-PH", { timeZone: "Asia/Manila", hour: "numeric", minute: "2-digit" });
   return `${date}, ${time}`;
 }
+
+/** One row of post_comments(). */
+export type FeedComment = {
+  id: string;
+  author_name: string;
+  body: string;
+  created_at: string;
+  is_mine: boolean;
+};
+
+export type ReactionState = { like_count: number; haha_count: number; my_reaction: ReactionType | null };
+
+/**
+ * What the counts become when the viewer picks `next` (null = remove), so the bar can
+ * update at once; the server's answer then replaces it.
+ */
+export function applyReaction(state: ReactionState, next: ReactionType | null): ReactionState {
+  const counts = { like: state.like_count, haha: state.haha_count };
+  if (state.my_reaction) counts[state.my_reaction] -= 1;
+  if (next) counts[next] += 1;
+  return { like_count: Math.max(counts.like, 0), haha_count: Math.max(counts.haha, 0), my_reaction: next };
+}

@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { communityPhotoUrl, photoSize, type FeedPost, type Viewer } from "@/lib/community";
+import { communityPhotoUrl, photoSize, type FeedPost, type ReactionType, type Viewer } from "@/lib/community";
 import { FeedCard } from "./feed-card";
 import { ReactionBar } from "./reaction-bar";
 
@@ -10,6 +10,8 @@ export function PostCard({
   viewer,
   eager = false,
   menu,
+  onReact,
+  onComments,
 }: {
   post: FeedPost;
   nowMs: number;
@@ -17,6 +19,8 @@ export function PostCard({
   eager?: boolean;
   /** The ⋯ menu (own posts). */
   menu?: ReactNode;
+  onReact?: (type: ReactionType | null) => Promise<void>;
+  onComments?: () => void;
 }) {
   const photos = post.photo_paths.map((path) => ({ url: communityPhotoUrl(path), ...photoSize(path) }));
   return (
@@ -38,6 +42,8 @@ export function PostCard({
           myReaction={post.my_reaction}
           viewer={viewer}
           returnPath="/community"
+          onReact={onReact}
+          onComments={onComments}
         />
       }
     />
