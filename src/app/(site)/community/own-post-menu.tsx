@@ -9,7 +9,7 @@ import { FormMessage } from "@/components/ui/field";
 import { Sheet } from "@/components/ui/sheet";
 import type { FeedPost } from "@/lib/community";
 import { deletePost, editPostCaption } from "./actions";
-import { CaptionField } from "./caption-field";
+import { CaptionField } from "@/components/feed/caption-field";
 
 type Props = {
   post: FeedPost;

@@ -22,7 +22,7 @@ type SearchParams = Promise<Record<string, string | string[] | undefined>>;
  * (`?status=open|in_progress|resolved`; none = All).
  */
 export default function FeedbackPage({ searchParams }: { searchParams: SearchParams }) {
-  // Extra bottom padding so the floating button (part C) never covers the last card.
+  // Extra bottom padding so the floating + Feedback button never covers the last card.
   return (
     <main className="mx-auto w-full max-w-xl px-4 pt-8 pb-[calc(6.5rem+env(safe-area-inset-bottom))] min-[390px]:px-5 sm:pt-12">
       <PageHeader eyebrow="Your voice" title="Feedback">
@@ -43,6 +43,7 @@ async function FeedbackData({ searchParams }: { searchParams: SearchParams }) {
   const [profile, page, settings] = await Promise.all([getProfile(), fetchFeedbackPage(status), getPublicSettings()]);
 
   const viewer: Viewer = !profile ? "guest" : isProfileComplete(profile) ? "member" : "incomplete";
+  const me = profile && viewer === "member" ? { name: profile.full_name ?? "Member" } : null;
   return (
     <div className="grid gap-4">
       <StatusFilter current={status} />
@@ -56,6 +57,7 @@ async function FeedbackData({ searchParams }: { searchParams: SearchParams }) {
           serverNow={nowMs()}
           viewer={viewer}
           courtName={settings.court_name}
+          me={me}
         />
       ) : (
         <p role="alert" className="rounded-[var(--radius-card)] bg-danger-bg px-4 py-3 text-[15px] font-medium text-danger">
