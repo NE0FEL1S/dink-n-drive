@@ -187,6 +187,7 @@ function TextField(props: FieldProps) {
         defaultValue={props.defaultValue}
         maxLength={80}
         autoComplete="off"
+        enterKeyHint="next"
         aria-invalid={props.error ? true : undefined}
         aria-describedby={props.error || props.hint ? `set-${props.name}-msg` : undefined}
         className={`${inputClass} ${props.error ? "border-danger" : "border-line"}`}

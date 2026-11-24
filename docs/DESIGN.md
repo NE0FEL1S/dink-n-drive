@@ -384,6 +384,8 @@ On phones it's a bottom sheet; on laptops, a centered dialog. `/book` renders th
 - `enterKeyHint` set ("next", "done", "send").
 - The sticky bottom bar must not cover a focused input when the keyboard is open.
 
+**Checked in Phase 7E** (every page and the main popups at 360 / 393 / 430 px on Android and iPhone): no sideways scroll, inputs ≥ 16 px, controls ≥ 44 px tall. Fixed then: the feedback "All" chip (min 44 px wide), the empty Payments "See all bookings →" (a 44 px text button), the inline "Log in" links in the booking details and on guest My Bookings (12–14 px of invisible vertical padding, so the text doesn't move), and keyboard hints on Settings and Profile. The landing nav's **Log in** stays 42 px tall to look right next to the menu button; an invisible `::after` makes its tap area 48 px. `e2e/smoke/mobile.spec.ts` re-checks all of this on every phone run.
+
 **Browser chrome**
 - `themeColor` set to `#FFFFFF` (colors the Android Chrome address bar and the iOS status area).
 - `apple-touch-icon` and a web manifest with app name and icons, so "Add to Home Screen" looks right on both.

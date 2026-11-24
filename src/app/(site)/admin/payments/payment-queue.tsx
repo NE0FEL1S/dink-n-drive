@@ -68,7 +68,7 @@ export function PaymentQueue({ items }: { items: PaymentItem[] }) {
             <p className="text-[15px] leading-6 text-navy-700">
               No payments are waiting for review. New GCash receipts show up here as customers send them.
             </p>
-            <Link href="/admin/bookings" className="mt-1 w-fit text-[15px] font-semibold text-glacier-700 hover:underline">
+            <Link href="/admin/bookings" className="-ml-3 inline-flex min-h-11 w-fit items-center rounded-full px-3 text-[15px] font-semibold text-glacier-700 hover:bg-glacier-50 active:bg-glacier-50">
               See all bookings →
             </Link>
           </div>

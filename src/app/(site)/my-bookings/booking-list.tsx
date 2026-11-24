@@ -72,7 +72,7 @@ export function BookingList(props: {
       {props.isGuest && (
         <p className="rounded-[var(--radius-card)] border border-line bg-white px-4 py-3 text-[15px] text-navy-700 shadow-[var(--shadow-soft)]">
           These are the bookings made on <b>this browser</b>.{" "}
-          <Link href="/login?next=%2Fmy-bookings" className="font-semibold text-glacier-700 underline underline-offset-4">
+          <Link href="/login?next=%2Fmy-bookings" className="-mx-1 rounded-md px-1 py-3.5 font-semibold text-glacier-700 underline underline-offset-4">
             Log in or create an account
           </Link>{" "}
           to keep them on any device.

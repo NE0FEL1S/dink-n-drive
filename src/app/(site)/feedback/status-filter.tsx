@@ -33,7 +33,7 @@ export function StatusFilter({ current }: { current: FeedbackStatus | null }) {
             aria-current={status === current ? "page" : undefined}
             onClick={() => setTapped({ from: current, to: status })}
             className={
-              "flex min-h-11 flex-auto touch-manipulation items-center justify-center rounded-full px-3 text-[15px] font-semibold whitespace-nowrap transition-colors duration-150 sm:px-5 " +
+              "flex min-h-11 min-w-11 flex-auto touch-manipulation items-center justify-center rounded-full px-3 text-[15px] font-semibold whitespace-nowrap transition-colors duration-150 sm:px-5 " +
               (active ? "bg-navy-900 text-white" : "text-slate-500 hover:bg-ice-50 active:bg-ice-100")
             }
           >

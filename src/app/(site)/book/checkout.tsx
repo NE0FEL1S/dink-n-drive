@@ -183,7 +183,7 @@ export function DetailsStep(props: {
         {!account && (
           <p className="text-sm text-slate-500">
             Have an account?{" "}
-            <Link href="/login?next=%2Fbook" className="font-semibold text-glacier-700 underline-offset-4 hover:underline">
+            <Link href="/login?next=%2Fbook" className="-mx-1 rounded-md px-1 py-3.5 font-semibold text-glacier-700 underline-offset-4 hover:underline">
               Log in
             </Link>{" "}
             to use your saved details.
