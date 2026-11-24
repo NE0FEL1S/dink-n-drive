@@ -1,8 +1,9 @@
 /**
- * The booking functions raise short keys (supabase/migrations/*_booking_functions.sql).
+ * The booking and cancellation functions raise short keys (supabase/migrations/*_booking_functions.sql,
+ * *_cancellation_refunds.sql).
  * This turns them into what the customer reads. Field keys point at a form field.
  */
-export type BookingErrorInfo = { message: string; field?: "name" | "email" | "phone"; repick?: boolean };
+export type BookingErrorInfo = { message: string; field?: "name" | "email" | "phone" | "gcashName" | "gcashNumber"; repick?: boolean };
 
 export function bookingError(key: string | undefined, detail?: string | null): BookingErrorInfo {
   switch (key) {
@@ -33,6 +34,20 @@ export function bookingError(key: string | undefined, detail?: string | null): B
       return { message: "The hold ran out, so the hours were released. Please book again.", repick: true };
     case "not_awaiting_payment":
       return { message: "This booking isn't waiting for payment anymore. Check My bookings." };
+    case "not_paid":
+      return { message: "This booking isn't paid yet, so you can cancel it for free instead." };
+    case "already_requested":
+      return { message: "You already asked to cancel this booking. The court owner will review it." };
+    case "not_cancellable":
+      return { message: "This booking can't be cancelled anymore. Check its status in My bookings." };
+    case "past_cutoff":
+      return {
+        message: `Cancellations close ${detail ?? "3"} ${detail === "1" ? "hour" : "hours"} before the game starts. Please message the court owner.`,
+      };
+    case "invalid_gcash_name":
+      return { message: "Enter the name on the GCash account.", field: "gcashName" };
+    case "invalid_gcash_number":
+      return { message: "Use an 11-digit GCash number, like 09171234567.", field: "gcashNumber" };
     case "not_found":
       return { message: "We couldn't find that booking on this browser." };
     case "proof_missing":

@@ -15,7 +15,8 @@ export const metadata: Metadata = { title: "My bookings" };
 /**
  * My Bookings (SPEC §4): signed-in customers see their account's bookings (plus any guest
  * bookings still unclaimed in this browser); guests see the bookings made in this browser,
- * found through the device-token cookie. Unpaid ones can be paid or cancelled here.
+ * found through the device-token cookie. Unpaid ones can be paid or cancelled here; paid
+ * ones can be cancelled by request (SPEC §6), and refunds are followed here.
  */
 export default function MyBookingsPage() {
   return (
@@ -52,6 +53,7 @@ async function MyBookingsData() {
       isGuest={!profile}
       qr={gcashQr(settings.gcash_qr_path)}
       holdMinutes={settings.hold_minutes}
+      cutoffHours={settings.cancel_cutoff_hours}
     />
   );
 }

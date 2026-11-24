@@ -14,6 +14,7 @@ import type { GcashQr } from "@/lib/gcash";
 import type { Database } from "@/types/database";
 import { DoneStep, PayStep } from "../book/checkout";
 import { cancelUnpaidBooking } from "./actions";
+import { CancelPaidForm, RefundNote, RefundProof } from "./cancel-paid";
 
 export type MyBooking = Database["public"]["Functions"]["my_bookings"]["Returns"][number];
 
@@ -27,7 +28,20 @@ function manilaHourOf(iso: string, day: string): number {
   return manilaDay(ms) !== day && h === 0 ? 24 : h;
 }
 
-export function BookingList(props: { bookings: MyBooking[]; serverNow: number; isGuest: boolean; qr: GcashQr | null; holdMinutes: number }) {
+/** "Fri, Nov 28 · 8 – 10 AM" for a booking. */
+function whenLabel(b: Pick<MyBooking, "start_at" | "end_at">): string {
+  const day = manilaDay(Date.parse(b.start_at));
+  return `${dayLabel(day)} · ${rangeLabel(manilaHourOf(b.start_at, day), manilaHourOf(b.end_at, day))}`;
+}
+
+export function BookingList(props: {
+  bookings: MyBooking[];
+  serverNow: number;
+  isGuest: boolean;
+  qr: GcashQr | null;
+  holdMinutes: number;
+  cutoffHours: number;
+}) {
   const router = useRouter();
   const [skew] = useState(() => props.serverNow - Date.now());
   const [now, setNow] = useState(props.serverNow);
@@ -35,6 +49,7 @@ export function BookingList(props: { bookings: MyBooking[]; serverNow: number; i
   const [paying, setPaying] = useState<MyBooking | null>(null);
   const [paid, setPaid] = useState(false);
   const [cancelling, setCancelling] = useState<MyBooking | null>(null);
+  const [proofOf, setProofOf] = useState<MyBooking | null>(null);
 
   // one clock for all countdowns; a hold that runs out moves its card to Past
   const hasLiveHold = props.bookings.some((b) => b.status === "pending_payment");
@@ -105,6 +120,8 @@ export function BookingList(props: { bookings: MyBooking[]; serverNow: number; i
                 booking={b}
                 status={statusOf(b)}
                 now={now}
+                cutoffHours={props.cutoffHours}
+                onViewProof={() => setProofOf(b)}
                 onPay={() => {
                   setPaid(false);
                   setPaying(b);
@@ -150,22 +167,53 @@ export function BookingList(props: { bookings: MyBooking[]; serverNow: number; i
       </Sheet>
 
       <Sheet open={cancelling !== null} title="Cancel this booking?" onClose={() => setCancelling(null)}>
-        {cancelling && (
-          <CancelUnpaid
-            booking={cancelling}
-            onDone={() => {
-              setCancelling(null);
-              router.refresh();
-            }}
-            onKeep={() => setCancelling(null)}
-          />
+        {cancelling &&
+          (cancelling.status === "pending_payment" ? (
+            <CancelUnpaid
+              booking={cancelling}
+              onDone={() => {
+                setCancelling(null);
+                router.refresh();
+              }}
+              onKeep={() => setCancelling(null)}
+            />
+          ) : (
+            <CancelPaidForm
+              booking={cancelling}
+              label={whenLabel(cancelling)}
+              onDone={() => {
+                setCancelling(null);
+                router.refresh();
+              }}
+              onKeep={() => setCancelling(null)}
+              onStale={() => router.refresh()}
+            />
+          ))}
+      </Sheet>
+
+      <Sheet open={proofOf !== null} title="Refund screenshot" onClose={() => setProofOf(null)}>
+        {proofOf && (
+          <div className="grid gap-3">
+            <p className="text-[15px] text-navy-700">
+              <b className="tabular">{proofOf.ref_code}</b> · {whenLabel(proofOf)}
+            </p>
+            <RefundProof bookingId={proofOf.id} />
+          </div>
         )}
       </Sheet>
     </div>
   );
 }
 
-function BookingCard(props: { booking: MyBooking; status: BookingStatus; now: number; onPay: () => void; onCancel: () => void }) {
+function BookingCard(props: {
+  booking: MyBooking;
+  status: BookingStatus;
+  now: number;
+  cutoffHours: number;
+  onPay: () => void;
+  onCancel: () => void;
+  onViewProof: () => void;
+}) {
   const { booking: b, status, now } = props;
   const day = manilaDay(Date.parse(b.start_at));
   const startH = manilaHourOf(b.start_at, day);
@@ -173,6 +221,9 @@ function BookingCard(props: { booking: MyBooking; status: BookingStatus; now: nu
   const left = status === "pending_payment" && b.hold_expires_at ? Math.max(0, Date.parse(b.hold_expires_at) - now) : 0;
   const mm = Math.floor(left / 60000);
   const ss = String(Math.floor((left % 60000) / 1000)).padStart(2, "0");
+  const paidUpcoming = (status === "pending_review" || status === "confirmed") && Date.parse(b.start_at) > now;
+  const canRequest = paidUpcoming && now < Date.parse(b.start_at) - props.cutoffHours * HOUR;
+  const cutoffNoteId = `cutoff-${b.id}`;
 
   return (
     <article
@@ -218,10 +269,26 @@ function BookingCard(props: { booking: MyBooking; status: BookingStatus; now: nu
         </p>
       )}
       {status === "expired" && <p className="mt-3 text-sm text-slate-500">No payment arrived in time, so the hours were released.</p>}
-      {status === "cancelled" && (
-        <p className="mt-3 text-sm text-slate-500">{b.cancelled_by === "owner" ? "Cancelled by the court owner." : "You cancelled this booking."}</p>
+      <RefundNote booking={b} onViewProof={props.onViewProof} />
+      {paidUpcoming && (
+        <div className="mt-3 grid gap-1.5">
+          <Button
+            variant="secondary"
+            className="w-full sm:w-auto sm:justify-self-start"
+            onClick={props.onCancel}
+            disabled={!canRequest}
+            aria-describedby={canRequest ? undefined : cutoffNoteId}
+          >
+            Cancel booking
+          </Button>
+          {!canRequest && (
+            <p id={cutoffNoteId} className="text-sm text-slate-500">
+              Cancellations close {props.cutoffHours} {props.cutoffHours === 1 ? "hour" : "hours"} before the game. Message the court owner if you
+              can&apos;t make it.
+            </p>
+          )}
+        </div>
       )}
-      {status === "cancel_requested" && <p className="mt-3 text-sm text-slate-500">Your cancellation request is waiting for the court owner.</p>}
     </article>
   );
 }
