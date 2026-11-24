@@ -42,6 +42,8 @@ export type AdminBookingRow = {
   paddleFee: number;
   total: number;
   status: Status;
+  /** Counts toward earnings (SPEC §9): confirmed, or a cancellation request on a confirmed booking. */
+  counted: boolean;
   proofPath: string | null;
   reviewedBy: string | null;
   reviewedAt: string | null;
@@ -78,7 +80,7 @@ export async function loadAdminBookings({ period, status, q }: Filter, page: num
   let query = supabase
     .from("bookings")
     .select(
-      "id, ref_code, kind, user_id, contact_name, contact_email, contact_phone, start_at, hours, paddle_rented, court_fee, paddle_fee, total, status, payment_proof_path, reviewed_at, reject_reason, cancelled_by, block_note, reviewer:profiles!bookings_reviewed_by_fkey(full_name), refunds(refund_amount, status)",
+      "id, ref_code, kind, user_id, contact_name, contact_email, contact_phone, start_at, hours, paddle_rented, court_fee, paddle_fee, total, status, status_before_request, payment_proof_path, reviewed_at, reject_reason, cancelled_by, block_note, reviewer:profiles!bookings_reviewed_by_fkey(full_name), refunds(refund_amount, status)",
       { count: "exact" },
     )
     .gte("start_at", slotStartIso(period.from, 0))
@@ -130,6 +132,7 @@ export async function loadAdminBookings({ period, status, q }: Filter, page: num
       paddleFee: b.paddle_fee,
       total: b.total,
       status: b.status,
+      counted: b.status === "confirmed" || (b.status === "cancel_requested" && b.status_before_request === "confirmed"),
       proofPath: b.payment_proof_path,
       reviewedBy: b.reviewer?.full_name ?? null,
       reviewedAt: b.reviewed_at,

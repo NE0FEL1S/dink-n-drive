@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { connection } from "next/server";
 import { Suspense } from "react";
-import { CalendarOff, ChevronLeft, ChevronRight } from "lucide-react";
+import { CalendarOff, ChevronLeft, ChevronRight, Download } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { buttonClass } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -66,6 +66,13 @@ async function BookingsData({ searchParams }: { searchParams: SearchParams }) {
     if (n > 1) params.set("page", String(n));
     return `/admin/bookings?${params}`;
   };
+  // every row matching the filter (not just this page)
+  const exportHref = (format: "xlsx" | "pdf") => {
+    const params = new URLSearchParams({ format, ...periodParams(period) });
+    if (status !== "all") params.set("status", status);
+    if (q) params.set("q", q);
+    return `/admin/bookings/export?${params}`;
+  };
   const first = total === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
   const last = Math.min(total, page * PAGE_SIZE);
 
@@ -95,10 +102,25 @@ async function BookingsData({ searchParams }: { searchParams: SearchParams }) {
         </Card>
       ) : (
         <>
-          <p className="px-1 text-sm font-semibold text-slate-500" role="status">
-            {total === 1 ? "1 booking" : `${total} bookings`}
-            {pages > 1 ? ` · showing ${first}–${last}` : ""}
-          </p>
+          <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+            <p className="px-1 text-sm font-semibold text-slate-500" role="status">
+              {total === 1 ? "1 booking" : `${total} bookings`}
+              {pages > 1 ? ` · showing ${first}–${last}` : ""}
+            </p>
+            <div className="flex gap-2" aria-label="Export these bookings" role="group">
+              {(["xlsx", "pdf"] as const).map((format) => (
+                <a
+                  key={format}
+                  href={exportHref(format)}
+                  download
+                  className={buttonClass("secondary", "min-h-11 px-4 text-[15px]")}
+                >
+                  <Download className="size-4 text-navy-700" aria-hidden="true" />
+                  {format === "xlsx" ? "Excel" : "PDF"}
+                </a>
+              ))}
+            </div>
+          </div>
           <BookingsTable rows={rows} proofUrls={proofUrls} />
         </>
       )}
