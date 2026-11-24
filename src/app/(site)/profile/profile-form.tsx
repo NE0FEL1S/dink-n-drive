@@ -45,7 +45,7 @@ export function ProfileForm({ fullName, phone, email, next }: Props) {
         error={state.fields?.phone}
         required
       />
-      {email && <Field label="Email" name="email-readonly" type="email" value={email} readOnly hint="Your sign-in email." />}
+      {email && <Field label="Email" name="email-readonly" type="email" autoComplete="email" enterKeyHint="done" value={email} readOnly hint="Your sign-in email." />}
 
       <SubmitButton variant="primary" className="mt-1 w-full" pending={pending}>
         {next ? "Save and continue" : "Save"}

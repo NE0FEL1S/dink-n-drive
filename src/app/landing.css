@@ -110,7 +110,9 @@
   .landing .l-links { display: flex; }
   .landing .l-menu { display: none; }
 }
-.landing .l-login { height: 42px !important; padding: 0 20px !important; border-radius: 12px !important; font-size: 15.5px !important; font-weight: 800; }
+.landing .l-login { height: 42px !important; padding: 0 20px !important; border-radius: 12px !important; font-size: 15.5px !important; font-weight: 800; position: relative; }
+/* 42px looks right in the nav; the tap area is 48px tall (DESIGN §7) */
+.landing .l-login::after { content: ""; position: absolute; inset: -4px -1px; } /* -1px: from inside the 1px border */
 .landing .l-grad:active { filter: brightness(0.94); transform: scale(0.98); }
 @media (max-width: 699px) {
   .landing .l-logo svg { width: 34px; height: 34px; }

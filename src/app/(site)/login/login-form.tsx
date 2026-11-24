@@ -67,7 +67,7 @@ function SignInForm({ next }: { next: string }) {
         Log in
       </SubmitButton>
       <p className="text-sm text-slate-500">
-        Forgot your password? Message the court owner and they can set a temporary one for you.
+        Forgot your password? Message the court owner. They can set a new one for you after checking your phone number.
       </p>
     </form>
   );
