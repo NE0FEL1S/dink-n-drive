@@ -137,7 +137,7 @@ test.describe("Feedback feed", () => {
 
     await signIn(page, author, "/feedback");
     const card = feedbackCard(page, `Mine anon ${tag}`);
-    await expect(card.getByText("Anonymous (you)")).toBeVisible();
+    await expect(card.getByText("· Yours")).toBeVisible();
     await expect(card).toHaveAccessibleName("Feedback from Anonymous");
   });
 });

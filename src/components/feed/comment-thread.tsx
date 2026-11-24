@@ -19,16 +19,18 @@ type Props = {
   remove: (commentId: string) => Promise<Result>;
   /** Told the live count whenever it changes, so the card's "n comments" stays right. */
   onCountChange: (count: number) => void;
+  /** A line above the write box for members (e.g. that comments show your name). */
+  writeNote?: string;
 };
 
 const BODY_MAX = 1000;
 
 /**
- * Comments under a post (Phase 6: under feedback too). Oldest first; members write at the
+ * Comments under a post or a feedback item. Oldest first; members write at the
  * bottom (the box stays pinned while the list scrolls) and can delete their own. Guests and
  * incomplete profiles read, with a button to log in / finish their profile instead of the box.
  */
-export function CommentThread({ viewer, returnPath, load, add, remove, onCountChange }: Props) {
+export function CommentThread({ viewer, returnPath, load, add, remove, onCountChange, writeNote }: Props) {
   const [comments, setComments] = useState<FeedComment[] | null>(null);
   const [now, setNow] = useState(0);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -120,6 +122,7 @@ export function CommentThread({ viewer, returnPath, load, add, remove, onCountCh
           </ButtonLink>
         ) : (
           <div className="grid gap-2">
+            {writeNote && <p className="text-sm leading-5 text-slate-500">{writeNote}</p>}
             {error && <FormMessage tone="error">{error}</FormMessage>}
             <div className="flex items-end gap-2">
               <label htmlFor={boxId} className="sr-only">

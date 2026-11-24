@@ -3,14 +3,15 @@
 import { useCallback, useState, useTransition } from "react";
 import Link from "next/link";
 import { MessageSquareText } from "lucide-react";
+import { CommentThread } from "@/components/feed/comment-thread";
 import { ComposeButton } from "@/components/feed/compose-button";
 import { FeedbackCard } from "@/components/feed/feedback-card";
 import { Button, ButtonLink, Spinner } from "@/components/ui/button";
 import { Sheet } from "@/components/ui/sheet";
 import { Toast } from "@/components/ui/toast";
-import type { Viewer } from "@/lib/community";
+import { applyReaction, type ReactionType, type Viewer } from "@/lib/community";
 import type { FeedbackItem, FeedbackStatus } from "@/lib/feedback";
-import { loadMoreFeedback } from "./actions";
+import { addFeedbackComment, deleteFeedbackComment, loadFeedbackComments, loadMoreFeedback, reactToFeedback } from "./actions";
 import { FeedbackComposer } from "./feedback-composer";
 import { OwnFeedbackMenu } from "./own-feedback-menu";
 
@@ -39,6 +40,7 @@ export function FeedbackList({ status, initialItems, initialHasMore, serverNow, 
   const [failed, setFailed] = useState(false);
   const [pending, startTransition] = useTransition();
   const [composing, setComposing] = useState(false);
+  const [commentsFor, setCommentsFor] = useState<FeedbackItem | null>(null);
   const [toast, setToast] = useState<{ tone: "success" | "error"; text: string } | null>(null);
   const dismissToast = useCallback(() => setToast(null), []);
 
@@ -59,6 +61,22 @@ export function FeedbackList({ status, initialItems, initialHasMore, serverNow, 
         return [...current, ...result.items.filter((f) => !seen.has(f.id))];
       });
     });
+  };
+
+  const update = (id: string, change: Partial<FeedbackItem>) =>
+    setItems((current) => current.map((f) => (f.id === id ? { ...f, ...change } : f)));
+
+  /** Shows the new counts at once, then the server's; puts them back if it fails. */
+  const react = async (item: FeedbackItem, type: ReactionType | null) => {
+    const before = { like_count: item.like_count, haha_count: item.haha_count, my_reaction: item.my_reaction };
+    update(item.id, applyReaction(before, type));
+    const result = await reactToFeedback({ feedbackId: item.id, type });
+    if (result.ok) {
+      update(item.id, { like_count: result.likeCount, haha_count: result.hahaCount, my_reaction: result.myReaction });
+    } else {
+      update(item.id, before);
+      setToast({ tone: "error", text: result.error });
+    }
   };
 
   /** New feedback is Open: it joins the list unless another status is being shown. */
@@ -105,6 +123,8 @@ export function FeedbackList({ status, initialItems, initialHasMore, serverNow, 
                   />
                 ) : undefined
               }
+              onReact={viewer === "member" ? (type) => react(item, type) : undefined}
+              onComments={() => setCommentsFor(item)}
             />
           ))}
 
@@ -125,6 +145,21 @@ export function FeedbackList({ status, initialItems, initialHasMore, serverNow, 
       )}
 
       <ComposeButton viewer={viewer} label="Feedback" action="give feedback" returnPath="/feedback" onCompose={() => setComposing(true)} />
+
+      <Sheet open={commentsFor !== null} onClose={() => setCommentsFor(null)} title="Comments">
+        {commentsFor && (
+          <CommentThread
+            key={commentsFor.id}
+            viewer={viewer}
+            returnPath="/feedback"
+            load={() => loadFeedbackComments(commentsFor.id)}
+            add={(body) => addFeedbackComment({ feedbackId: commentsFor.id, body })}
+            remove={deleteFeedbackComment}
+            onCountChange={(count) => update(commentsFor.id, { comment_count: count })}
+            writeNote={commentsFor.is_mine && commentsFor.is_anonymous ? "Your feedback is anonymous, but your comments show your name." : undefined}
+          />
+        )}
+      </Sheet>
 
       {me && (
         <Sheet open={composing} onClose={() => setComposing(false)} title="Give feedback">

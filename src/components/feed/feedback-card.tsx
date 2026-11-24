@@ -34,15 +34,16 @@ export function FeedbackCard({
 }) {
   const anonymous = item.author_name === null;
   const name = item.author_name ?? ANONYMOUS_NAME;
-  // Only the author's own session gets is_mine, so this never tells anyone else who wrote it.
-  const shownName = anonymous && item.is_mine ? `${ANONYMOUS_NAME} (you)` : name;
   const photos = item.photo_paths.map((path) => ({ url: feedbackPhotoUrl(path), ...photoSize(path) }));
 
   return (
     <FeedCard
       label={`Feedback from ${name}`}
-      authorName={shownName}
+      authorName={name}
       createdAt={item.created_at}
+      // Only the author's own session gets is_mine, so this never tells anyone else who wrote it.
+      // On the time line, not the name, so the name row keeps room for the badge and ⋯.
+      meta={anonymous && item.is_mine ? "Yours" : undefined}
       nowMs={nowMs}
       text={item.message}
       photos={photos}

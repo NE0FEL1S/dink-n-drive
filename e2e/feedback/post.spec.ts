@@ -36,7 +36,7 @@ test.describe("Giving feedback", () => {
     const card = feedbackCard(page, message);
     await expect(card).toBeVisible();
     await expect(card).toHaveAccessibleName("Feedback from Anonymous");
-    await expect(card.getByText("Anonymous (you)")).toBeVisible();
+    await expect(card.getByText("· Yours")).toBeVisible();
     await expect(card.getByText("Open", { exact: true })).toBeVisible();
     await expect(card.getByRole("img", { name: "Photo posted by Anonymous" })).toBeVisible();
 
@@ -52,7 +52,7 @@ test.describe("Giving feedback", () => {
 
     await page.reload();
     const again = feedbackCard(page, message);
-    await expect(again.getByText("Anonymous (you)")).toBeVisible();
+    await expect(again.getByText("· Yours")).toBeVisible();
 
     // Delete it: the row is soft-deleted and the photo file removed.
     await again.getByRole("button", { name: "Feedback options" }).click();
