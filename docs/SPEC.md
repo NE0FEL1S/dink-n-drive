@@ -1,10 +1,11 @@
-# Dink n' Drive — Pickleball Court Website · Build Spec (v1.7)
+# Dink n' Drive — Pickleball Court Website · Build Spec (v1.8)
 
 Status: **Approved plan** · Last updated 2026-11-24
 
 Portfolio project by Arbien Armenion; may be handed over to the court owner for real use.
 
 Changelog
+- v1.8 — **Feedback** (decided with the developer, 2026-11-24): authors can delete their own feedback but not edit it. `/feedback` has status filters (All / Open / In progress / Resolved); All, newest first, is the default. Feedback comments also appear in Admin → Moderation. Feedback photos are stored under the feedback id (not the user id) so anonymous items can't be traced through photo URLs.
 - v1.7 — **Community posts** (decided with the developer, 2026-11-24): every post has 1–2 photos (caption optional). Authors can edit their caption (photos can't be changed) and delete their own posts and comments; comments can't be edited.
 - v1.6 — **Cancellation edge cases** (decided with the developer, 2026-11-24): a request on a booking whose payment isn't checked yet can't be approved until the payment is approved; rejecting that payment closes the request with no refund. A request still open at play time stays open. Owner cancellations prefill GCash details from the open request, else the booking contact. The GCash number is also erased when a request is declined; a ₱0 refund completes on approval.
 - v1.5 — **Email + password only:** Google sign-in dropped (decided with the developer, 2026-11-23). No emails are sent, so accounts are not email-verified; forgotten passwords go through the owner-assisted reset.
@@ -85,7 +86,7 @@ All prices, hours, hold time, cutoff, fees and limits live in a `settings` row s
 - **Refunds** — cancellation requests; owner sends GCash refund manually, uploads refund screenshot, marks Refunded
 - **Customers** — guests and account holders, grouped by phone number: bookings count, total hours, total spent, last visit; temporary-password reset (account holders with email/password only)
 - **Feedback** — inbox: set status, write the public reply, delete abusive items
-- **Moderation** — posts and comments, newest first; delete
+- **Moderation** — posts and comments (community and feedback), newest first; delete
 - **Settings** — prices, hours, hold minutes, cancellation cutoff/fee, booking window, unpaid-booking limit, GCash QR image, court name
 
 ---
@@ -165,13 +166,16 @@ Opening hours are checked in the function, not by a CHECK constraint, because th
 
 ## 8. Feedback page (public)
 
-- Same feed style as Community, with optional 0–2 photos.
+- Same feed style as Community, with optional 0–2 photos (up to 2,000 characters).
+- Status filter chips: **All** (default, newest first) · Open · In progress · Resolved.
+- The author can delete their own feedback (soft delete; photos removed). Feedback can't be edited, so the owner's reply always answers what was written.
 - Status badge: **Open / In progress / Resolved**.
 - Owner reply pinned under the feedback.
 - **Anonymous checkbox:** public sees "Anonymous"; the owner still sees the account. The public view returns no author for anonymous feedback. Note: if the author comments on their own anonymous feedback, the comment shows their name.
 - Reactions and comments work the same as Community.
 - Owner can delete abusive feedback (soft delete; photos removed from storage).
-- Rate limit: **5 feedback items per day** per user.
+- Rate limit: **5 feedback items per 24 hours** per user (deleted items count).
+- Anonymity: photo paths are `<feedback_id>/<file>` (never the user id), and comments/reactions on feedback are read only through database functions, never straight from the tables.
 
 ---
 
@@ -216,7 +220,7 @@ Opening hours are checked in the function, not by a CHECK constraint, because th
 | `payment-proofs` (private) | owner + that booking's customer | that booking's customer |
 | `refund-proofs` (private) | owner + that booking's customer | owner |
 | `community-photos` (public) | anyone | post author; owner can delete |
-| `feedback-photos` (public) | anyone | feedback author; owner can delete |
+| `feedback-photos` (public) | anyone | feedback author, under `<feedback_id>/` (uploader checked by `owner_id`); owner can delete |
 | `site-assets` (public, GCash QR) | anyone | owner |
 
 **Public availability** is served through a database function that returns taken time ranges only (customer bookings and blocks alike) — never customer details.
