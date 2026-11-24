@@ -145,10 +145,37 @@ export async function cleanupTestData(scope: "run" | "stale"): Promise<{ users: 
     for (const user of data.users) if (matches(user.email, user.created_at)) userIds.push(user.id);
     if (data.users.length < 1000) break;
   }
+  // Their posts go with the user (cascade), but community photos sit in the public
+  // bucket under <user_id>/<post_id>/ and must be removed by hand.
+  let communityFiles = 0;
+  for (const id of userIds) communityFiles += await removeCommunityPhotos(id);
+
   for (const id of userIds) {
     const { error } = await admin().auth.admin.deleteUser(id);
     if (error) throw new Error(`cleanup delete user ${id}: ${error.message}`);
   }
 
-  return { users: userIds.length, bookings: doomed.length + doomedBlocks.length, files: paymentFiles.length + refundFiles.length };
+  return {
+    users: userIds.length,
+    bookings: doomed.length + doomedBlocks.length,
+    files: paymentFiles.length + refundFiles.length + communityFiles,
+  };
+}
+
+/** Deletes every file under community-photos/<userId>/ (one folder per post). Returns how many. */
+async function removeCommunityPhotos(userId: string): Promise<number> {
+  const bucket = admin().storage.from("community-photos");
+  const { data: folders, error } = await bucket.list(userId, { limit: 1000 });
+  if (error) throw new Error(`cleanup list community photos: ${error.message}`);
+  const paths: string[] = [];
+  for (const folder of folders ?? []) {
+    const { data: files, error: filesError } = await bucket.list(`${userId}/${folder.name}`, { limit: 100 });
+    if (filesError) throw new Error(`cleanup list community photos: ${filesError.message}`);
+    for (const file of files ?? []) paths.push(`${userId}/${folder.name}/${file.name}`);
+  }
+  if (paths.length) {
+    const { error: removeError } = await bucket.remove(paths);
+    if (removeError) throw new Error(`cleanup remove community photos: ${removeError.message}`);
+  }
+  return paths.length;
 }

@@ -263,6 +263,11 @@ On phones it's a bottom sheet; on laptops, a centered dialog. `/book` renders th
   - Signing in or creating an account on this browser moves its guest bookings to the account.
 
 **Community / Feedback:** single-column feed. Photo cards with 16 px radius, author name and time, caption, a reaction bar (👍 😂 with counts) and a comments link. A floating "+ Post" button bottom-right, above the safe area and the nav.
+- **Built (Phase 5B):** `/community` with `PageHeader` ("Players' corner" / "Community"), then white cards in one column (max 576 px). Shared pieces for Phase 6 live in `src/components/feed/` (`FeedCard`, `FeedPhotos`, `ReactionBar`; `PostCard` wraps them for posts).
+  - **Card:** 40 px `orange-50` initials circle, name (15 px bold), time in Manila ("Just now", "5 min ago", "3 h ago", then "Nov 24, 3:41 PM") plus "· Edited"; the caption keeps its line breaks; photos inset 16/20 px with a 16 px radius.
+  - **Photos:** one photo keeps its own shape, cropped only beyond 4:5 tall or 1.91:1 wide; two photos sit side by side at 4:5 with a 4 px gap. The shape comes from the file name (`1-1280x960.webp`), so nothing jumps while loading. Photos skip the image optimizer (already compressed when posted) and load lazily, except the first post's.
+  - **Reaction bar:** under a 1 px divider; 48 px pills "👍 3" / "😂 Haha" (the label shows when the count is 0) and "💬 2 comments" on the right. Your own reaction is an `orange-50` pill with `orange-600` text. Guests are sent to log in, and accounts without a name + phone to Profile.
+  - **Paging:** 10 posts, then a white **Load more posts** button; at the end "You're all caught up." Empty: camera chip, "No posts yet.", and **Log in to post** for guests.
 
 **Admin:** usable on a phone (the owner will check payments on the go). The Payments queue is a card list with a large screenshot preview and Approve/Reject buttons. Tables become stacked cards below 768 px. Desktop gets a left sidebar.
 - **Built (Phase 3B):** `src/app/(site)/admin/layout.tsx` + `admin-nav.tsx`. Sections: Overview · Bookings · Payments · Refunds (Phase 4) · Settings (Customers, Feedback, Moderation join in their phases).
