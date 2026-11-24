@@ -28,6 +28,7 @@ test.describe("admin payments", () => {
     await expect(c).toContainText("Guest");
     const receipt = c.getByRole("img", { name: `GCash receipt for ${b.ref}` });
     await expect(receipt).toBeVisible();
+    await receipt.scrollIntoViewIfNeeded(); // receipts load lazily, as they come into view
     await expect.poll(() => receipt.evaluate((img: HTMLImageElement) => img.naturalWidth)).toBeGreaterThan(0);
     await expectNoHorizontalScroll(page);
 

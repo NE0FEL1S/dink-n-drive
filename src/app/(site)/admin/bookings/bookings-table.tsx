@@ -1,6 +1,7 @@
 import { ExternalLink, Phone } from "lucide-react";
 import { StatusBadge } from "@/components/ui/status-badge";
 import type { AdminBookingRow } from "@/lib/admin-bookings";
+import { RemoveBlockButton } from "./block-hours";
 import { dayLabel, rangeLabel } from "@/lib/booking-time";
 import { manilaDateTime, peso } from "@/lib/format";
 
@@ -84,10 +85,15 @@ export function BookingsTable({ rows, proofUrls }: Props) {
                 </div>
 
                 {r.isBlock ? (
-                  <p className="text-[15px] text-navy-700">
-                    <span className="font-semibold text-navy-900">Owner block</span>
-                    {r.blockNote ? ` · ${r.blockNote}` : ""}
-                  </p>
+                  <div className="grid gap-1">
+                    <p className="text-[15px] text-navy-700">
+                      <span className="font-semibold text-navy-900">Owner block</span>
+                      {r.blockNote ? ` · ${r.blockNote}` : ""}
+                    </p>
+                    <div className="-ml-3">
+                      <RemoveBlockButton blockId={r.id} label={`${dayLabel(r.day)}, ${rangeLabel(r.startHour, r.endHour)}`} />
+                    </div>
+                  </div>
                 ) : (
                   <>
                     <div className="grid gap-0.5">
@@ -152,6 +158,9 @@ export function BookingsTable({ rows, proofUrls }: Props) {
                       <>
                         <span className="block font-semibold text-navy-900">Owner block</span>
                         {r.blockNote && <span className="block truncate">{r.blockNote}</span>}
+                        <span className="-ml-3 block">
+                          <RemoveBlockButton blockId={r.id} label={`${dayLabel(r.day)}, ${rangeLabel(r.startHour, r.endHour)}`} />
+                        </span>
                       </>
                     ) : (
                       <>

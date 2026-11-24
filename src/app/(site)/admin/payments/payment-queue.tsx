@@ -1,12 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useTransition } from "react";
+import { useCallback, useState, useTransition } from "react";
 import { CheckCircle2, ExternalLink, ImageOff, Phone } from "lucide-react";
 import { Button, buttonClass, Spinner } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { FormMessage } from "@/components/ui/field";
 import { Sheet } from "@/components/ui/sheet";
+import { Toast } from "@/components/ui/toast";
 import { dayLabel, rangeLabel } from "@/lib/booking-time";
 import { peso } from "@/lib/format";
 import { approvePayment, rejectPayment } from "./actions";
@@ -45,10 +46,15 @@ export function PaymentQueue({ items }: { items: PaymentItem[] }) {
   const shown = items.filter((i) => !hidden.has(i.id));
 
   const hide = (id: string) => setHidden((h) => new Set(h).add(id));
+  const dismiss = useCallback(() => setNotice(null), []);
 
   return (
     <div className="grid gap-4">
-      {notice && <FormMessage tone={notice.tone}>{notice.text}</FormMessage>}
+      {notice && (
+        <Toast key={notice.text} tone={notice.tone} onDismiss={dismiss}>
+          {notice.text}
+        </Toast>
+      )}
 
       {shown.length === 0 ? (
         <Card className="flex items-start gap-4">
@@ -187,7 +193,9 @@ function PaymentCard({
             <img
               src={item.proofUrl}
               alt={`GCash receipt for ${item.ref}`}
-              className="mx-auto max-h-[440px] w-full object-contain md:max-h-[400px]"
+              loading="lazy"
+              decoding="async"
+              className="h-[420px] w-full object-contain md:h-[400px]"
             />
             <span className="absolute right-2 bottom-2 inline-flex h-9 items-center gap-1.5 rounded-full bg-white/95 px-3 text-sm font-semibold text-navy-900 shadow-[var(--shadow-soft)] group-active:scale-[0.98]">
               <ExternalLink className="size-4" aria-hidden="true" />

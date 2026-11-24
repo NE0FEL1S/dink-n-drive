@@ -2,16 +2,17 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { connection } from "next/server";
 import { Suspense } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { CalendarOff, ChevronLeft, ChevronRight } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { buttonClass } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { cleanSearch, loadAdminBookings, PAGE_SIZE, parseStatusFilter } from "@/lib/admin-bookings";
 import { one, periodParams, resolvePeriod } from "@/lib/admin-period";
 import { requireOwner } from "@/lib/auth";
-import { manilaDay, nowMs } from "@/lib/booking-time";
+import { addDays, manilaDay, nowMs } from "@/lib/booking-time";
 import { createClient } from "@/lib/supabase/server";
 import { AdminFilters } from "../admin-filters";
+import { BlockHoursButton } from "./block-hours";
 import { BookingsTable } from "./bookings-table";
 
 export const metadata: Metadata = { title: "Bookings · Admin" };
@@ -34,7 +35,8 @@ async function BookingsData({ searchParams }: { searchParams: SearchParams }) {
   await requireOwner();
   await connection();
   const sp = await searchParams;
-  const period = resolvePeriod({ period: one(sp.period), from: one(sp.from), to: one(sp.to) }, manilaDay(nowMs()), "today");
+  const today = manilaDay(nowMs());
+  const period = resolvePeriod({ period: one(sp.period), from: one(sp.from), to: one(sp.to) }, today, "today");
   const status = parseStatusFilter(one(sp.status));
   const q = cleanSearch(one(sp.q));
   const page = Math.max(1, Math.floor(Number(one(sp.page)) || 1));
@@ -69,6 +71,16 @@ async function BookingsData({ searchParams }: { searchParams: SearchParams }) {
 
   return (
     <div className="grid gap-4">
+      <div className="grid grid-cols-2 gap-3 sm:flex">
+        <BlockHoursButton today={today} />
+        <Link
+          href={`/admin/bookings?period=custom&from=${today}&to=${addDays(today, 365)}&status=blocked`}
+          className={buttonClass("secondary", "w-full px-3 whitespace-nowrap sm:w-auto sm:px-6")}
+        >
+          <CalendarOff className="hidden size-5 text-navy-700 sm:block" aria-hidden="true" />
+          Upcoming blocks
+        </Link>
+      </div>
       <AdminFilters path="/admin/bookings" title="Filters" period={period} search={{ status, q }} />
 
       {rows.length === 0 ? (
