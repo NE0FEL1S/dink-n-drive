@@ -134,7 +134,7 @@ URLs:
 - Staging (`staging`): https://dink-n-drive-git-staging-prism-technology.vercel.app
 - Each PR branch: `dink-n-drive-git-<branch>-prism-technology.vercel.app` (Vercel posts the link on the PR)
 
-At the Phase 7 launch: set Supabase **Site URL** to the production URL.
+At the Phase 7 launch: set Supabase **Site URL** to the production URL (see Part 8).
 
 ---
 
@@ -169,3 +169,39 @@ If the first run after starting a fresh `npm run dev` fails at sign-in for one d
 The GCash QR replacement test is off by default (it swaps the real payment QR and puts it back). Run it on purpose with `E2E_QR_TEST=1 npx playwright test e2e/admin/settings.spec.ts --project=desktop`. Afterwards the old QR file is kept as "the previous one", so other deployments with cached settings still show a working QR.
 
 Admin tests use days 60–360 days ahead (`freeAdminDay()`), outside the 30-day customer window, so they don't take the empty days the booking tests need (`freeTestDay()`). `supabase/checks/booking_checks.sql` also picks a day with nothing booked (5–29 days ahead), so it can run while tests are running.
+
+---
+
+## Part 8 — Go live (Phase 7 launch)
+
+The database is shared by local, staging and production, so every migration is already live; going live is about the app and the settings around it.
+
+**Before the `staging` → `main` PR**
+- [ ] CI on `staging` is green (GitHub → Actions → the latest `e2e` run).
+- [ ] Vercel → project → Settings → Environment Variables: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY` are set for **Production** (checked 2026-11-24).
+- [ ] Supabase → Authentication → **URL Configuration**:
+  - Site URL: `https://dink-n-drive.vercel.app`
+  - Redirect URLs keep `http://localhost:3000/**`, `https://dink-n-drive.vercel.app/**` and `https://*-prism-technology.vercel.app/**`
+- [ ] Supabase → Authentication → Sign In / Providers → Email: **Confirm email** stays **off** (no emails in v1).
+- [ ] Supabase → Authentication → Policies (Attack Protection): turn on **Leaked password protection** if your plan offers it (it may need the Pro plan; skip it on Free).
+- [ ] Supabase → Integrations → Cron: the job `expire-unpaid-holds` runs every minute and is active (checked 2026-11-24). Without it, unpaid holds never free their hours.
+
+**Deploy**
+1. Open a PR `staging` → `main` (Claude Code does this only when you say so) and merge it. Vercel deploys `main` to https://dink-n-drive.vercel.app.
+2. Check the deployed commit: `https://dink-n-drive.vercel.app/api/version` shows the merge commit of that PR.
+3. Smoke test production (creates and deletes tagged test data, like every run):
+   ```bash
+   E2E_BASE_URL=https://dink-n-drive.vercel.app npx playwright test e2e/smoke
+   ```
+4. On your own phones: open the site, book an hour as a guest, cancel it (unpaid), and check the keyboard doesn't cover the field you're typing in the booking popup and in Admin → Settings.
+
+**Before the court owner uses it for real**
+- **Hosting:** Vercel Hobby is for non-commercial use only. Upgrade the project to **Vercel Pro** (about $20/month) or move to a host whose free plan allows commercial use.
+- **Database:** Supabase Free pauses a project after 7 days with no activity and has no point-in-time backups. A busy court keeps it awake; for daily backups and no pausing, use **Supabase Pro** (about $25/month).
+- **Owner account:** the owner signs up on the site, then run Part 5b with their email. Remove the developer's owner role when handing over:
+  ```sql
+  update public.profiles set role = 'customer' where email = 'developer@example.com';
+  ```
+- **Settings:** the owner checks Admin → Settings (court name, prices, opening hours, hold time, cancellation cutoff and fee, booking window) and the **GCash QR**, which must be their own account's QR.
+- **Custom domain (optional):** Vercel → Settings → Domains. Then put the new domain in Supabase **Site URL** and add `https://<domain>/**` to **Redirect URLs**.
+- **Forgotten passwords:** customers message the owner, who sets a new password in Admin → Customers after checking the phone number on the account (no emails in v1).

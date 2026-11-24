@@ -72,4 +72,4 @@ Email sending of any kind, forgot/change password, booking emails, online paymen
 - [x] 4. Cancellation & refund flow (customer + admin)
 - [x] 5. Community feed: posts, photos, reactions, comments, moderation
 - [x] 6. Public feedback: reuse community components + status, replies, anonymous option
-- [ ] 7. Customers tab + owner-assisted reset, earnings chart, mobile polish, testing, Vercel deploy
+- [x] 7. Customers tab + owner-assisted reset, earnings chart, mobile polish, testing, Vercel deploy
