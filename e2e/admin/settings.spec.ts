@@ -1,7 +1,14 @@
 import { expect, test, type Page } from "@playwright/test";
-import { gcashQr } from "../../src/lib/gcash";
 import { admin, createTestOwner } from "../support/admin";
+import { requireEnv } from "../support/env";
 import { expectNoHorizontalScroll, field, heading, signIn } from "../support/ui";
+
+/**
+ * Public URL of a QR in site-assets, like src/lib/gcash.ts builds it. Not imported from there:
+ * that module loads src/lib/supabase/env.ts, which needs the publishable key CI doesn't have.
+ */
+const qrUrl = (path: string) =>
+  `${requireEnv("NEXT_PUBLIC_SUPABASE_URL")}/storage/v1/object/public/site-assets/${path.split("/").map(encodeURIComponent).join("/")}`;
 
 /**
  * Settings are one shared row and the GCash QR is the real one, so:
@@ -72,7 +79,7 @@ test.describe("admin settings", () => {
     const owner = await createTestOwner("set-qr");
     const originalPath = (await settingsRow()).gcash_qr_path;
     test.skip(!originalPath, "no QR set yet");
-    const originalUrl = gcashQr(originalPath)!.url;
+    const originalUrl = qrUrl(originalPath!);
     const original = Buffer.from(await (await fetch(originalUrl)).arrayBuffer());
     const ext = originalPath!.split(".").pop()!;
     const mime = ext === "png" ? "image/png" : ext === "webp" ? "image/webp" : "image/jpeg";
@@ -97,7 +104,7 @@ test.describe("admin settings", () => {
     await page.getByRole("button", { name: "Save new QR" }).click();
     await expect(page.getByText("New GCash QR saved.").filter({ visible: true })).toBeVisible();
     const restored = (await settingsRow()).gcash_qr_path!;
-    const back = Buffer.from(await (await fetch(gcashQr(restored)!.url)).arrayBuffer());
+    const back = Buffer.from(await (await fetch(qrUrl(restored))).arrayBuffer());
     expect(back.equals(original)).toBe(true);
     // ...and the stand-in is still there as "the one before", while files older than that are gone
     const { data: after } = await admin().storage.from("site-assets").list("gcash");

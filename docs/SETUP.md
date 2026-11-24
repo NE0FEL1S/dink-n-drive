@@ -151,6 +151,10 @@ One-time setup — GitHub repo → **Settings → Secrets and variables → Acti
 | `NEXT_PUBLIC_SUPABASE_URL` | same as in `.env.local` |
 | `SUPABASE_SECRET_KEY` | same as in `.env.local` |
 
+CI deliberately has **no publishable key**, so test files may import only site code that never loads `src/lib/supabase/env.ts` (`src/lib/booking-time`, `src/lib/format`, `src/types`). `npm run lint` enforces this: one bad import stops the whole run before any test starts (that broke CI from PR #20 to #39).
+
+**No Vercel Toolbar on staging.** The toolbar (comments bubble) sits over buttons on phone screens and makes tests fail. Vercel → project → **Settings → Environment Variables**: `VERCEL_PREVIEW_FEEDBACK_ENABLED` = `0`, environment **Preview**, branch **staging** (PR previews of other branches keep the toolbar). It takes effect on staging's next deployment.
+
 **On your computer.**
 ```bash
 npx playwright install chromium webkit   # once
@@ -164,4 +168,4 @@ If the first run after starting a fresh `npm run dev` fails at sign-in for one d
 
 The GCash QR replacement test is off by default (it swaps the real payment QR and puts it back). Run it on purpose with `E2E_QR_TEST=1 npx playwright test e2e/admin/settings.spec.ts --project=desktop`. Afterwards the old QR file is kept as "the previous one", so other deployments with cached settings still show a working QR.
 
-Admin tests use days 60–360 days ahead (`freeAdminDay()`), outside the 30-day customer window, so they don't take the empty days the booking tests need (`freeTestDay()`).
+Admin tests use days 60–360 days ahead (`freeAdminDay()`), outside the 30-day customer window, so they don't take the empty days the booking tests need (`freeTestDay()`). `supabase/checks/booking_checks.sql` also picks a day with nothing booked (5–29 days ahead), so it can run while tests are running.
