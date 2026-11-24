@@ -554,9 +554,28 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_approve_cancellation: {
+        Args: { p_refund_id: string }
+        Returns: Database["public"]["Enums"]["refund_status"]
+      }
       admin_approve_payment: {
         Args: { p_booking_id: string }
         Returns: Database["public"]["Enums"]["booking_status"]
+      }
+      admin_cancel_booking: {
+        Args: {
+          p_booking_id: string
+          p_gcash_name?: string
+          p_gcash_number?: string
+        }
+        Returns: {
+          refund_amount: number
+          refund_id: string
+        }[]
+      }
+      admin_complete_refund: {
+        Args: { p_proof_path: string; p_refund_id: string }
+        Returns: Database["public"]["Enums"]["refund_status"]
       }
       admin_create_block: {
         Args: { p_hours: number; p_note?: string; p_start_at: string }
@@ -564,6 +583,10 @@ export type Database = {
           booking_id: string
           ref_code: string
         }[]
+      }
+      admin_decline_cancellation: {
+        Args: { p_reason: string; p_refund_id: string }
+        Returns: Database["public"]["Enums"]["booking_status"]
       }
       admin_reject_payment: {
         Args: { p_booking_id: string; p_reason: string }
@@ -630,6 +653,7 @@ export type Database = {
           created_at: string
           end_at: string
           has_payment_proof: boolean
+          has_refund_proof: boolean
           hold_expires_at: string
           hourly_rate: number
           hours: number
@@ -639,10 +663,35 @@ export type Database = {
           paddle_rented: boolean
           payment_submitted_at: string
           ref_code: string
+          refund_amount: number
+          refund_cancel_fee: number
+          refund_completed_at: string
+          refund_decided_at: string
+          refund_decline_reason: string
+          refund_gcash_name: string
+          refund_gcash_number: string
+          refund_requested_at: string
+          refund_status: Database["public"]["Enums"]["refund_status"]
           reject_reason: string
           start_at: string
           status: Database["public"]["Enums"]["booking_status"]
           total: number
+        }[]
+      }
+      my_refund_proof: {
+        Args: { p_booking_id: string; p_guest_token?: string }
+        Returns: string
+      }
+      request_cancellation: {
+        Args: {
+          p_booking_id: string
+          p_gcash_name: string
+          p_gcash_number: string
+          p_guest_token?: string
+        }
+        Returns: {
+          refund_amount: number
+          refund_id: string
         }[]
       }
       submit_payment_proof: {

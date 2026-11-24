@@ -1,10 +1,11 @@
-# Dink n' Drive — Pickleball Court Website · Build Spec (v1.5)
+# Dink n' Drive — Pickleball Court Website · Build Spec (v1.6)
 
-Status: **Approved plan** · Last updated 2026-11-23
+Status: **Approved plan** · Last updated 2026-11-24
 
 Portfolio project by Arbien Armenion; may be handed over to the court owner for real use.
 
 Changelog
+- v1.6 — **Cancellation edge cases** (decided with the developer, 2026-11-24): a request on a booking whose payment isn't checked yet can't be approved until the payment is approved; rejecting that payment closes the request with no refund. A request still open at play time stays open. Owner cancellations prefill GCash details from the open request, else the booking contact. The GCash number is also erased when a request is declined; a ₱0 refund completes on approval.
 - v1.5 — **Email + password only:** Google sign-in dropped (decided with the developer, 2026-11-23). No emails are sent, so accounts are not email-verified; forgotten passwords go through the owner-assisted reset.
 - v1.4 — **Guest booking:** anyone can book with name, email and phone; accounts are optional for booking (still required to post, comment, react or give feedback). My Bookings also shows guest bookings made in the same browser. Payment proof is uploaded right below the GCash QR. Customer cancellation of a paid booking is now a **request** the owner approves or declines; the ₱100 fee counts as earnings once the refund is marked completed. The unpaid-booking limit is per phone number. Landing page is one screen; booking opens in a popup.
 - v1.3 — Pre-build review. Paddle carry-over removed: every booking with paddles pays the flat ₱50. Owner can block hours and cancel any booking with a full refund. New limits: how far ahead people can book and how many unpaid bookings a customer can hold. Cancellation fee is saved on the booking; unpaid bookings cancel free at any time. Comments and reactions use real foreign keys. Rate limits added for feedback and comments. Next.js 16 `proxy` replaces `middleware`.
@@ -135,16 +136,18 @@ Opening hours are checked in the function, not by a CHECK constraint, because th
 - While the request is pending the booking is `cancel_requested` and the slot **stays held**. The customer sees "Cancellation requested" in My Bookings.
 - The owner reviews it in Admin → Refunds:
   - **Approve** → booking `cancelled` (`cancelled_by = 'customer'`), refund `approved`. The owner sends the GCash refund, uploads the refund screenshot and marks it **completed**.
-  - **Decline** (with a reason shown to the customer) → booking returns to its previous status (`pending_review` or `confirmed`); refund `declined`.
+  - **Decline** (with a reason shown to the customer) → booking returns to its previous status (`pending_review` or `confirmed`); refund `declined`, GCash number erased. The customer may send a new request before the cutoff.
+  - **Payment not checked yet** (request made while `pending_review`): the request can't be approved until the owner approves the payment (the request stays open). If the owner rejects the payment instead, the booking becomes `rejected` and the request is declined with the same reason — nothing was paid, so nothing is refunded.
+  - A request still open when the booking's start time passes stays open (slot held); the owner decides later.
 - Refund = `greatest(total − cancel_fee, 0)`, where `cancel_fee` is the fee saved on the booking when it was created (e.g. 2 hours with paddles ₱550 → ₱450 back; 1 hour ₱250 → ₱150 back).
 
 **Owner cancellation**
-- Any booking, any time, no cutoff, no fee, no request step. If the booking was `pending_review` or `confirmed`, a refund row is created as `approved` for the full `total` (the owner enters or confirms the customer's GCash details).
+- Any booking, any time, no cutoff, no fee, no request step. If the booking was `pending_review` or `confirmed`, a refund row is created as `approved` for the full `total` (the owner enters or confirms the customer's GCash details; prefilled from the customer's open request, else the booking's contact name and phone). An open customer request becomes this full refund.
 - Stored as `cancelled` with `cancelled_by = 'owner'`.
 
 **Both**
 - Refund status: `requested` → `approved` → `completed`, or `requested` → `declined`. The customer can see the status and the refund screenshot from My Bookings.
-- The GCash number is erased automatically once the refund is marked completed.
+- The GCash number is erased automatically once the refund is marked completed. A ₱0 refund (fee ≥ total) has nothing to send and is completed on approval.
 - Earnings: the kept ₱100 fee counts as revenue **once the refund is marked completed**; refunds are shown in their own column.
 
 ---
