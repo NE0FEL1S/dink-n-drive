@@ -22,6 +22,9 @@ const STATUSES: Status[] = [
 
 export const PAGE_SIZE = 50;
 
+/** Statuses the owner can cancel from the bookings list (admin_cancel_booking checks again). */
+const CANCELLABLE: Status[] = ["pending_payment", "pending_review", "confirmed", "cancel_requested"];
+
 /** One row of the admin bookings table (SPEC §9 columns), ready to display or export. */
 export type AdminBookingRow = {
   id: string;
@@ -51,6 +54,10 @@ export type AdminBookingRow = {
   cancelledBy: "customer" | "owner" | null;
   /** Refund for a cancellation (not declined), once Phase 4 adds them. */
   refundAmount: number | null;
+  /** The owner may cancel it (SPEC §6): a customer booking that is unpaid, paid or has a request open. */
+  cancellable: boolean;
+  /** GCash details from the customer's open cancellation request (prefill for an owner cancel). */
+  openRequest: { gcashName: string; gcashNumber: string } | null;
   blockNote: string | null;
 };
 
@@ -80,7 +87,7 @@ export async function loadAdminBookings({ period, status, q }: Filter, page: num
   let query = supabase
     .from("bookings")
     .select(
-      "id, ref_code, kind, user_id, contact_name, contact_email, contact_phone, start_at, hours, paddle_rented, court_fee, paddle_fee, total, status, status_before_request, payment_proof_path, reviewed_at, reject_reason, cancelled_by, block_note, reviewer:profiles!bookings_reviewed_by_fkey(full_name), refunds(refund_amount, status)",
+      "id, ref_code, kind, user_id, contact_name, contact_email, contact_phone, start_at, hours, paddle_rented, court_fee, paddle_fee, total, status, status_before_request, payment_proof_path, reviewed_at, reject_reason, cancelled_by, block_note, reviewer:profiles!bookings_reviewed_by_fkey(full_name), refunds(refund_amount, status, gcash_name, gcash_number)",
       { count: "exact" },
     )
     .gte("start_at", slotStartIso(period.from, 0))
@@ -139,6 +146,9 @@ export async function loadAdminBookings({ period, status, q }: Filter, page: num
       rejectReason: b.reject_reason,
       cancelledBy: b.cancelled_by,
       refundAmount: refund ? refund.refund_amount : null,
+      cancellable: b.kind === "customer" && CANCELLABLE.includes(b.status),
+      openRequest:
+        refund?.status === "requested" ? { gcashName: refund.gcash_name ?? "", gcashNumber: toLocalPhMobile(refund.gcash_number) } : null,
       blockNote: b.block_note,
     };
   });
