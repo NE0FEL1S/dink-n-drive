@@ -1,6 +1,7 @@
 import { Phone } from "lucide-react";
 import { localPhone, visitDate, type CustomerRow } from "@/lib/admin-customers";
 import { initials, peso } from "@/lib/format";
+import { ResetPasswordButton } from "./reset-password";
 
 /** Account · Guest · Account + guest (an account holder who also booked without logging in). */
 function TypeChip({ row }: { row: CustomerRow }) {
@@ -30,6 +31,11 @@ function OtherAccounts({ row }: { row: CustomerRow }) {
       {row.accounts.map((a) => a.email ?? a.name ?? "No email").join(", ")}
     </p>
   );
+}
+
+/** Accounts that log in with a password get "Set new password" (owner-assisted reset). */
+function resettable(row: CustomerRow) {
+  return row.accounts.filter((a) => a.canReset);
 }
 
 function Stat({ label, value }: { label: string; value: string }) {
@@ -103,6 +109,14 @@ export function CustomerList({ rows }: { rows: CustomerRow[] }) {
                 </p>
                 <OtherAccounts row={r} />
               </div>
+
+              {resettable(r).length > 0 && (
+                <div className="grid gap-2 border-t border-line pt-3 sm:flex sm:flex-wrap sm:justify-end">
+                  {resettable(r).map((a) => (
+                    <ResetPasswordButton key={a.id} account={a} showEmail={r.accounts.length > 1} className="w-full sm:w-auto" />
+                  ))}
+                </div>
+              )}
             </article>
           </li>
         ))}
@@ -131,9 +145,14 @@ export function CustomerList({ rows }: { rows: CustomerRow[] }) {
                   </span>
                   {r.email && <span className="block truncate text-slate-500">{r.email}</span>}
                   <OtherAccounts row={r} />
+                  {resettable(r).map((a) => (
+                    <span key={a.id} className="-ml-3 block">
+                      <ResetPasswordButton account={a} showEmail={r.accounts.length > 1} compact />
+                    </span>
+                  ))}
                 </td>
                 <td className="px-4 py-3 whitespace-nowrap">
-                  {r.phone ? <PhoneLink phone={r.phone} className="font-semibold" /> : <span className="text-slate-500">None</span>}
+                  {r.phone ? <PhoneLink phone={r.phone} className="font-semibold" /> : <span className="text-slate-500">No phone on file</span>}
                 </td>
                 <td className="px-4 py-3 text-right font-semibold text-navy-900 tabular-nums">{r.bookings}</td>
                 <td className="px-4 py-3 text-right tabular-nums">{hoursText(r.hours)}</td>
