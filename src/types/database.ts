@@ -596,6 +596,17 @@ export type Database = {
         Returns: Database["public"]["Enums"]["booking_status"]
       }
       admin_remove_block: { Args: { p_booking_id: string }; Returns: undefined }
+      admin_reply_feedback: {
+        Args: { p_feedback_id: string; p_reply: string }
+        Returns: string
+      }
+      admin_set_feedback_status: {
+        Args: {
+          p_feedback_id: string
+          p_status: Database["public"]["Enums"]["feedback_status"]
+        }
+        Returns: undefined
+      }
       admin_summary: {
         Args: { p_from: string; p_to: string }
         Returns: {
@@ -619,6 +630,13 @@ export type Database = {
         Returns: boolean
       }
       claim_guest_bookings: { Args: { p_guest_token: string }; Returns: number }
+      comment_on_feedback: {
+        Args: { p_body: string; p_feedback_id: string }
+        Returns: {
+          created_at: string
+          id: string
+        }[]
+      }
       comment_on_post: {
         Args: { p_body: string; p_post_id: string }
         Returns: {
@@ -659,15 +677,59 @@ export type Database = {
           total: number
         }[]
       }
+      create_feedback: {
+        Args: {
+          p_feedback_id: string
+          p_is_anonymous: boolean
+          p_message: string
+          p_photo_paths: string[]
+        }
+        Returns: string
+      }
       create_post: {
         Args: { p_caption: string; p_photo_paths: string[]; p_post_id: string }
         Returns: string
       }
       delete_comment: { Args: { p_comment_id: string }; Returns: undefined }
+      delete_feedback: { Args: { p_feedback_id: string }; Returns: string[] }
       delete_post: { Args: { p_post_id: string }; Returns: string[] }
       edit_post_caption: {
         Args: { p_caption: string; p_post_id: string }
         Returns: string
+      }
+      feedback_comments: {
+        Args: { p_feedback_id: string }
+        Returns: {
+          author_name: string
+          body: string
+          created_at: string
+          id: string
+          is_mine: boolean
+        }[]
+      }
+      feedback_feed: {
+        Args: {
+          p_before?: string
+          p_before_id?: string
+          p_limit?: number
+          p_status?: Database["public"]["Enums"]["feedback_status"]
+        }
+        Returns: {
+          author_name: string
+          comment_count: number
+          created_at: string
+          haha_count: number
+          id: string
+          is_anonymous: boolean
+          is_mine: boolean
+          like_count: number
+          message: string
+          my_reaction: Database["public"]["Enums"]["reaction_type"]
+          owner_reply: string
+          photo_paths: string[]
+          replied_at: string
+          status: Database["public"]["Enums"]["feedback_status"]
+        }[]
       }
       get_availability: {
         Args: { p_day: string }
@@ -738,6 +800,17 @@ export type Database = {
         Returns: {
           refund_amount: number
           refund_id: string
+        }[]
+      }
+      set_feedback_reaction: {
+        Args: {
+          p_feedback_id: string
+          p_type: Database["public"]["Enums"]["reaction_type"]
+        }
+        Returns: {
+          haha_count: number
+          like_count: number
+          my_reaction: Database["public"]["Enums"]["reaction_type"]
         }[]
       }
       set_post_reaction: {
