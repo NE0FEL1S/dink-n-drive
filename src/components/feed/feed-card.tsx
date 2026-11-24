@@ -14,29 +14,35 @@ type Props = {
   photos?: FeedPhoto[];
   /** Load the photos right away (the first card on screen). */
   eager?: boolean;
+  /** Replaces the initials circle (e.g. the anonymous icon). Same 40 px size. */
+  avatar?: ReactNode;
   /** Top-right slot (status badge, ⋯ menu). */
   aside?: ReactNode;
+  /** Between the photos and the footer (the owner's reply on feedback). */
+  children?: ReactNode;
   /** Reaction bar / comments. */
   footer?: ReactNode;
 };
 
 /**
- * One item in a single-column feed (Community now, Feedback in Phase 6; DESIGN §5):
- * white card, author initials + name + time, the text, 1–2 photos, then the footer.
+ * One item in a single-column feed (Community and Feedback; DESIGN §5):
+ * white card, author initials + name + time, the text, 0–2 photos, then the footer.
  */
-export function FeedCard({ label, authorName, createdAt, editedAt, nowMs, text, photos, eager, aside, footer }: Props) {
+export function FeedCard({ label, authorName, createdAt, editedAt, nowMs, text, photos, eager, avatar, aside, children, footer }: Props) {
   return (
     <article
       aria-label={label}
       className="overflow-hidden rounded-[var(--radius-card)] border border-line bg-white shadow-[var(--shadow-soft)]"
     >
       <header className="flex items-center gap-3 px-4 pt-4 min-[390px]:px-5">
-        <span
-          aria-hidden="true"
-          className="grid size-10 shrink-0 place-items-center rounded-full bg-orange-50 text-sm font-bold text-orange-600"
-        >
-          {initials(authorName)}
-        </span>
+        {avatar ?? (
+          <span
+            aria-hidden="true"
+            className="grid size-10 shrink-0 place-items-center rounded-full bg-orange-50 text-sm font-bold text-orange-600"
+          >
+            {initials(authorName)}
+          </span>
+        )}
         <div className="min-w-0 flex-1">
           <p className="truncate text-[15px] leading-5 font-bold text-navy-900">{authorName}</p>
           <p className="text-sm leading-5 text-slate-500">
@@ -60,6 +66,8 @@ export function FeedCard({ label, authorName, createdAt, editedAt, nowMs, text, 
           <FeedPhotos photos={photos} authorName={authorName} eager={eager} />
         </div>
       )}
+
+      {children}
 
       {footer ?? <div className="h-4" />}
     </article>
