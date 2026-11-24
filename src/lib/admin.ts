@@ -38,3 +38,15 @@ export const getRefundsToDoCount = cache(async (): Promise<number> => {
   if (error) throw new Error(`refunds count: ${error.message}`);
   return count ?? 0;
 });
+
+/** Live feedback still marked Open (the Feedback badge). The owner's session reads every row. */
+export const getOpenFeedbackCount = cache(async (): Promise<number> => {
+  const supabase = await createClient();
+  const { count, error } = await supabase
+    .from("feedback")
+    .select("id", { count: "exact", head: true })
+    .eq("status", "open")
+    .is("deleted_at", null);
+  if (error) throw new Error(`open feedback count: ${error.message}`);
+  return count ?? 0;
+});

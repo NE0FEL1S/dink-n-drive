@@ -18,8 +18,9 @@ type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 const PAGE_SIZE = 20;
 
 /**
- * Moderation (SPEC §4, §7): every live community post and comment, newest first, so the
- * owner can delete anything abusive. Feedback items join in Phase 6.
+ * Moderation (SPEC §4, §7, §8): every live community post, and every live comment on a
+ * post or a feedback item, newest first, so the owner can delete anything abusive.
+ * Feedback items themselves are handled in Admin → Feedback.
  */
 export default function AdminModerationPage({ searchParams }: { searchParams: SearchParams }) {
   return (
@@ -58,11 +59,14 @@ async function ModerationData({ searchParams }: { searchParams: SearchParams }) 
     supabase
       .from("comments")
       .select(
-        "id, body, created_at, author:profiles!comments_user_id_fkey(full_name, email), post:posts!comments_post_id_fkey!inner(id, caption, deleted_at, author:profiles!posts_user_id_fkey(full_name))",
+        "id, body, created_at, author:profiles!comments_user_id_fkey(full_name, email), post:posts!comments_post_id_fkey(id, caption, deleted_at, author:profiles!posts_user_id_fkey(full_name)), feedback:feedback!comments_feedback_id_fkey(id, message, deleted_at, author:profiles!feedback_user_id_fkey(full_name))",
         { count: "exact" },
       )
       .is("deleted_at", null)
+      // A deleted post / feedback item drops out of its embed; keep comments whose target is still live.
       .is("post.deleted_at", null)
+      .is("feedback.deleted_at", null)
+      .or("post.not.is.null,feedback.not.is.null")
       .order("created_at", { ascending: false })
       .order("id", { ascending: false })
       .range(view === "comments" ? from : 0, view === "comments" ? from + PAGE_SIZE - 1 : 0),
@@ -72,7 +76,7 @@ async function ModerationData({ searchParams }: { searchParams: SearchParams }) 
     console.error("[admin] moderation load failed:", posts.error?.message ?? comments.error?.message);
     return (
       <p role="alert" className="rounded-[var(--radius-card)] bg-danger-bg px-4 py-3 text-[15px] font-medium text-danger">
-        We couldn&apos;t load the community posts. Please refresh the page.
+        We couldn&apos;t load the posts and comments. Please refresh the page.
       </p>
     );
   }
@@ -99,8 +103,9 @@ async function ModerationData({ searchParams }: { searchParams: SearchParams }) 
           authorEmail: c.author?.email ?? null,
           when: sentLabel(Date.parse(c.created_at), now),
           text: c.body,
-          postAuthor: c.post?.author?.full_name ?? "Member",
-          postCaption: c.post?.caption ?? "",
+          target: c.post ? "post" : "feedback",
+          targetAuthor: (c.post ? c.post.author?.full_name : c.feedback?.author?.full_name) ?? "Member",
+          targetText: (c.post ? c.post.caption : c.feedback?.message) ?? "",
         }));
 
   const total = counts[view];

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense, type ReactNode } from "react";
-import { getPendingReviewCount, getRefundsToDoCount } from "@/lib/admin";
+import { getOpenFeedbackCount, getPendingReviewCount, getRefundsToDoCount } from "@/lib/admin";
 import { requireOwner } from "@/lib/auth";
 import { AdminNav } from "./admin-nav";
 
@@ -25,6 +25,11 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
             <RefundsBadge />
           </Suspense>
         }
+        feedbackBadge={
+          <Suspense fallback={null}>
+            <FeedbackBadge />
+          </Suspense>
+        }
       />
       <div className="min-w-0">{children}</div>
     </main>
@@ -39,6 +44,11 @@ async function PendingReviewBadge() {
 async function RefundsBadge() {
   await requireOwner();
   return <CountBadge count={await getRefundsToDoCount()} label="to decide or send" />;
+}
+
+async function FeedbackBadge() {
+  await requireOwner();
+  return <CountBadge count={await getOpenFeedbackCount()} label="open" />;
 }
 
 function CountBadge({ count, label }: { count: number; label: string }) {

@@ -71,5 +71,5 @@ Email sending of any kind, forgot/change password, booking emails, online paymen
 - [x] 3. Admin: payment queue, bookings table + filters, summary cards, Excel/PDF exports, settings
 - [x] 4. Cancellation & refund flow (customer + admin)
 - [x] 5. Community feed: posts, photos, reactions, comments, moderation
-- [ ] 6. Public feedback: reuse community components + status, replies, anonymous option
+- [x] 6. Public feedback: reuse community components + status, replies, anonymous option
 - [ ] 7. Customers tab + owner-assisted reset, earnings chart, mobile polish, testing, Vercel deploy
