@@ -65,3 +65,10 @@ export async function insertTestFeedbackComment(user: Pick<TestUser, "id">, feed
   const { error } = await admin().from("comments").insert({ user_id: user.id, feedback_id: feedbackId, body });
   if (error) throw new Error(`insertTestFeedbackComment: ${error.message}`);
 }
+
+/** Paths of the files in feedback-photos/<feedbackId>/. */
+export async function listFeedbackFiles(feedbackId: string): Promise<string[]> {
+  const { data, error } = await admin().storage.from("feedback-photos").list(feedbackId, { limit: 100 });
+  if (error) throw new Error(`listFeedbackFiles: ${error.message}`);
+  return (data ?? []).map((f) => `${feedbackId}/${f.name}`);
+}

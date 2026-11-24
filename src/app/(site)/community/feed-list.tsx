@@ -1,11 +1,11 @@
 "use client";
 
 import { useCallback, useState, useTransition } from "react";
-import Link from "next/link";
-import { Camera, Plus } from "lucide-react";
+import { Camera } from "lucide-react";
 import { CommentThread } from "@/components/feed/comment-thread";
+import { ComposeButton } from "@/components/feed/compose-button";
 import { PostCard } from "@/components/feed/post-card";
-import { Button, ButtonLink, buttonClass, Spinner } from "@/components/ui/button";
+import { Button, ButtonLink, Spinner } from "@/components/ui/button";
 import { Sheet } from "@/components/ui/sheet";
 import { Toast } from "@/components/ui/toast";
 import { applyReaction, type FeedPost, type ReactionType, type Viewer } from "@/lib/community";
@@ -135,7 +135,7 @@ export function FeedList({ initialPosts, initialHasMore, serverNow, viewer, me }
         </div>
       )}
 
-      <PostButton viewer={viewer} onPost={() => setComposing(true)} />
+      <ComposeButton viewer={viewer} label="Post" action="post" returnPath="/community" onCompose={() => setComposing(true)} />
 
       <Sheet open={commentsFor !== null} onClose={() => setCommentsFor(null)} title="Comments">
         {commentsFor && (
@@ -157,34 +157,6 @@ export function FeedList({ initialPosts, initialHasMore, serverNow, viewer, me }
         </Sheet>
       )}
     </>
-  );
-}
-
-/**
- * Floating "+ Post", bottom-right above the home indicator (DESIGN §5). Guests go to log in,
- * accounts without a name + phone to Profile.
- */
-function PostButton({ viewer, onPost }: { viewer: Viewer; onPost: () => void }) {
-  const className = buttonClass(
-    "cta",
-    "fixed right-4 bottom-[calc(1rem+env(safe-area-inset-bottom))] z-20 min-h-14 touch-manipulation px-6 text-[17px] shadow-[0_10px_28px_rgb(191_74_18/0.35)] min-[390px]:right-5 sm:right-8 sm:bottom-8",
-  );
-  const content = (
-    <>
-      <Plus className="size-5" strokeWidth={2.5} aria-hidden="true" /> Post
-    </>
-  );
-  if (viewer === "member") {
-    return (
-      <button type="button" className={className} onClick={onPost}>
-        {content}
-      </button>
-    );
-  }
-  return (
-    <Link href={viewer === "guest" ? LOGIN : COMPLETE_PROFILE} className={className} aria-label={viewer === "guest" ? "Log in to post" : "Complete your profile to post"}>
-      {content}
-    </Link>
   );
 }
 
