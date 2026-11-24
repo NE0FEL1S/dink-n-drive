@@ -14,6 +14,9 @@ const STYLES: Record<BookingStatus, { label: string; className: string }> = {
   blocked: { label: "Blocked", className: "bg-neutral-bg text-neutral" },
 };
 
+/** Status names as people read them ("Pending review"). */
+export const STATUS_LABELS = Object.fromEntries(Object.entries(STYLES).map(([k, v]) => [k, v.label])) as Record<BookingStatus, string>;
+
 export function StatusBadge({ status }: { status: BookingStatus }) {
   const s = STYLES[status];
   return <span className={`inline-flex h-7 items-center rounded-full px-3 text-xs font-semibold whitespace-nowrap ${s.className}`}>{s.label}</span>;

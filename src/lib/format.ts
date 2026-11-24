@@ -21,3 +21,11 @@ export function hourWords(hour: number): string {
 export function manilaHour(now: Date = new Date()): number {
   return new Date(now.getTime() + 8 * 3_600_000).getUTCHours();
 }
+
+/** A moment as "Nov 24, 3:41 PM" in Manila time. */
+export function manilaDateTime(iso: string): string {
+  const d = new Date(iso);
+  const date = d.toLocaleDateString("en-PH", { timeZone: "Asia/Manila", month: "short", day: "numeric" });
+  const time = d.toLocaleTimeString("en-PH", { timeZone: "Asia/Manila", hour: "numeric", minute: "2-digit" });
+  return `${date}, ${time}`;
+}
