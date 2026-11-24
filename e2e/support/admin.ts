@@ -149,6 +149,8 @@ export async function cleanupTestData(scope: "run" | "stale"): Promise<{ users: 
   // bucket under <user_id>/<post_id>/ and must be removed by hand.
   let communityFiles = 0;
   for (const id of userIds) communityFiles += await removeCommunityPhotos(id);
+  // Feedback photos sit under <feedback_id>/ (no user folder), so they're found through the rows.
+  const feedbackFiles = await removeFeedbackPhotos(userIds);
 
   for (const id of userIds) {
     const { error } = await admin().auth.admin.deleteUser(id);
@@ -158,7 +160,7 @@ export async function cleanupTestData(scope: "run" | "stale"): Promise<{ users: 
   return {
     users: userIds.length,
     bookings: doomed.length + doomedBlocks.length,
-    files: paymentFiles.length + refundFiles.length + communityFiles,
+    files: paymentFiles.length + refundFiles.length + communityFiles + feedbackFiles,
   };
 }
 
@@ -178,4 +180,23 @@ async function removeCommunityPhotos(userId: string): Promise<number> {
     if (removeError) throw new Error(`cleanup remove community photos: ${removeError.message}`);
   }
   return paths.length;
+}
+
+/** Deletes the photo files of every feedback item (live or deleted) by these users. Returns how many. */
+async function removeFeedbackPhotos(userIds: string[]): Promise<number> {
+  let removed = 0;
+  for (let i = 0; i < userIds.length; i += 100) {
+    const { data, error } = await admin()
+      .from("feedback_photos")
+      .select("path, feedback!inner(user_id)")
+      .in("feedback.user_id", userIds.slice(i, i + 100));
+    if (error) throw new Error(`cleanup list feedback photos: ${error.message}`);
+    const paths = (data ?? []).map((p) => p.path);
+    if (paths.length) {
+      const { error: removeError } = await admin().storage.from("feedback-photos").remove(paths);
+      if (removeError) throw new Error(`cleanup remove feedback photos: ${removeError.message}`);
+      removed += paths.length;
+    }
+  }
+  return removed;
 }
