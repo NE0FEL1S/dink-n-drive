@@ -7,7 +7,8 @@ import { SUPABASE_URL } from "./env";
 /**
  * Supabase client with the SECRET key. Bypasses RLS.
  * Server-only: never import from a Client Component, never expose the key.
- * Use only where the spec calls for it (signed upload URLs for guests,
+ * Use only where the spec calls for it (signed upload URLs for guests, guests' refund
+ * screenshots after my_refund_proof() checks ownership,
  * owner-assisted password reset, e2e cleanup).
  */
 export function createAdminClient() {

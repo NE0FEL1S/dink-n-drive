@@ -69,8 +69,10 @@ export async function insertTestBooking(opts: {
   hours?: number;
   paddles?: boolean;
   status?: BookingStatus;
+  /** Raw device token of the guest browser that "made" it (default: nobody's). */
+  guestToken?: string;
 }) {
-  const { day, hour, label, hours = 1, paddles = false, status = "confirmed" } = opts;
+  const { day, hour, label, hours = 1, paddles = false, status = "confirmed", guestToken } = opts;
   const { data: s, error: settingsError } = await admin().from("settings").select("hourly_rate, paddle_fee, cancel_fee").single();
   if (settingsError) throw new Error(`settings: ${settingsError.message}`);
   const courtFee = s.hourly_rate * hours;
@@ -85,7 +87,7 @@ export async function insertTestBooking(opts: {
       .insert({
         ref_code: ref,
         kind: "customer",
-        guest_token_hash: createHash("sha256").update(randomBytes(32)).digest("hex"),
+        guest_token_hash: createHash("sha256").update(guestToken ?? randomBytes(32)).digest("hex"),
         contact_name: `E2E ${label}`,
         contact_email: email,
         contact_phone: `+63${phone.slice(1)}`,

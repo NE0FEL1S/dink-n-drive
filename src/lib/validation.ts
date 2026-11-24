@@ -7,6 +7,13 @@ export const fullNameSchema = z
   .min(2, "Enter your full name.")
   .max(100, "Name is too long (100 characters max).");
 
+/** Name on the customer's GCash account (for refunds). */
+export const gcashNameSchema = z
+  .string()
+  .trim()
+  .min(2, "Enter the name on the GCash account.")
+  .max(100, "Name is too long (100 characters max).");
+
 /** Input `09XXXXXXXXX` → output `+639XXXXXXXXX`. */
 export const phMobileSchema = z
   .string()
