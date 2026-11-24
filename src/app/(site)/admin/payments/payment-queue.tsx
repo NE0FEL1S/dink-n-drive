@@ -30,6 +30,8 @@ export type PaymentItem = {
   sent: string | null;
   /** Signed link to the screenshot in the private payment-proofs bucket. */
   proofUrl: string | null;
+  /** The customer asked to cancel before the payment was checked. */
+  cancelRequested: boolean;
 };
 
 const dangerButton = "border-danger/30! text-danger! hover:bg-danger-bg! active:bg-danger-bg!";
@@ -82,7 +84,12 @@ export function PaymentQueue({ items }: { items: PaymentItem[] }) {
               item={item}
               onApproved={() => {
                 hide(item.id);
-                setNotice({ tone: "success", text: `${item.ref} approved. The customer now sees it as confirmed.` });
+                setNotice({
+                  tone: "success",
+                  text: item.cancelRequested
+                    ? `${item.ref} payment approved. Its cancellation request is waiting in Refunds.`
+                    : `${item.ref} approved. The customer now sees it as confirmed.`,
+                });
               }}
               onError={(text, stale) => {
                 if (stale) hide(item.id);
@@ -100,7 +107,12 @@ export function PaymentQueue({ items }: { items: PaymentItem[] }) {
             item={rejecting}
             onDone={() => {
               hide(rejecting.id);
-              setNotice({ tone: "success", text: `${rejecting.ref} rejected. Those hours are open again.` });
+              setNotice({
+                tone: "success",
+                text: rejecting.cancelRequested
+                  ? `${rejecting.ref} rejected and its cancellation request closed. Those hours are open again.`
+                  : `${rejecting.ref} rejected. Those hours are open again.`,
+              });
               setRejecting(null);
             }}
             onStale={(text) => {
@@ -140,6 +152,16 @@ function PaymentCard({
           <p className="text-[15px] font-bold tracking-[0.02em] text-navy-900">{item.ref}</p>
           {item.sent && <p className="text-sm text-slate-500">Sent {item.sent}</p>}
         </div>
+
+        {item.cancelRequested && (
+          <p className="rounded-[var(--radius-control)] bg-warning-bg px-3 py-2 text-sm text-warning">
+            <b>The customer asked to cancel.</b> Check the payment first. If you approve it, decide the request in{" "}
+            <Link href="/admin/refunds" className="font-semibold underline underline-offset-2">
+              Refunds
+            </Link>
+            ; if you reject it, the request closes with no refund.
+          </p>
+        )}
 
         <div className="grid gap-0.5">
           <p className="text-sm font-semibold text-slate-500">{dayLabel(item.day)}</p>

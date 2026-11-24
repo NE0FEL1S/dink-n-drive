@@ -3,15 +3,16 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, type ReactNode } from "react";
-import { CalendarDays, LayoutDashboard, Settings, Wallet, type LucideIcon } from "lucide-react";
+import { CalendarDays, LayoutDashboard, RotateCcw, Settings, Wallet, type LucideIcon } from "lucide-react";
 
-type Section = { href: string; label: string; icon: LucideIcon; badge?: "payments" };
+type Section = { href: string; label: string; icon: LucideIcon; badge?: "payments" | "refunds" };
 
-/** Owner sections built so far. Refunds, Customers, Feedback and Moderation join in their phases. */
+/** Owner sections built so far. Customers, Feedback and Moderation join in their phases. */
 const SECTIONS: Section[] = [
   { href: "/admin", label: "Overview", icon: LayoutDashboard },
   { href: "/admin/bookings", label: "Bookings", icon: CalendarDays },
   { href: "/admin/payments", label: "Payments", icon: Wallet, badge: "payments" },
+  { href: "/admin/refunds", label: "Refunds", icon: RotateCcw, badge: "refunds" },
   { href: "/admin/settings", label: "Settings", icon: Settings },
 ];
 
@@ -22,6 +23,8 @@ function isActive(pathname: string, href: string) {
 type Props = {
   /** Streams in (Suspense) with the count of payments waiting for review. */
   paymentsBadge: ReactNode;
+  /** Streams in with the count of cancellation requests to decide + refunds to send. */
+  refundsBadge: ReactNode;
 };
 
 /**
@@ -29,7 +32,7 @@ type Props = {
  * phones and tablets, and a sticky left sidebar from 1024 px. Both are rendered; CSS
  * shows one. Inside the admin layout's grid, the hidden one takes no space.
  */
-export function AdminNav({ paymentsBadge }: Props) {
+export function AdminNav({ paymentsBadge, refundsBadge }: Props) {
   const pathname = usePathname();
   const scroller = useRef<HTMLDivElement>(null);
 
@@ -74,6 +77,7 @@ export function AdminNav({ paymentsBadge }: Props) {
               >
                 {s.label}
                 {s.badge === "payments" && paymentsBadge}
+                {s.badge === "refunds" && refundsBadge}
               </Link>
             );
           })}
@@ -101,7 +105,7 @@ export function AdminNav({ paymentsBadge }: Props) {
               >
                 <Icon className={`size-5 ${active ? "text-orange-600" : "text-navy-700"}`} aria-hidden="true" />
                 {s.label}
-                {s.badge === "payments" && <span className="ml-auto">{paymentsBadge}</span>}
+                {s.badge && <span className="ml-auto">{s.badge === "payments" ? paymentsBadge : refundsBadge}</span>}
               </Link>
             );
           })}

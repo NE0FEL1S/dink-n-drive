@@ -1,5 +1,6 @@
 /**
- * The admin functions raise short keys (supabase/migrations/*_admin_functions.sql).
+ * The admin functions raise short keys (supabase/migrations/*_admin_functions.sql,
+ * *_cancellation_refunds.sql).
  * This turns them into what the owner reads.
  */
 const KNOWN = new Set([
@@ -14,6 +15,14 @@ const KNOWN = new Set([
   "invalid_hours",
   "invalid_note",
   "invalid_range",
+  "not_requested",
+  "payment_not_verified",
+  "not_approved",
+  "not_cancellable",
+  "invalid_gcash_name",
+  "invalid_gcash_number",
+  "invalid_path",
+  "proof_missing",
 ]);
 
 /**
@@ -48,6 +57,21 @@ export function adminError(key: string | undefined): string {
       return "Keep the note under 200 characters.";
     case "invalid_range":
       return "The start date must be on or before the end date.";
+    case "not_requested":
+      return "This cancellation request was already decided (maybe in another tab). The list has been updated.";
+    case "payment_not_verified":
+      return "Check this booking's payment in Payments first, then decide the cancellation.";
+    case "not_approved":
+      return "This refund was already marked refunded (maybe in another tab). The list has been updated.";
+    case "not_cancellable":
+      return "This booking can't be cancelled anymore (it's already cancelled, expired or rejected).";
+    case "invalid_gcash_name":
+      return "Enter the name on the customer's GCash account.";
+    case "invalid_gcash_number":
+      return "Use an 11-digit GCash number, like 09171234567.";
+    case "invalid_path":
+    case "proof_missing":
+      return "The screenshot upload didn't finish. Please try again.";
     default:
       return "Something went wrong. Please try again.";
   }
