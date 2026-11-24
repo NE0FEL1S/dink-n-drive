@@ -1,10 +1,11 @@
-# Dink n' Drive — Pickleball Court Website · Build Spec (v1.8)
+# Dink n' Drive — Pickleball Court Website · Build Spec (v1.9)
 
 Status: **Approved plan** · Last updated 2026-11-24
 
 Portfolio project by Arbien Armenion; may be handed over to the court owner for real use.
 
 Changelog
+- v1.9 — **Customers & password reset** (decided with the developer, 2026-11-24): in the owner-assisted reset the **owner types the new password** after entering the customer's phone number, which must match the phone on their profile; accounts without a phone on file can't be reset. Customers are grouped by phone; bookings, hours and total spent follow the earnings rule (kept cancellation fees included), expired holds are ignored, and owner accounts are not listed. Accounts with no phone and no bookings still appear so they can be found for a reset.
 - v1.8 — **Feedback** (decided with the developer, 2026-11-24): authors can delete their own feedback but not edit it. `/feedback` has status filters (All / Open / In progress / Resolved); All, newest first, is the default. Feedback comments also appear in Admin → Moderation. Feedback photos are stored under the feedback id (not the user id) so anonymous items can't be traced through photo URLs.
 - v1.7 — **Community posts** (decided with the developer, 2026-11-24): every post has 1–2 photos (caption optional). Authors can edit their caption (photos can't be changed) and delete their own posts and comments; comments can't be edited.
 - v1.6 — **Cancellation edge cases** (decided with the developer, 2026-11-24): a request on a booking whose payment isn't checked yet can't be approved until the payment is approved; rejecting that payment closes the request with no refund. A request still open at play time stays open. Owner cancellations prefill GCash details from the open request, else the booking contact. The GCash number is also erased when a request is declined; a ₱0 refund completes on approval.
@@ -62,7 +63,7 @@ All prices, hours, hold time, cutoff, fees and limits live in a `settings` row s
 - **Guests** (no account) can book; see §5. Accounts give prefilled details and My Bookings on any device.
 - Roles: `customer` (default) and `owner`. Customers can never change `role`. The first owner is set by hand with SQL (see `docs/SETUP.md`).
 - Admin routes are protected by the Next.js **proxy** (`src/proxy.ts`, formerly "middleware") **and** RLS.
-- **Owner-assisted reset:** in Admin → Customers, the owner can set a temporary password for an email/password customer after verifying their phone number (server action using the secret/service-role key, server-side only).
+- **Owner-assisted reset:** in Admin → Customers, the owner types a new password for an email/password customer after entering the customer's phone number, which must match the phone on their profile (server action using the secret/service-role key, server-side only). The owner tells the customer the new password in person or by message.
 
 ---
 
@@ -84,7 +85,7 @@ All prices, hours, hold time, cutoff, fees and limits live in a `settings` row s
 - **Bookings** — the bookings table, filters, exports; **block hours** (pick date + hours, optional note) and remove blocks; **cancel any booking** (full refund, no fee)
 - **Payments** — queue of bookings awaiting review with screenshot preview; Approve / Reject (with reason)
 - **Refunds** — cancellation requests; owner sends GCash refund manually, uploads refund screenshot, marks Refunded
-- **Customers** — guests and account holders, grouped by phone number: bookings count, total hours, total spent, last visit; temporary-password reset (account holders with email/password only)
+- **Customers** — guests and account holders, grouped by phone number: bookings count, total hours, total spent, last visit; set a new password (account holders with email/password only)
 - **Feedback** — inbox: set status, write the public reply, delete abusive items
 - **Moderation** — posts and comments (community and feedback), newest first; delete
 - **Settings** — prices, hours, hold minutes, cancellation cutoff/fee, booking window, unpaid-booking limit, GCash QR image, court name
