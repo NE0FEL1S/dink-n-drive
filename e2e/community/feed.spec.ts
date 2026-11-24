@@ -86,11 +86,11 @@ test.describe("Community feed", () => {
   test("members see their own reaction", async ({ page }, testInfo) => {
     const tag = `${runId()}-${testInfo.project.name}`;
     const [author, member] = await Promise.all([createTestUser("poster"), createTestUser("member")]);
-    const post = await insertTestPost(author, { caption: `Mine ${tag}` });
+    const post = await insertTestPost(author, { caption: `Reacted ${tag}` });
     await insertTestReaction(member, post.id, "like");
 
     await signIn(page, member, "/community");
-    const card = postCard(page, `Mine ${tag}`);
+    const card = postCard(page, `Reacted ${tag}`);
     await expect(card.getByRole("img", { name: "Like, 1, your reaction" })).toBeVisible();
     await expect(card.getByRole("img", { name: "Haha, 0" })).toBeVisible();
   });
