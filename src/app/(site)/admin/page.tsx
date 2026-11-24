@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { connection } from "next/server";
 import { Suspense, type ReactNode } from "react";
-import { CheckCircle2, Wallet } from "lucide-react";
+import { BarChart3, CheckCircle2, Wallet } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { ButtonLink } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -11,9 +11,11 @@ import { adminError } from "@/lib/admin-errors";
 import { one, resolvePeriod } from "@/lib/admin-period";
 import { requireOwner } from "@/lib/auth";
 import { manilaDay, nowMs } from "@/lib/booking-time";
+import { chartData } from "@/lib/earnings-chart";
 import { peso } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
 import { AdminFilters } from "./admin-filters";
+import { EarningsChart } from "./earnings-chart";
 
 export const metadata: Metadata = { title: "Admin" };
 
@@ -78,7 +80,12 @@ async function Summary({ searchParams }: { searchParams: SearchParams }) {
   const period = resolvePeriod({ period: one(sp.period), from: one(sp.from), to: one(sp.to) }, manilaDay(nowMs()), "month");
 
   const supabase = await createClient();
-  const { data, error } = await supabase.rpc("admin_summary", { p_from: period.from, p_to: period.to }).single();
+  const oneDay = period.from === period.to;
+  const [{ data, error }, daily] = await Promise.all([
+    supabase.rpc("admin_summary", { p_from: period.from, p_to: period.to }).single(),
+    oneDay ? null : supabase.rpc("admin_daily_earnings", { p_from: period.from, p_to: period.to }),
+  ]);
+  if (daily?.error) console.error("[admin] admin_daily_earnings failed:", daily.error.code ?? "", daily.error.message);
 
   return (
     <section aria-label="Summary" className="grid gap-4">
@@ -104,6 +111,18 @@ async function Summary({ searchParams }: { searchParams: SearchParams }) {
             wide
           />
         </div>
+      )}
+      {oneDay ? (
+        <Card className="flex items-center gap-3">
+          <BarChart3 className="size-5 shrink-0 text-slate-500" aria-hidden="true" />
+          <p className="text-[15px] leading-6 text-navy-700">Pick This week, This month or a custom range to see earnings per day.</p>
+        </Card>
+      ) : daily && !daily.error ? (
+        <EarningsChart data={chartData(daily.data)} periodLabel={period.label} />
+      ) : (
+        <p role="alert" className="rounded-[var(--radius-card)] bg-danger-bg px-4 py-3 text-[15px] font-medium text-danger">
+          We couldn&apos;t load the earnings chart. Please refresh the page.
+        </p>
       )}
     </section>
   );

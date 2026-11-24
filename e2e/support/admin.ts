@@ -153,8 +153,12 @@ export async function cleanupTestData(scope: "run" | "stale"): Promise<{ users: 
   const feedbackFiles = await removeFeedbackPhotos(userIds);
 
   for (const id of userIds) {
-    const { error } = await admin().auth.admin.deleteUser(id);
-    if (error) throw new Error(`cleanup delete user ${id}: ${error.message}`);
+    let { error } = await admin().auth.admin.deleteUser(id);
+    if (error?.message === "fetch failed") ({ error } = await admin().auth.admin.deleteUser(id)); // one retry on a network blip
+    // Another run's stale cleanup (e.g. CI on staging) may have deleted it a moment ago.
+    if (error && error.status !== 404 && error.code !== "user_not_found") {
+      throw new Error(`cleanup delete user ${id}: ${error.message}`);
+    }
   }
 
   return {
