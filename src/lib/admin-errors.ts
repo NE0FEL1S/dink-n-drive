@@ -2,6 +2,29 @@
  * The admin functions raise short keys (supabase/migrations/*_admin_functions.sql).
  * This turns them into what the owner reads.
  */
+const KNOWN = new Set([
+  "not_owner",
+  "not_found",
+  "not_pending_review",
+  "invalid_reason",
+  "slot_taken",
+  "outside_opening_hours",
+  "in_the_past",
+  "not_on_the_hour",
+  "invalid_hours",
+  "invalid_note",
+  "invalid_range",
+]);
+
+/**
+ * For server actions: the owner-facing message for a database error, and a server log line
+ * when it isn't one of the expected keys (a network failure, a bug), so it shows in the logs.
+ */
+export function adminRpcError(fn: string, error: { message: string; code?: string }): string {
+  if (!KNOWN.has(error.message)) console.error(`[admin] ${fn} failed:`, error.code ?? "", error.message);
+  return adminError(error.message);
+}
+
 export function adminError(key: string | undefined): string {
   switch (key) {
     case "not_owner":
