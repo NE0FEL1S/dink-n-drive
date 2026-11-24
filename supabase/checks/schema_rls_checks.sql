@@ -27,6 +27,7 @@ begin
   insert into _results(check_name, ok, detail) values ('default role is customer', v = 'customer', v);
 
   update public.profiles set phone = '+639171234567' where id in (a, b);
+  insert into public.posts (user_id, caption) values (a, 'hello court');  -- fixture (as admin)
 
   -- base booking for A: 10:00-12:00, confirmed
   insert into public.bookings (ref_code, user_id, contact_name, contact_email, contact_phone, start_at, end_at, hours,
@@ -177,8 +178,13 @@ begin
     insert into _results(check_name, ok, detail) values ('cannot post as someone else', true, sqlerrm);
   end;
 
-  insert into public.posts (user_id, caption) values (a, 'hello court');
-  insert into _results(check_name, ok, detail) values ('complete profile can post', true, null);
+  -- Phase 5: posts are created only through create_post (see community_checks.sql)
+  begin
+    insert into public.posts (user_id, caption) values (a, 'hello court');
+    insert into _results(check_name, ok, detail) values ('direct post insert refused (use create_post)', false, 'inserted!');
+  exception when insufficient_privilege then
+    insert into _results(check_name, ok, detail) values ('direct post insert refused (use create_post)', true, sqlerrm);
+  end;
 
   -- ======================= as anon (guest) =======================
   execute 'reset role';
@@ -209,7 +215,7 @@ begin
   select count(*) into cnt from public.settings;
   insert into _results(check_name, ok, detail) values ('anon can read settings', cnt = 1, cnt::text);
 
-  select count(*) into cnt from public.posts;
+  select count(*) into cnt from public.posts where user_id = a;
   insert into _results(check_name, ok, detail) values ('anon can read live posts', cnt = 1, cnt::text);
 
   begin
