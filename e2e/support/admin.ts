@@ -78,6 +78,11 @@ export async function createTestOwner(label: string): Promise<TestUser> {
   return user;
 }
 
+/** A note that tags an owner block as test data (cleanup deletes blocks by it). */
+export function testBlockNote(label: string): string {
+  return `e2e+${runId()}-${label}`.slice(0, 200);
+}
+
 /**
  * Deletes tagged test data:
  * - `scope: "run"`   → everything from this run (global teardown)
@@ -114,6 +119,24 @@ export async function cleanupTestData(scope: "run" | "stale"): Promise<{ users: 
     if (error) throw new Error(`cleanup delete bookings: ${error.message}`);
   }
 
+  // 1b. Owner blocks have no contact email; test blocks carry a tagged note (`e2e+<run>-…`).
+  const { data: blocks, error: blocksError } = await admin()
+    .from("bookings")
+    .select("id, block_note, created_at")
+    .eq("kind", "block")
+    .like("block_note", "e2e+%");
+  if (blocksError) throw new Error(`cleanup blocks: ${blocksError.message}`);
+  const doomedBlocks = (blocks ?? []).filter((b) =>
+    scope === "run" ? b.block_note!.startsWith(prefix) : new Date(b.created_at).getTime() < staleBefore,
+  );
+  if (doomedBlocks.length) {
+    const { error } = await admin()
+      .from("bookings")
+      .delete()
+      .in("id", doomedBlocks.map((b) => b.id));
+    if (error) throw new Error(`cleanup delete blocks: ${error.message}`);
+  }
+
   // 2. Users. Collect every page first (deleting while paging would shift the pages).
   const userIds: string[] = [];
   for (let page = 1; ; page++) {
@@ -127,5 +150,5 @@ export async function cleanupTestData(scope: "run" | "stale"): Promise<{ users: 
     if (error) throw new Error(`cleanup delete user ${id}: ${error.message}`);
   }
 
-  return { users: userIds.length, bookings: doomed.length, files: paymentFiles.length + refundFiles.length };
+  return { users: userIds.length, bookings: doomed.length + doomedBlocks.length, files: paymentFiles.length + refundFiles.length };
 }

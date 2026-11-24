@@ -1,6 +1,6 @@
 import { createHash, randomBytes } from "node:crypto";
 import { addDays, manilaDay, slotStartIso } from "../../src/lib/booking-time";
-import { admin, runId, testEmail, testPhone } from "./admin";
+import { admin, runId, testBlockNote, testEmail, testPhone } from "./admin";
 
 /**
  * A far-ahead Manila day with no bookings or blocks at all, for a test that books hours.
@@ -76,6 +76,8 @@ export async function insertTestBooking(opts: {
   const courtFee = s.hourly_rate * hours;
   const paddleFee = paddles ? s.paddle_fee : 0;
 
+  const email = testEmail(label);
+  const phone = testPhone();
   for (let attempt = 0; ; attempt++) {
     const ref = "DND-" + Array.from(randomBytes(5), (b) => REF_ALPHABET[b % 32]).join("");
     const { data, error } = await admin()
@@ -85,8 +87,8 @@ export async function insertTestBooking(opts: {
         kind: "customer",
         guest_token_hash: createHash("sha256").update(randomBytes(32)).digest("hex"),
         contact_name: `E2E ${label}`,
-        contact_email: testEmail(label),
-        contact_phone: `+63${testPhone().slice(1)}`,
+        contact_email: email,
+        contact_phone: `+63${phone.slice(1)}`,
         start_at: slotStartIso(day, hour),
         end_at: slotStartIso(day, hour + hours),
         hours,
@@ -98,10 +100,12 @@ export async function insertTestBooking(opts: {
         total: courtFee + paddleFee,
         status,
         hold_expires_at: status === "pending_payment" ? new Date(Date.now() + 15 * 60_000).toISOString() : null,
+        cancelled_by: status === "cancelled" ? "customer" : null,
+        cancelled_at: status === "cancelled" ? new Date().toISOString() : null,
       })
       .select("id, ref_code, total")
       .single();
-    if (!error) return { id: data.id, ref: data.ref_code, total: data.total };
+    if (!error) return { id: data.id, ref: data.ref_code, total: data.total, email, phone };
     if (error.code === "23505" && attempt < 4) continue; // ref collision
     throw Object.assign(new Error(`insert booking: ${error.message}`), { code: error.code });
   }
@@ -150,4 +154,27 @@ export async function pendingReviewBooking(day: string, hour: number, label: str
     .eq("id", b.id);
   if (error) throw new Error(`receipt path: ${error.message}`);
   return b;
+}
+
+/** A tagged owner block (cleanup deletes it by its note). Returns its id and reference. */
+export async function insertTestBlock(day: string, hour: number, hours: number, label: string) {
+  for (let attempt = 0; ; attempt++) {
+    const ref = "DND-" + Array.from(randomBytes(5), (b) => REF_ALPHABET[b % 32]).join("");
+    const { data, error } = await admin()
+      .from("bookings")
+      .insert({
+        ref_code: ref,
+        kind: "block",
+        status: "blocked",
+        start_at: slotStartIso(day, hour),
+        end_at: slotStartIso(day, hour + hours),
+        hours,
+        block_note: testBlockNote(label),
+      })
+      .select("id, ref_code")
+      .single();
+    if (!error) return { id: data.id, ref: data.ref_code };
+    if (error.code === "23505" && attempt < 4) continue;
+    throw Object.assign(new Error(`insert block: ${error.message}`), { code: error.code });
+  }
 }
