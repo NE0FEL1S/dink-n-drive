@@ -1,10 +1,11 @@
-# Dink n' Drive — Pickleball Court Website · Build Spec (v1.6)
+# Dink n' Drive — Pickleball Court Website · Build Spec (v1.7)
 
 Status: **Approved plan** · Last updated 2026-11-24
 
 Portfolio project by Arbien Armenion; may be handed over to the court owner for real use.
 
 Changelog
+- v1.7 — **Community posts** (decided with the developer, 2026-11-24): every post has 1–2 photos (caption optional). Authors can edit their caption (photos can't be changed) and delete their own posts and comments; comments can't be edited.
 - v1.6 — **Cancellation edge cases** (decided with the developer, 2026-11-24): a request on a booking whose payment isn't checked yet can't be approved until the payment is approved; rejecting that payment closes the request with no refund. A request still open at play time stays open. Owner cancellations prefill GCash details from the open request, else the booking contact. The GCash number is also erased when a request is declined; a ₱0 refund completes on approval.
 - v1.5 — **Email + password only:** Google sign-in dropped (decided with the developer, 2026-11-23). No emails are sent, so accounts are not email-verified; forgotten passwords go through the owner-assisted reset.
 - v1.4 — **Guest booking:** anyone can book with name, email and phone; accounts are optional for booking (still required to post, comment, react or give feedback). My Bookings also shows guest bookings made in the same browser. Payment proof is uploaded right below the GCash QR. Customer cancellation of a paid booking is now a **request** the owner approves or declines; the ₱100 fee counts as earnings once the refund is marked completed. The unpaid-booking limit is per phone number. Landing page is one screen; booking opens in a popup.
@@ -154,7 +155,8 @@ Opening hours are checked in the function, not by a CHECK constraint, because th
 
 ## 7. Community page
 
-- Post = caption + **1–2 photos** (compressed in the browser).
+- Post = **1–2 photos** (required, compressed in the browser) + optional caption (up to 2,000 characters).
+- The author can edit the caption (shown as "edited"); photos can't be changed after posting. The author can delete their own post or comment (soft delete). Comments can't be edited.
 - Reactions: 👍 Like and 😂 Haha (one reaction per user per post; can switch or remove).
 - Comments (text).
 - Owner can delete any post or comment (soft delete). Deleting a post also removes its photos from storage, because the public bucket would keep serving them.
@@ -199,7 +201,7 @@ Opening hours are checked in the function, not by a CHECK constraint, because th
 | `settings` | single row: court_name, hourly_rate, paddle_fee, paddle_count (display only), open_hour, close_hour (24 = midnight), hold_minutes, cancel_cutoff_hours, cancel_fee, max_advance_days, max_unpaid_bookings, gcash_qr_path |
 | `bookings` | id, ref_code, kind (`customer` / `block`), user_id (null for guests and blocks), guest_token_hash (guests only; sha-256 of the device token), contact_name, contact_email, contact_phone (snapshot for every customer booking; never public), start_at, end_at, hours, paddle_rented, hourly_rate, court_fee, paddle_fee, cancel_fee, total, status, status_before_request, payment_proof_path, reviewed_by, reviewed_at, reject_reason, cancelled_by (`customer` / `owner`), cancelled_at, block_note, created_at |
 | `refunds` | booking_id, requested_at, cancel_fee, refund_amount, gcash_name, gcash_number (nulled once completed), status (`requested` / `approved` / `declined` / `completed`), decline_reason, decided_by, decided_at, refund_proof_path, completed_by, completed_at |
-| `posts` | id, user_id, caption, created_at, deleted_at |
+| `posts` | id, user_id, caption, created_at, edited_at, deleted_at |
 | `post_photos` | id, post_id, path, position (1–2) |
 | `feedback` | id, user_id, is_anonymous, message, status, owner_reply, replied_at, created_at, deleted_at |
 | `feedback_photos` | id, feedback_id, path, position (1–2) |

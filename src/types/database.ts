@@ -302,6 +302,7 @@ export type Database = {
           caption: string
           created_at: string
           deleted_at: string | null
+          edited_at: string | null
           id: string
           user_id: string
         }
@@ -309,6 +310,7 @@ export type Database = {
           caption?: string
           created_at?: string
           deleted_at?: string | null
+          edited_at?: string | null
           id?: string
           user_id: string
         }
@@ -316,6 +318,7 @@ export type Database = {
           caption?: string
           created_at?: string
           deleted_at?: string | null
+          edited_at?: string | null
           id?: string
           user_id?: string
         }
@@ -616,6 +619,29 @@ export type Database = {
         Returns: boolean
       }
       claim_guest_bookings: { Args: { p_guest_token: string }; Returns: number }
+      comment_on_post: {
+        Args: { p_body: string; p_post_id: string }
+        Returns: {
+          created_at: string
+          id: string
+        }[]
+      }
+      community_feed: {
+        Args: { p_before?: string; p_before_id?: string; p_limit?: number }
+        Returns: {
+          author_name: string
+          caption: string
+          comment_count: number
+          created_at: string
+          edited_at: string
+          haha_count: number
+          id: string
+          is_mine: boolean
+          like_count: number
+          my_reaction: Database["public"]["Enums"]["reaction_type"]
+          photo_paths: string[]
+        }[]
+      }
       create_booking: {
         Args: {
           p_email?: string
@@ -632,6 +658,16 @@ export type Database = {
           ref_code: string
           total: number
         }[]
+      }
+      create_post: {
+        Args: { p_caption: string; p_photo_paths: string[]; p_post_id: string }
+        Returns: string
+      }
+      delete_comment: { Args: { p_comment_id: string }; Returns: undefined }
+      delete_post: { Args: { p_post_id: string }; Returns: string[] }
+      edit_post_caption: {
+        Args: { p_caption: string; p_post_id: string }
+        Returns: string
       }
       get_availability: {
         Args: { p_day: string }
@@ -682,6 +718,16 @@ export type Database = {
         Args: { p_booking_id: string; p_guest_token?: string }
         Returns: string
       }
+      post_comments: {
+        Args: { p_post_id: string }
+        Returns: {
+          author_name: string
+          body: string
+          created_at: string
+          id: string
+          is_mine: boolean
+        }[]
+      }
       request_cancellation: {
         Args: {
           p_booking_id: string
@@ -692,6 +738,17 @@ export type Database = {
         Returns: {
           refund_amount: number
           refund_id: string
+        }[]
+      }
+      set_post_reaction: {
+        Args: {
+          p_post_id: string
+          p_type: Database["public"]["Enums"]["reaction_type"]
+        }
+        Returns: {
+          haha_count: number
+          like_count: number
+          my_reaction: Database["public"]["Enums"]["reaction_type"]
         }[]
       }
       submit_payment_proof: {
