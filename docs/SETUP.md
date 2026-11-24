@@ -159,3 +159,7 @@ npx playwright test --project=iphone      # one device only
 E2E_BASE_URL=https://dink-n-drive-git-staging-prism-technology.vercel.app npm run test:e2e   # against staging
 npx playwright show-report                # open the last report
 ```
+
+If the first run after starting a fresh `npm run dev` fails at sign-in for one device (the login button keeps spinning), that's `next dev` compiling the admin pages for the first time. Run the tests again, or start `npm run dev` yourself and open a page or two before running them. Staging (a real build) doesn't have this.
+
+Admin tests use days 60–360 days ahead (`freeAdminDay()`), outside the 30-day customer window, so they don't take the empty days the booking tests need (`freeTestDay()`).

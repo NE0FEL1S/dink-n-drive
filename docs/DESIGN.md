@@ -269,7 +269,14 @@ On phones it's a bottom sheet; on laptops, a centered dialog. `/book` renders th
   - **Below 1024 px:** a white pill row of tabs on the sky (same look as the My Bookings tabs: active `navy-900` with white text), scrolling sideways when it doesn't fit (all of 360–430 px today). The current tab is always scrolled into view.
   - **From 1024 px:** a sticky white sidebar card (232 px) with an "ADMIN" label and 48 px rows with Lucide icons; the active row is `orange-50` with `orange-600` text, like the header nav. Its top lines up with the page's eyebrow pill.
   - **Payments badge:** `orange-600` pill with the number of payments waiting for review (hidden at 0), streamed in after the nav renders.
-  - Each section page uses `PageHeader` (eyebrow "Admin", title = section name).
+  - Each section page uses `PageHeader` (eyebrow "Admin", title = section name), with no subtitle (small text doesn't go on the sky).
+- **Built (Phase 3C), Payments:** one card per booking waiting for review, oldest receipt first.
+  - **Card:** reference + "Sent today, 3:42 PM"; day, time range (20 px bold), "2 hours · paddles rented"; an `ice-50` box "The receipt should show **₱550**" (serif, tabular); customer name with a Guest/Account chip, tap-to-call phone (`glacier-700`), email.
+  - **Receipt preview:** the full screenshot (`object-contain`, up to 440 px tall on phones, 400 px on laptops) on `ice-100`, with a white "Full size" chip that opens it in a new tab (a signed link that works for an hour).
+  - **Order:** phones stack details → receipt → buttons; from 768 px the receipt is a 240 px column on the left.
+  - **Buttons:** Reject (white with red text and border) and Approve (orange-600), side by side. Approve acts at once; Reject opens a sheet with the booking summary, three quick reasons as chips (Amount doesn't match · Screenshot unclear · Not received) that fill in a full sentence, an editable "Reason for the customer" box (500 characters, counter), a red-text "Reject payment" and "Back".
+  - After each action a green line on top says what happened ("DND-XXXXX approved. The customer now sees it as confirmed."). If another tab already handled it, the card is dropped with a notice.
+  - **Empty:** "All caught up" with "See all bookings →".
 
 ---
 
