@@ -68,7 +68,7 @@ Email sending of any kind, forgot/change password, booking emails, online paymen
 ## Phases
 - [x] 1. Setup: schema, RLS, storage buckets, auth (email + password), profile completion, owner role
 - [x] 2. Booking flow: hourly grid with multi-hour selection, paddle logic, payment-proof upload, holds/expiry, My Bookings
-- [ ] 3. Admin: payment queue, bookings table + filters, summary cards, Excel/PDF exports, settings
+- [x] 3. Admin: payment queue, bookings table + filters, summary cards, Excel/PDF exports, settings
 - [ ] 4. Cancellation & refund flow (customer + admin)
 - [ ] 5. Community feed: posts, photos, reactions, comments, moderation
 - [ ] 6. Public feedback: reuse community components + status, replies, anonymous option

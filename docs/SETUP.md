@@ -162,4 +162,6 @@ npx playwright show-report                # open the last report
 
 If the first run after starting a fresh `npm run dev` fails at sign-in for one device (the login button keeps spinning), that's `next dev` compiling the admin pages for the first time. Run the tests again, or start `npm run dev` yourself and open a page or two before running them. Staging (a real build) doesn't have this.
 
+The GCash QR replacement test is off by default (it swaps the real payment QR and puts it back). Run it on purpose with `E2E_QR_TEST=1 npx playwright test e2e/admin/settings.spec.ts --project=desktop`. Afterwards the old QR file is kept as "the previous one", so other deployments with cached settings still show a working QR.
+
 Admin tests use days 60–360 days ahead (`freeAdminDay()`), outside the 30-day customer window, so they don't take the empty days the booking tests need (`freeTestDay()`).
