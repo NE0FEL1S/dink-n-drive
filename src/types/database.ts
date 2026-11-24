@@ -587,9 +587,47 @@ export type Database = {
           ref_code: string
         }[]
       }
+      admin_customers: {
+        Args: {
+          p_limit?: number
+          p_offset?: number
+          p_search?: string
+          p_sort?: string
+        }
+        Returns: {
+          accounts: Json
+          bookings: number
+          email: string
+          first_seen: string
+          guest_bookings: number
+          hours: number
+          last_visit: string
+          name: string
+          next_visit: string
+          phone: string
+          total_count: number
+          total_spent: number
+        }[]
+      }
+      admin_daily_earnings: {
+        Args: { p_from: string; p_to: string }
+        Returns: {
+          bookings: number
+          cancel_fees: number
+          court_revenue: number
+          day: string
+          earnings: number
+          hours: number
+          paddle_revenue: number
+        }[]
+      }
       admin_decline_cancellation: {
         Args: { p_reason: string; p_refund_id: string }
         Returns: Database["public"]["Enums"]["booking_status"]
+      }
+      admin_password_reset_target: {
+        Args: { p_phone: string; p_user_id: string }
+        Returns: string
       }
       admin_reject_payment: {
         Args: { p_booking_id: string; p_reason: string }
