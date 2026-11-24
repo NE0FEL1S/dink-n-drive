@@ -31,7 +31,7 @@ test.describe("Community feed", () => {
     await expect(card.getByText("Second line")).toBeVisible();
     await expect(card.getByRole("link", { name: "Like, 1" })).toBeVisible();
     await expect(card.getByRole("link", { name: "Haha, 1" })).toBeVisible();
-    await expect(card.getByRole("link", { name: "1 comment" })).toBeVisible();
+    await expect(card.getByRole("button", { name: "1 comment" })).toBeVisible();
 
     // One photo keeps its own shape (the 800x600 in its name → 4:3).
     const photo = card.getByRole("img", { name: "Photo posted by E2E poster" });
@@ -42,7 +42,7 @@ test.describe("Community feed", () => {
     // Two photos sit side by side.
     const pair = postCard(page, `Two photos ${tag}`);
     await expect(pair.getByRole("img", { name: /Photo [12] of 2 posted by E2E poster/ })).toHaveCount(2);
-    await expect(pair.getByRole("link", { name: "Comment" })).toBeVisible();
+    await expect(pair.getByRole("button", { name: "Comment" })).toBeVisible();
 
     // Deleted posts never show.
     await expect(page.getByText(`Deleted ${tag}`)).toHaveCount(0);
@@ -91,7 +91,7 @@ test.describe("Community feed", () => {
 
     await signIn(page, member, "/community");
     const card = postCard(page, `Reacted ${tag}`);
-    await expect(card.getByRole("img", { name: "Like, 1, your reaction" })).toBeVisible();
-    await expect(card.getByRole("img", { name: "Haha, 0" })).toBeVisible();
+    await expect(card.getByRole("button", { name: "Like, 1" })).toHaveAttribute("aria-pressed", "true");
+    await expect(card.getByRole("button", { name: "Haha, 0" })).toHaveAttribute("aria-pressed", "false");
   });
 });
