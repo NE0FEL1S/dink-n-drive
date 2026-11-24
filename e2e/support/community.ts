@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { crc32, deflateSync } from "node:zlib";
 import { admin, type TestUser } from "./admin";
 import { RECEIPT_PNG } from "./booking";
 
@@ -51,4 +52,46 @@ export async function insertTestReaction(user: Pick<TestUser, "id">, postId: str
 export async function insertTestComment(user: Pick<TestUser, "id">, postId: string, body: string) {
   const { error } = await admin().from("comments").insert({ user_id: user.id, post_id: postId, body });
   if (error) throw new Error(`insertTestComment: ${error.message}`);
+}
+
+/**
+ * A solid-colour PNG of a given size, for the post composer (it compresses to JPEG and reads
+ * the real width and height, so a 1×1 receipt image isn't enough).
+ */
+export function solidPng(width: number, height: number, [r, g, b]: [number, number, number]): Buffer {
+  const chunk = (type: string, data: Buffer) => {
+    const length = Buffer.alloc(4);
+    length.writeUInt32BE(data.length);
+    const body = Buffer.concat([Buffer.from(type, "ascii"), data]);
+    const crc = Buffer.alloc(4);
+    crc.writeUInt32BE(crc32(body));
+    return Buffer.concat([length, body, crc]);
+  };
+  const header = Buffer.alloc(13);
+  header.writeUInt32BE(width, 0);
+  header.writeUInt32BE(height, 4);
+  header[8] = 8; // bit depth
+  header[9] = 2; // RGB
+  const row = Buffer.alloc(1 + width * 3);
+  for (let x = 0; x < width; x++) row.set([r, g, b], 1 + x * 3);
+  const raw = Buffer.concat(Array.from({ length: height }, () => row));
+  return Buffer.concat([
+    Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+    chunk("IHDR", header),
+    chunk("IDAT", deflateSync(raw)),
+    chunk("IEND", Buffer.alloc(0)),
+  ]);
+}
+
+/** Paths of every file under community-photos/<userId>/. */
+export async function listCommunityFiles(userId: string): Promise<string[]> {
+  const bucket = admin().storage.from("community-photos");
+  const { data: folders, error } = await bucket.list(userId, { limit: 1000 });
+  if (error) throw new Error(`listCommunityFiles: ${error.message}`);
+  const paths: string[] = [];
+  for (const folder of folders ?? []) {
+    const { data: files } = await bucket.list(`${userId}/${folder.name}`, { limit: 100 });
+    for (const file of files ?? []) paths.push(`${userId}/${folder.name}/${file.name}`);
+  }
+  return paths;
 }

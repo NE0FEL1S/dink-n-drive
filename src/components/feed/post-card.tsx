@@ -1,9 +1,23 @@
+import type { ReactNode } from "react";
 import { communityPhotoUrl, photoSize, type FeedPost, type Viewer } from "@/lib/community";
 import { FeedCard } from "./feed-card";
 import { ReactionBar } from "./reaction-bar";
 
 /** A community post: author, time, caption, 1–2 photos, reactions and comments (SPEC §7). */
-export function PostCard({ post, nowMs, viewer, eager = false }: { post: FeedPost; nowMs: number; viewer: Viewer; eager?: boolean }) {
+export function PostCard({
+  post,
+  nowMs,
+  viewer,
+  eager = false,
+  menu,
+}: {
+  post: FeedPost;
+  nowMs: number;
+  viewer: Viewer;
+  eager?: boolean;
+  /** The ⋯ menu (own posts). */
+  menu?: ReactNode;
+}) {
   const photos = post.photo_paths.map((path) => ({ url: communityPhotoUrl(path), ...photoSize(path) }));
   return (
     <FeedCard
@@ -15,6 +29,7 @@ export function PostCard({ post, nowMs, viewer, eager = false }: { post: FeedPos
       text={post.caption}
       photos={photos}
       eager={eager}
+      aside={menu}
       footer={
         <ReactionBar
           likeCount={post.like_count}

@@ -15,8 +15,9 @@ export const metadata: Metadata = { title: "Community" };
  * account with a complete profile. Newest posts first, 10 at a time.
  */
 export default function CommunityPage() {
+  // Extra bottom padding so the floating + Post button never covers the last card.
   return (
-    <main className="mx-auto w-full max-w-xl px-4 pt-8 pb-[calc(2rem+env(safe-area-inset-bottom))] min-[390px]:px-5 sm:pt-12">
+    <main className="mx-auto w-full max-w-xl px-4 pt-8 pb-[calc(6.5rem+env(safe-area-inset-bottom))] min-[390px]:px-5 sm:pt-12">
       <PageHeader eyebrow="Players' corner" title="Community">
         Photos and stories from games at the court.
       </PageHeader>
@@ -42,7 +43,8 @@ async function FeedData() {
   }
 
   const viewer: Viewer = !profile ? "guest" : isProfileComplete(profile) ? "member" : "incomplete";
-  return <FeedList initialPosts={page.posts} initialHasMore={page.hasMore} serverNow={nowMs()} viewer={viewer} />;
+  const me = profile && viewer === "member" ? { id: profile.id, name: profile.full_name ?? "Member" } : null;
+  return <FeedList initialPosts={page.posts} initialHasMore={page.hasMore} serverNow={nowMs()} viewer={viewer} me={me} />;
 }
 
 function FeedSkeleton() {
