@@ -2,6 +2,7 @@ import { ExternalLink, Phone } from "lucide-react";
 import { StatusBadge } from "@/components/ui/status-badge";
 import type { AdminBookingRow } from "@/lib/admin-bookings";
 import { RemoveBlockButton } from "./block-hours";
+import { OwnerCancelButton } from "./owner-cancel";
 import { dayLabel, rangeLabel } from "@/lib/booking-time";
 import { manilaDateTime, peso } from "@/lib/format";
 
@@ -116,11 +117,18 @@ export function BookingsTable({ rows, proofUrls }: Props) {
                   </>
                 )}
 
-                {(note || review || proofUrls.has(r.id)) && (
+                {(note || review || proofUrls.has(r.id) || r.cancellable) && (
                   <div className="grid gap-1 border-t border-line pt-2 text-sm text-slate-500">
                     {note && <p className="line-clamp-2">{note}</p>}
                     {review && <p>{review}</p>}
-                    <ReceiptLink url={proofUrls.get(r.id)} code={r.ref} />
+                    <div className="flex flex-wrap items-center justify-between gap-x-3">
+                      <ReceiptLink url={proofUrls.get(r.id)} code={r.ref} />
+                      {r.cancellable && (
+                        <span className="-mr-3 ml-auto">
+                          <OwnerCancelButton row={r} />
+                        </span>
+                      )}
+                    </div>
                   </div>
                 )}
               </article>
@@ -188,6 +196,11 @@ export function BookingsTable({ rows, proofUrls }: Props) {
                   <td className="max-w-[200px] px-4 py-3">
                     <StatusBadge status={r.status} />
                     {note && <span className="mt-1 line-clamp-2 block text-slate-500">{note}</span>}
+                    {r.cancellable && (
+                      <span className="-ml-3 block">
+                        <OwnerCancelButton row={r} />
+                      </span>
+                    )}
                   </td>
                   <td className="max-w-[220px] px-4 py-3 text-slate-500">
                     <ReceiptLink url={proofUrls.get(r.id)} code={r.ref} />

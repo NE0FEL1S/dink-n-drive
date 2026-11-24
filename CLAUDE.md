@@ -69,7 +69,7 @@ Email sending of any kind, forgot/change password, booking emails, online paymen
 - [x] 1. Setup: schema, RLS, storage buckets, auth (email + password), profile completion, owner role
 - [x] 2. Booking flow: hourly grid with multi-hour selection, paddle logic, payment-proof upload, holds/expiry, My Bookings
 - [x] 3. Admin: payment queue, bookings table + filters, summary cards, Excel/PDF exports, settings
-- [ ] 4. Cancellation & refund flow (customer + admin)
+- [x] 4. Cancellation & refund flow (customer + admin)
 - [ ] 5. Community feed: posts, photos, reactions, comments, moderation
 - [ ] 6. Public feedback: reuse community components + status, replies, anonymous option
 - [ ] 7. Customers tab + owner-assisted reset, earnings chart, mobile polish, testing, Vercel deploy
