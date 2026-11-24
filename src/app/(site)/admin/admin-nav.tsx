@@ -3,16 +3,17 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, type ReactNode } from "react";
-import { CalendarDays, LayoutDashboard, RotateCcw, Settings, Wallet, type LucideIcon } from "lucide-react";
+import { CalendarDays, LayoutDashboard, RotateCcw, Settings, ShieldCheck, Wallet, type LucideIcon } from "lucide-react";
 
 type Section = { href: string; label: string; icon: LucideIcon; badge?: "payments" | "refunds" };
 
-/** Owner sections built so far. Customers, Feedback and Moderation join in their phases. */
+/** Owner sections built so far. Customers and Feedback join in their phases. */
 const SECTIONS: Section[] = [
   { href: "/admin", label: "Overview", icon: LayoutDashboard },
   { href: "/admin/bookings", label: "Bookings", icon: CalendarDays },
   { href: "/admin/payments", label: "Payments", icon: Wallet, badge: "payments" },
   { href: "/admin/refunds", label: "Refunds", icon: RotateCcw, badge: "refunds" },
+  { href: "/admin/moderation", label: "Moderation", icon: ShieldCheck },
   { href: "/admin/settings", label: "Settings", icon: Settings },
 ];
 
