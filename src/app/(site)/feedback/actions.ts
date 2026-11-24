@@ -1,6 +1,8 @@
 "use server";
 
 import { z } from "zod";
+import { getProfile } from "@/lib/auth";
+import type { FeedComment, ReactionType } from "@/lib/community";
 import { FEEDBACK_BUCKET, FEEDBACK_STATUSES, type FeedbackItem } from "@/lib/feedback";
 import { feedbackError } from "@/lib/feedback-errors";
 import { fetchFeedbackPage } from "@/lib/feedback-feed";
@@ -76,5 +78,64 @@ export async function deleteFeedback(feedbackId: string): Promise<FeedbackAction
     const { error: removeError } = await supabase.storage.from(FEEDBACK_BUCKET).remove(paths);
     if (removeError) console.error("deleteFeedback: photo files not removed", feedbackId, removeError);
   }
+  return { ok: true };
+}
+
+const reactionSchema = z.object({ feedbackId: z.uuid(), type: z.enum(["like", "haha"]).nullable() });
+
+/** 👍 / 😂 (adds or switches), or null to remove. Returns the item's new counts. */
+export async function reactToFeedback(input: {
+  feedbackId: string;
+  type: ReactionType | null;
+}): Promise<FeedbackActionResult<{ likeCount: number; hahaCount: number; myReaction: ReactionType | null }>> {
+  const parsed = reactionSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: feedbackError("not_found") };
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .rpc("set_feedback_reaction", { p_feedback_id: parsed.data.feedbackId, p_type: parsed.data.type as ReactionType })
+    .single();
+  if (error || !data) return { ok: false, error: feedbackError(error?.message ?? "") };
+  return { ok: true, likeCount: data.like_count, hahaCount: data.haha_count, myReaction: data.my_reaction ?? null };
+}
+
+/** A feedback item's comments, oldest first (anyone can read them). */
+export async function loadFeedbackComments(feedbackId: string): Promise<FeedbackActionResult<{ comments: FeedComment[]; now: number }>> {
+  if (!z.uuid().safeParse(feedbackId).success) return { ok: false, error: feedbackError("not_found") };
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("feedback_comments", { p_feedback_id: feedbackId });
+  if (error) return { ok: false, error: "We couldn't load the comments. Please try again." };
+  return { ok: true, comments: (data ?? []) as FeedComment[], now: Date.now() };
+}
+
+const commentSchema = z.object({
+  feedbackId: z.uuid(),
+  body: z.string().trim().min(1, "Write something first.").max(1000, "Comments can be up to 1,000 characters."),
+});
+
+/** Adds a comment (30 an hour across posts and feedback, checked by the database). */
+export async function addFeedbackComment(input: { feedbackId: string; body: string }): Promise<FeedbackActionResult<{ comment: FeedComment }>> {
+  const parsed = commentSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? feedbackError("invalid_comment") };
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .rpc("comment_on_feedback", { p_feedback_id: parsed.data.feedbackId, p_body: parsed.data.body })
+    .single();
+  if (error || !data) return { ok: false, error: feedbackError(error?.message ?? "", error?.details) };
+
+  const profile = await getProfile();
+  return {
+    ok: true,
+    comment: { id: data.id, created_at: data.created_at, body: parsed.data.body, author_name: profile?.full_name ?? "You", is_mine: true },
+  };
+}
+
+/** The author deletes their own comment (the owner can delete any). */
+export async function deleteFeedbackComment(commentId: string): Promise<FeedbackActionResult> {
+  if (!z.uuid().safeParse(commentId).success) return { ok: false, error: feedbackError("not_found") };
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("delete_comment", { p_comment_id: commentId });
+  if (error) return { ok: false, error: feedbackError(error.message) };
   return { ok: true };
 }

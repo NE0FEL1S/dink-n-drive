@@ -9,6 +9,8 @@ type Props = {
   authorName: string;
   createdAt: string;
   editedAt?: string | null;
+  /** Extra word after the time ("· Yours"). */
+  meta?: string;
   nowMs: number;
   text?: string;
   photos?: FeedPhoto[];
@@ -28,7 +30,7 @@ type Props = {
  * One item in a single-column feed (Community and Feedback; DESIGN §5):
  * white card, author initials + name + time, the text, 0–2 photos, then the footer.
  */
-export function FeedCard({ label, authorName, createdAt, editedAt, nowMs, text, photos, eager, avatar, aside, children, footer }: Props) {
+export function FeedCard({ label, authorName, createdAt, editedAt, meta, nowMs, text, photos, eager, avatar, aside, children, footer }: Props) {
   return (
     <article
       aria-label={label}
@@ -50,6 +52,7 @@ export function FeedCard({ label, authorName, createdAt, editedAt, nowMs, text, 
               {postTimeLabel(createdAt, nowMs)}
             </time>
             {editedAt && <span> · Edited</span>}
+            {meta && <span> · {meta}</span>}
           </p>
         </div>
         {aside}
