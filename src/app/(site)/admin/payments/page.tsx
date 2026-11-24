@@ -2,8 +2,10 @@ import type { Metadata } from "next";
 import { connection } from "next/server";
 import { Suspense } from "react";
 import { PageHeader } from "@/components/page-header";
+import { AWAITING_PAYMENT_REVIEW } from "@/lib/admin";
 import { requireOwner } from "@/lib/auth";
-import { addDays, manilaDay, nowMs } from "@/lib/booking-time";
+import { sentLabel } from "@/lib/admin-time";
+import { manilaDay, nowMs } from "@/lib/booking-time";
 import { manilaHour } from "@/lib/format";
 import { toLocalPhMobile } from "@/lib/phone";
 import { createClient } from "@/lib/supabase/server";
@@ -17,6 +19,8 @@ const PROOF_URL_SECONDS = 60 * 60;
 /**
  * Payments (SPEC §4, §5 step 7): bookings with a GCash screenshot waiting for the owner,
  * oldest first. Approve → confirmed; Reject (with a reason) → rejected, hours reopen.
+ * Includes bookings whose customer asked to cancel before the payment was checked: the
+ * owner checks the payment here first, then decides the request in Refunds.
  */
 export default function AdminPaymentsPage() {
   return (
@@ -38,10 +42,10 @@ async function PaymentsData() {
   const { data, error } = await supabase
     .from("bookings")
     .select(
-      "id, ref_code, user_id, contact_name, contact_email, contact_phone, start_at, hours, paddle_rented, total, payment_proof_path, payment_submitted_at",
+      "id, ref_code, user_id, contact_name, contact_email, contact_phone, start_at, hours, paddle_rented, total, payment_proof_path, payment_submitted_at, status",
     )
     .eq("kind", "customer")
-    .eq("status", "pending_review")
+    .or(AWAITING_PAYMENT_REVIEW)
     .order("payment_submitted_at", { ascending: true, nullsFirst: true });
 
   if (error) {
@@ -78,21 +82,11 @@ async function PaymentsData() {
       isGuest: b.user_id === null,
       sent: b.payment_submitted_at ? sentLabel(Date.parse(b.payment_submitted_at), now) : null,
       proofUrl: b.payment_proof_path ? (urls.get(b.payment_proof_path) ?? null) : null,
+      cancelRequested: b.status === "cancel_requested",
     };
   });
 
   return <PaymentQueue items={items} />;
-}
-
-/** "today, 3:42 PM" · "yesterday, 9:10 PM" · "Nov 27, 3:42 PM" (Manila time). */
-function sentLabel(ms: number, now: number): string {
-  const time = new Date(ms).toLocaleTimeString("en-PH", { timeZone: "Asia/Manila", hour: "numeric", minute: "2-digit" });
-  const day = manilaDay(ms);
-  const today = manilaDay(now);
-  if (day === today) return `today, ${time}`;
-  if (day === addDays(today, -1)) return `yesterday, ${time}`;
-  const date = new Date(ms).toLocaleDateString("en-PH", { timeZone: "Asia/Manila", month: "short", day: "numeric" });
-  return `${date}, ${time}`;
 }
 
 function QueueSkeleton() {
