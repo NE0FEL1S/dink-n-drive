@@ -3,15 +3,10 @@
 import Link from "next/link";
 import { CalendarCheck, LayoutDashboard, LogOut, UserRound } from "lucide-react";
 import { signOut } from "@/app/auth/actions";
+import { initials } from "@/lib/format";
 import { Dropdown, menuItemClass } from "./dropdown";
 
 type Props = { name: string; email: string | null; isOwner: boolean };
-
-function initials(name: string) {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  const letters = parts.length > 1 ? parts[0][0] + parts[parts.length - 1][0] : (parts[0] ?? "?").slice(0, 2);
-  return letters.toUpperCase();
-}
 
 /** Avatar button + account menu: My bookings, Profile, Admin (owner only), Sign out (DESIGN §6). */
 export function AccountMenu({ name, email, isOwner }: Props) {

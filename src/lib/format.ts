@@ -1,3 +1,10 @@
+/** "Juan Dela Cruz" → "JC", "Juan" → "JU" (avatar letters). */
+export function initials(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  const letters = parts.length > 1 ? parts[0][0] + parts[parts.length - 1][0] : (parts[0] ?? "?").slice(0, 2);
+  return letters.toUpperCase();
+}
+
 /** Whole pesos → "₱1,250". */
 export function peso(amount: number): string {
   return `₱${amount.toLocaleString("en-PH")}`;
