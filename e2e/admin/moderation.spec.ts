@@ -1,6 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 import { admin, createTestOwner, createTestUser, runId } from "../support/admin";
 import { insertTestComment, insertTestPost, listCommunityFiles } from "../support/community";
+import { insertTestFeedback, insertTestFeedbackComment } from "../support/feedback";
 import { expectNoHorizontalScroll, heading, signIn } from "../support/ui";
 
 /** Other runs share the database, so always find this test's own card by its text. */
@@ -64,6 +65,31 @@ test.describe("Admin moderation", () => {
     const { data } = await admin().from("comments").select("body, deleted_at").eq("post_id", post.id);
     expect(data!.find((c) => c.body.startsWith("Rude"))!.deleted_at).not.toBeNull();
     expect(data!.find((c) => c.body.startsWith("Kind"))!.deleted_at).toBeNull();
+  });
+
+  test("feedback comments are listed too; comments on deleted posts or feedback are not", async ({ page }, testInfo) => {
+    const tag = `${runId()}-${testInfo.project.name}`;
+    const [owner, author, talker] = await Promise.all([createTestOwner("mod-owner"), createTestUser("mod-author"), createTestUser("mod-talker")]);
+    const item = await insertTestFeedback(author, { message: `Feedback ${tag}`, anonymous: true });
+    const goneItem = await insertTestFeedback(author, { message: `Gone feedback ${tag}`, deleted: true });
+    const gonePost = await insertTestPost(author, { caption: `Gone post ${tag}`, deleted: true });
+    await insertTestFeedbackComment(talker, item.id, `On feedback ${tag}`);
+    await insertTestFeedbackComment(talker, goneItem.id, `Hidden one ${tag}`);
+    await insertTestComment(talker, gonePost.id, `Hidden two ${tag}`);
+
+    await signIn(page, owner, "/admin/moderation?view=comments");
+    const comment = card(page, "Comment", `On feedback ${tag}`);
+    // The owner sees the real author, even on anonymous feedback.
+    await expect(comment).toContainText(`On E2E mod-author's feedback: “Feedback ${tag}”`);
+    await expect(card(page, "Comment", `Hidden one ${tag}`)).toHaveCount(0);
+    await expect(card(page, "Comment", `Hidden two ${tag}`)).toHaveCount(0);
+
+    await comment.getByRole("button", { name: "Delete comment" }).click();
+    await expect(sheet(page)).toContainText("disappears from the feedback page");
+    await sheet(page).getByRole("button", { name: "Yes, delete comment" }).click();
+    await expect(card(page, "Comment", `On feedback ${tag}`)).toHaveCount(0);
+    const { data } = await admin().from("comments").select("deleted_at").eq("feedback_id", item.id).single();
+    expect(data!.deleted_at).not.toBeNull();
   });
 
   test("customers can't open moderation", async ({ page }) => {

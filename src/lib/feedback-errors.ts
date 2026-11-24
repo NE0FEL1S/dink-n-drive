@@ -17,6 +17,12 @@ export function feedbackError(key: string, detail?: string | null): string {
       return "That feedback isn't there anymore. It may have been deleted.";
     case "invalid_feedback":
       return "Something went wrong. Please try again.";
+    case "invalid_reply":
+      return "Replies can be up to 2,000 characters.";
+    case "invalid_status":
+      return "Pick Open, In progress or Resolved.";
+    case "not_owner":
+      return "Only the court owner can do this. Please log in again.";
     default:
       return communityError(key, detail);
   }

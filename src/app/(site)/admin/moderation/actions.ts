@@ -1,5 +1,6 @@
 "use server";
 
+import { refresh } from "next/cache";
 import { z } from "zod";
 import { requireOwner } from "@/lib/auth";
 import { COMMUNITY_BUCKET } from "@/lib/community";
@@ -24,6 +25,7 @@ export async function removePost(postId: string): Promise<ModerationResult> {
     const { error: removeError } = await supabase.storage.from(COMMUNITY_BUCKET).remove(paths);
     if (removeError) console.error("[admin] removePost: photo files not removed", postId, removeError);
   }
+  refresh(); // the tab counts
   return { ok: true };
 }
 
@@ -35,5 +37,6 @@ export async function removeComment(commentId: string): Promise<ModerationResult
   const supabase = await createClient();
   const { error } = await supabase.rpc("delete_comment", { p_comment_id: commentId });
   if (error) return { ok: false, error: communityError(error.message) };
+  refresh(); // the tab counts
   return { ok: true };
 }
