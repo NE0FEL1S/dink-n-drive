@@ -62,7 +62,8 @@ jobs:
     needs: prepare
     if: needs.prepare.outputs.tested != 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    # The full suite (240 tests on 3 devices) takes ~19 min against staging; leave headroom.
+    timeout-minutes: 40
     container:
       image: mcr.microsoft.com/playwright:v1.65.1-noble
       options: --user 1001
